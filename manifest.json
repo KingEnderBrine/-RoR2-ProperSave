@@ -1,0 +1,10 @@
+{
+    "name": "ProperSave",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/KingEnderBrine/-RoR2-ProperSave",
+    "description": "Saves your progress at the start of the stage so you can load later",
+    "dependencies": [
+        "bbepis-BepInExPack-3.2.0",
+	    "tristanmcpherson-R2API-2.4.21"
+    ]
+}

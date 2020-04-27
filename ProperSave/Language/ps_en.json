@@ -1,6 +1,4 @@
 ﻿{
-  "PS_TITLE_CONTINUE_DESC": "Contunue saved game",
-  "PS_TITLE_CONTINUE": "Continue",
-  "PS_TITLE_SAVE": "Save",
-  "PS_CHAT_SAVE": "<b>[PropperSave]</b> Game would be saved on transfer to next stage"
+  "PS_TITLE_CONTINUE_DESC": "Continue saved game",
+  "PS_TITLE_CONTINUE": "Continue"
 }

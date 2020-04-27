@@ -1,6 +1,4 @@
 ﻿{
   "PS_TITLE_CONTINUE_DESC": "Продолжить сохранённую игру",
-  "PS_TITLE_CONTINUE": "Продолжить",
-  "PS_TITLE_SAVE": "Сохранить",
-  "PS_CHAT_SAVE": "<b>[PropperSave]</b> Игра будет сохранена при переходе на следующую стадию"
+  "PS_TITLE_CONTINUE": "Продолжить"
 }

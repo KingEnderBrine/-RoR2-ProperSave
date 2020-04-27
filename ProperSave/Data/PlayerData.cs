@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using R2API.Utils;
+using RoR2;
 using RoR2.Stats;
 using System;
 using System.Collections;
@@ -35,6 +36,12 @@ namespace ProperSave.Data
         [DataMember(Name = "l")]
         public string loadoutXML;
 
+        [DataMember(Name = "lccm")]
+        public float lunarCoinChanceMultiplier;
+
+        [DataMember(Name = "lc")]
+        public uint lunarCoins;
+
         public PlayerData(NetworkUser player) {
             username = player.userName;
             money = (int)player.master.money;
@@ -42,6 +49,8 @@ namespace ProperSave.Data
             loadoutXML = player.master.loadout.ToXml("Loadout").ToString();
             
             characterBodyName = player.master.bodyPrefab.name;
+            lunarCoinChanceMultiplier = player.masterController.GetFieldValue<float>("lunarCoinChanceMultiplier");
+            lunarCoins = player.localUser.userProfile.coins;
 
             var tmpMinions = new List<MinionData>();
             foreach (var instance in CharacterMaster.readOnlyInstancesList)
@@ -102,6 +111,8 @@ namespace ProperSave.Data
         IEnumerator WaitForStart(NetworkUser player) {
             yield return null;
 
+            //player.localUser.userProfile.coins = lunarCoins;
+            player.masterController.SetFieldValue("lunarCoinChanceMultiplier", lunarCoinChanceMultiplier);
             var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
             for (var i = 0; i < statsFields.Length; i++)
             {

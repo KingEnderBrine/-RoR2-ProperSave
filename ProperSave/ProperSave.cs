@@ -87,7 +87,7 @@ namespace ProperSave
             GameNetworkManager.singleton.desiredHost = new GameNetworkManager.HostDescription(new GameNetworkManager.HostDescription.HostingParameters
             {
                 listen = false,
-                maxPlayers = 4
+                maxPlayers = 1
             });
             yield return new WaitUntil(() => PreGameController.instance != null);
             PreGameController.instance?.StartLaunch();
@@ -176,7 +176,7 @@ namespace ProperSave
             On.RoR2.Stage.Start += (orig, self) =>
             {
                 orig(self);
-                if (GameNetworkManager.singleton.desiredHost.hostingParameters.listen)
+                if (!RoR2Application.isInSinglePlayer)
                 {
                     return;
                 }
@@ -192,7 +192,7 @@ namespace ProperSave
             On.RoR2.GameOverController.Awake += (orig, self) =>
             {
                 orig(self);
-                if (GameNetworkManager.singleton.desiredHost.hostingParameters.listen)
+                if (!RoR2Application.isInSinglePlayer)
                 {
                     return;
                 }

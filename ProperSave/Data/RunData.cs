@@ -15,7 +15,7 @@ namespace ProperSave.Data
     public class RunData
     {
         [DataMember(Name = "s")]
-        public string seed;
+        public ulong seed;
         [DataMember(Name = "d")]
         public int difficulty;
         [DataMember(Name = "ft")]
@@ -47,7 +47,7 @@ namespace ProperSave.Data
         public RunData()
         {
             var run = Run.instance;
-            seed = run.seed.ToString();
+            seed = run.seed;
             difficulty = (int)run.selectedDifficulty;
 
             var stopWatch = run.GetFieldValue<Run.RunStopwatch>("runStopwatch");
@@ -81,7 +81,7 @@ namespace ProperSave.Data
 
             var instance = Run.instance;
 
-            instance.seed = ulong.Parse(seed);
+            instance.seed = seed;
             instance.selectedDifficulty = (DifficultyIndex)difficulty;
             instance.fixedTime = fixedTime;
             instance.shopPortalCount = shopPortalCount;

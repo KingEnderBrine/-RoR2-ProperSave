@@ -13,6 +13,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using TinyJson;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace ProperSave
 {
@@ -51,6 +52,8 @@ namespace ProperSave
             RegisterGameLoading();
 
             RegisterContinueButton();
+
+            RegisterMultiplayerContinueButton();
         }
 
         [ConCommand(commandName = "ps_load", flags = ConVarFlags.None, helpText = "Load saved game")]
@@ -242,6 +245,42 @@ namespace ProperSave
 
         }
 
+        private void RegisterMultiplayerContinueButton()
+        {
+            On.RoR2.UI.MainMenu.MultiplayerMenuController.Awake += (orig, self) => {
+                var multiplayerButton = GameObject.Find("GenericMenuButton (StartPrivateGame)");
+                var continueButton = Instantiate(multiplayerButton, multiplayerButton.transform.parent);
+                ProperSave.continueButton = new WeakReference<GameObject>(continueButton);
+                continueButton.name = "[PS] Continue";
+                continueButton.transform.SetSiblingIndex(1);
+
+                var buttonComponent = continueButton.GetComponent<HGButton>();
+                buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
+
+                var languageComponent = continueButton.GetComponent<LanguageTextMeshController>();
+                languageComponent.token = LanguageConsts.PS_TITLE_CONTINUE;
+
+                buttonComponent.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+                buttonComponent.onClick.AddListener(() =>
+                {
+                    //RoR2.Console.instance.SubmitCmd(null, "ps_load");
+                });
+                buttonComponent.interactable = File.Exists(GetSavePath());
+
+                orig(self);
+            };
+
+            On.RoR2.UI.MainMenu.ProfileMainMenuScreen.SetMainProfile += (orig, self, profile) =>
+            {
+                orig(self, profile);
+                if (continueButton.TryGetTarget(out var button))
+                {
+                    button.GetComponent<HGButton>().interactable = File.Exists(GetSavePath());
+                }
+            };
+
+        }
+
         private void RegisterLanguage()
         {
             foreach (var file in Directory.GetFiles(ExecutingDirectory, "ps_*.json", SearchOption.AllDirectories))
@@ -261,7 +300,36 @@ namespace ProperSave
                     LanguageAPI.Add(key, tokens[key].Value, languageToken);
                 }
             }
+        }
 
+        [Server]
+        private void LoadMultiplayer()
+        {
+            string filePath = GetSavePath();
+
+            if (!File.Exists(filePath))
+            {
+                Debug.Log($"File \"{filePath}\" not found");
+                return;
+                //yield break;
+            }
+
+            //NetworkUser.readOnlyInstancesList[0].Network_id.steamId
+
+            IsLoadingScene = true;
+            var saveJSON = File.ReadAllText(filePath);
+            Save = JSONParser.FromJson<SaveData>(saveJSON);
+
+            //GameNetworkManager.singleton.desiredHost = new GameNetworkManager.HostDescription(new GameNetworkManager.HostDescription.HostingParameters
+            //{
+            //    listen = false,
+            //    maxPlayers = 4
+            //});
+            //yield return new WaitUntil(() => PreGameController.instance != null);
+            //PreGameController.instance?.StartLaunch();
+
+            RoR2.Console.instance.SubmitCmd(null, "host 1");
+            NetworkSession.instance.BeginRun(GameModeCatalog.FindGameModePrefabComponent("ClassicRun"), new RuleBook(), Save.RunData.seed);
         }
     }
 }

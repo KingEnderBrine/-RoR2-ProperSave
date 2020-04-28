@@ -17,13 +17,15 @@ using UnityEngine;
 namespace ProperSave
 {
     [R2APISubmoduleDependency("LanguageAPI", "CommandHelper")]
+    [BepInDependency("com.MagnusMagnuson.TemporaryLunarCoins", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "1.0.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "1.1.0")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> continueButton = new WeakReference<GameObject>(null);
 
         public static ProperSave Instance { get; set; }
+        public static bool IsTLCDefined { get; set; }
 
         public static string ExecutingDirectory { get; } = Assembly.GetExecutingAssembly().Location.Replace("\\ProperSave.dll", "");
         public static string SavesDirectory { get; } = $"{ExecutingDirectory}\\Saves";
@@ -43,6 +45,8 @@ namespace ProperSave
             {
                 Destroy(this);
             }
+
+            IsTLCDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.MagnusMagnuson.TemporaryLunarCoins");
 
             RegisterLanguage();
 
@@ -261,7 +265,35 @@ namespace ProperSave
                     LanguageAPI.Add(key, tokens[key].Value, languageToken);
                 }
             }
-
         }
+
+        //This part is usless as I completely override Run.Start and not calling TLC at all when loading game.
+        //But I spent some time on this and don't want to delete it.
+        #region TemporaryLunarCoins
+        /*
+        //Loads assembly only when method is called
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private void RegisterTLCOverride()
+        {
+            var tlcRunStart = typeof(TemporaryLunarCoins.TemporaryLunarCoins).GetMethod("Run_Start", BindingFlags.NonPublic | BindingFlags.Instance);
+            MonoMod.RuntimeDetour.HookGen.HookEndpointManager.Modify(tlcRunStart, (Action<ILContext>)TLCHook);
+        }
+
+        //Hook to TemporaryLunarCoins Run.Start override and disable it when loading saved game
+        private void TLCHook(ILContext il)
+        {
+            var c = new ILCursor(il);
+            c.GotoNext(
+                x => x.MatchLdarg(1),
+                x => x.MatchLdarg(2),
+                x => x.MatchCallvirt("On.RoR2.Run/orig_Start", "Invoke"));
+            c.Index += 3;
+            
+            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoadingScene)).GetMethod);//new MethodInfo()// MethodReference("ProperSave.ProperSave::get_IsLoadingScene()", new TypeReference("System", "Boolean", null)));
+            c.Emit(OpCodes.Brfalse, c.Next);
+            c.Emit(OpCodes.Ret);
+        }
+        */
+        #endregion
     }
 }

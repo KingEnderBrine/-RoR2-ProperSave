@@ -111,7 +111,11 @@ namespace ProperSave.Data
         IEnumerator WaitForStart(NetworkUser player) {
             yield return null;
 
-            //player.localUser.userProfile.coins = lunarCoins;
+            if (ProperSave.IsTLCDefined)
+            {
+                player.localUser.userProfile.coins = lunarCoins;
+            }
+
             player.masterController.SetFieldValue("lunarCoinChanceMultiplier", lunarCoinChanceMultiplier);
             var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
             for (var i = 0; i < statsFields.Length; i++)

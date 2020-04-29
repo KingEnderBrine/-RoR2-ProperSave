@@ -10,7 +10,6 @@ using UnityEngine;
 
 namespace ProperSave.Data
 {
-    [Serializable]
     public class PlayerData {
 
         [DataMember(Name = "u")]

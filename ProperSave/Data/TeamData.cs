@@ -4,7 +4,6 @@ using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {
-    [Serializable]
     public class TeamData
     {
         [DataMember(Name = "e")]

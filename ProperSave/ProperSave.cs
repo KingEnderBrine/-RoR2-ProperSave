@@ -1,4 +1,6 @@
 ﻿using BepInEx;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using ProperSave.Data;
 using R2API;
 using R2API.Utils;
@@ -10,6 +12,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using TinyJson;
 using UnityEngine;
@@ -18,13 +21,20 @@ using UnityEngine.Networking;
 namespace ProperSave
 {
     [R2APISubmoduleDependency("LanguageAPI", "CommandHelper")]
+
+    //Support for both versions of TLC
+    [BepInDependency("com.blazingdrummer.TemporaryLunarCoins", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("com.MagnusMagnuson.TemporaryLunarCoins", BepInDependency.DependencyFlags.SoftDependency)]
+
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "1.0.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "1.1.0")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> continueButton = new WeakReference<GameObject>(null);
 
-        public static ProperSave Instance { get; set; }
+        public static ProperSave Instance { get; private set; }
+        public static bool IsTLCDefined { get; private set; }
+        public static bool IsOldTLCDefined { get; private set; }
 
         public static string ExecutingDirectory { get; } = Assembly.GetExecutingAssembly().Location.Replace("\\ProperSave.dll", "");
         public static string SavesDirectory { get; } = $"{ExecutingDirectory}\\Saves";
@@ -32,7 +42,7 @@ namespace ProperSave
         private static bool FirstRunStage { get; set; }
         private static SaveData Save { get; set; }
 
-        public static RunRngData PreStageRng { get; set; }
+        public static RunRngData PreStageRng { get; private set; }
 
         public void Awake()
         {
@@ -45,9 +55,17 @@ namespace ProperSave
                 Destroy(this);
             }
 
+            IsOldTLCDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.MagnusMagnuson.TemporaryLunarCoins");
+            IsTLCDefined = IsOldTLCDefined | BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.blazingdrummer.TemporaryLunarCoins");
+            
             RegisterLanguage();
 
             CommandHelper.AddToConsoleWhenReady();
+
+            if (IsOldTLCDefined)
+            {
+                RegisterTLCOverride();
+            }
 
             RegisterGameLoading();
 
@@ -90,7 +108,7 @@ namespace ProperSave
             GameNetworkManager.singleton.desiredHost = new GameNetworkManager.HostDescription(new GameNetworkManager.HostDescription.HostingParameters
             {
                 listen = false,
-                maxPlayers = 4
+                maxPlayers = 1
             });
             yield return new WaitUntil(() => PreGameController.instance != null);
             PreGameController.instance?.StartLaunch();
@@ -151,19 +169,7 @@ namespace ProperSave
             };
 
             //Replace with custom run load
-            On.RoR2.Run.Start += (orig, self) =>
-            {
-                FirstRunStage = true;
-                if (IsLoadingScene)
-                {
-                    Save.LoadRun();
-                    Save.LoadArtifacts();
-                }
-                else
-                {
-                    orig(self);
-                }
-            };
+            RegisterRunStartHook();
 
             //Restore team expirience
             On.RoR2.TeamManager.Start += (orig, self) =>
@@ -179,7 +185,7 @@ namespace ProperSave
             On.RoR2.Stage.Start += (orig, self) =>
             {
                 orig(self);
-                if (GameNetworkManager.singleton.desiredHost.hostingParameters.listen)
+                if (!RoR2Application.isInSinglePlayer)
                 {
                     return;
                 }
@@ -195,7 +201,7 @@ namespace ProperSave
             On.RoR2.GameOverController.Awake += (orig, self) =>
             {
                 orig(self);
-                if (GameNetworkManager.singleton.desiredHost.hostingParameters.listen)
+                if (!RoR2Application.isInSinglePlayer)
                 {
                     return;
                 }
@@ -206,6 +212,29 @@ namespace ProperSave
             {
                 PreStageRng = new RunRngData(Run.instance);
                 orig(self);
+            };
+        }
+
+        private void RegisterRunStartHook()
+        {
+            IL.RoR2.Run.Start += (il) =>
+            {
+                var c = new ILCursor(il);
+                c.EmitDelegate<Func<bool>>(() =>
+                {
+                    FirstRunStage = true;
+                    if (!IsLoadingScene)
+                    {
+                        return false;
+                    }
+
+                    Save.LoadRun();
+                    Save.LoadArtifacts();
+
+                    return true;
+                });
+                c.Emit(OpCodes.Brfalse, c.Next);
+                c.Emit(OpCodes.Ret);
             };
         }
 
@@ -283,8 +312,10 @@ namespace ProperSave
 
         private void RegisterLanguage()
         {
+            var flag = false;
             foreach (var file in Directory.GetFiles(ExecutingDirectory, "ps_*.json", SearchOption.AllDirectories))
             {
+                flag = true;
                 var languageToken = Regex.Match(file, ".+ps_(?<lang>[a-zA-Z]+).json\\Z").Groups["lang"].Value;
                 var tokens = JSON.Parse(File.ReadAllText(file));
 
@@ -300,8 +331,38 @@ namespace ProperSave
                     LanguageAPI.Add(key, tokens[key].Value, languageToken);
                 }
             }
+            if (!flag)
+            {
+                Debug.LogWarning("Localizaiton files not found");
+            }
         }
 
+        #region Old TemporaryLunarCoins
+        
+        //Loads assembly only when method is called
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private void RegisterTLCOverride()
+        {
+            var tlcRunStart = typeof(TemporaryLunarCoins.TemporaryLunarCoins).GetMethod("Run_Start", BindingFlags.NonPublic | BindingFlags.Instance);
+            MonoMod.RuntimeDetour.HookGen.HookEndpointManager.Modify(tlcRunStart, (Action<ILContext>)TLCHook);
+        }
+
+        //Hook to TemporaryLunarCoins Run.Start override and disable it when loading saved game
+        private void TLCHook(ILContext il)
+        {
+            var c = new ILCursor(il);
+            c.GotoNext(
+                x => x.MatchLdarg(1),
+                x => x.MatchLdarg(2),
+                x => x.MatchCallvirt("On.RoR2.Run/orig_Start", "Invoke"));
+            c.Index += 3;
+            
+            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoadingScene), BindingFlags.NonPublic | BindingFlags.Static).GetMethod);
+            c.Emit(OpCodes.Brfalse, c.Next);
+            c.Emit(OpCodes.Ret);
+        }
+
+        #endregion
         [Server]
         private void LoadMultiplayer()
         {

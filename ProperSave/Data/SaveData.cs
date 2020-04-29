@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace ProperSave.Data {
-    [Serializable]
     public class SaveData {
         [DataMember(Name = "r")]
         public RunData RunData { get; set; }

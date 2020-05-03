@@ -11,12 +11,11 @@ using UnityEngine;
 namespace ProperSave.Data
 {
     public class PlayerData {
-
-        [DataMember(Name = "u")]
-        public string username;
+        [DataMember(Name = "si")]
+        public ulong steamId;
 
         [DataMember(Name = "m")]
-        public int money;
+        public uint money;
 
         [DataMember(Name = "sf")]
         public string[] statsFields;
@@ -42,14 +41,15 @@ namespace ProperSave.Data
         public uint lunarCoins;
 
         public PlayerData(NetworkUser player) {
-            username = player.userName;
-            money = (int)player.master.money;
+            steamId = player.Network_id.steamId.value;
+
+            money = player.master.money;
             inventory = new InventoryData(player.master);
             loadoutXML = player.master.loadout.ToXml("Loadout").ToString();
             
             characterBodyName = player.master.bodyPrefab.name;
             lunarCoinChanceMultiplier = player.masterController.GetFieldValue<float>("lunarCoinChanceMultiplier");
-            lunarCoins = player.localUser.userProfile.coins;
+            lunarCoins = player.lunarCoins;
 
             var tmpMinions = new List<MinionData>();
             foreach (var instance in CharacterMaster.readOnlyInstancesList)
@@ -81,13 +81,7 @@ namespace ProperSave.Data
             }
         }
 
-        public void LoadPlayer() {
-            var player = ProperSave.GetPlayerFromUsername(username);
-            if (player == null) {
-                Debug.Log("Could not find player: " + username);
-                return;
-            }
-
+        public void LoadPlayer(NetworkUser player) {
             foreach(var minion in minions)
             {
                 minion.LoadMinion(player.master);
@@ -102,9 +96,27 @@ namespace ProperSave.Data
 
             inventory.LoadInventory(player.master);
 
-            player.master.money = (uint)money;
+            player.master.money = money;
 
-            ProperSave.Instance.StartCoroutine(WaitForStart(player));
+            if (ProperSave.IsTLCDefined)
+            {
+                player.DeductLunarCoins(player.lunarCoins);
+                player.AwardLunarCoins(lunarCoins);
+            }
+
+            player.masterController.SetFieldValue("lunarCoinChanceMultiplier", lunarCoinChanceMultiplier);
+            var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
+            for (var i = 0; i < statsFields.Length; i++)
+            {
+                var fieldValue = statsFields[i];
+                stats.SetStatValueFromString(StatDef.allStatDefs[i], fieldValue);
+            }
+            for (var i = 0; i < statsUnlockables.Length; i++)
+            {
+                var unlockableIndex = statsUnlockables[i];
+                stats.AddUnlockable(new UnlockableIndex(unlockableIndex));
+            }
+            //ProperSave.Instance.StartCoroutine(WaitForStart(player));
         }
 
         IEnumerator WaitForStart(NetworkUser player) {
@@ -112,7 +124,8 @@ namespace ProperSave.Data
 
             if (ProperSave.IsTLCDefined)
             {
-                player.localUser.userProfile.coins = lunarCoins;
+                player.DeductLunarCoins(player.lunarCoins);
+                player.AwardLunarCoins(lunarCoins);
             }
 
             player.masterController.SetFieldValue("lunarCoinChanceMultiplier", lunarCoinChanceMultiplier);

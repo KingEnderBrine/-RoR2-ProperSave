@@ -68,7 +68,8 @@ namespace ProperSave.Data
 
             eventFlags = run.GetFieldValue<HashSet<string>>("eventFlags").ToArray();
 
-            trialArtifact = (int)(ArtifactTrialMissionController.trialArtifact?.artifactIndex ?? ArtifactIndex.None);
+            var artifactController = UnityEngine.Object.FindObjectOfType<ArtifactTrialMissionController>();
+            trialArtifact = artifactController?.GetFieldValue<int>("currentArtifactIndex") ?? -1;
         }
 
         //Upgraded copy of Run.Start
@@ -97,7 +98,6 @@ namespace ProperSave.Data
                 runRng.LoadData(instance);
                 instance.InvokeMethod("GenerateStageRNG");
                 typeof(Run).GetMethod("PopulateValidStages", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
-
             }
 
             instance.SetFieldValue("allowNewParticipants", true);
@@ -114,7 +114,6 @@ namespace ProperSave.Data
             {
                 instance.nextStageScene = SceneCatalog.GetSceneDefFromSceneName(nextSceneName);
                 NetworkManager.singleton.ServerChangeScene(sceneName);
-                ProperSave.Instance.StartCoroutine(WaitForSceneChange());
             }
 
             itemMask.LoadData(out instance.availableItems);
@@ -135,12 +134,7 @@ namespace ProperSave.Data
                     handler.Method.Invoke(handler.Target, new object[] { instance });
                 }
             }
-        }
-
-        private IEnumerator WaitForSceneChange()
-        {
-            yield return new WaitUntil(() => SceneCatalog.GetSceneDefForCurrentScene().baseSceneName == sceneName);
-            Run.instance.stageClearCount = stageClearCount;
+            instance.stageClearCount = stageClearCount;
         }
     }
 }

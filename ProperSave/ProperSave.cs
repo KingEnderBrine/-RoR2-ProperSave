@@ -29,12 +29,11 @@ namespace ProperSave
     [BepInDependency("com.MagnusMagnuson.TemporaryLunarCoins", BepInDependency.DependencyFlags.SoftDependency)]
 
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "1.1.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.0.0")]
     public class ProperSave : BaseUnityPlugin
     {
-        private static WeakReference<GameObject> singleplayerContinueButton = new WeakReference<GameObject>(null);
-        private static WeakReference<GameObject> multiplayerContinueButton = new WeakReference<GameObject>(null);
-        private static WeakReference<GameObject> lobbyContinueButton = new WeakReference<GameObject>(null);
+        private static WeakReference<GameObject> mainMenuButton = new WeakReference<GameObject>(null);
+        private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
 
         public static ProperSave Instance { get; private set; }
         public static bool IsTLCDefined { get; private set; }
@@ -48,7 +47,7 @@ namespace ProperSave
         private static List<SaveFileMeta> SavesMetadata { get; } = new List<SaveFileMeta>();
 
         public static RunRngData PreStageRng { get; private set; }
-        public static ArtifactsData RunArtifactData { get; private set; }
+        public static RunArtifactsData RunArtifactData { get; private set; }
 
         public void Awake()
         {
@@ -64,7 +63,7 @@ namespace ProperSave
             PopulateSavesMetadata();
 
             IsOldTLCDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.MagnusMagnuson.TemporaryLunarCoins");
-            IsTLCDefined = IsOldTLCDefined | BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.blazingdrummer.TemporaryLunarCoins");
+            IsTLCDefined = IsOldTLCDefined || BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.blazingdrummer.TemporaryLunarCoins");
             
             RegisterLanguage();
 
@@ -79,116 +78,37 @@ namespace ProperSave
 
             RegisterGameSaving();
 
-            RegisterSingleplayerContinueButton();
+            RegisterMainMenuButton();
 
-            //RegisterMultiplayerContinueButton();
-
-            RegisterLobbyContinueButton();
+            RegisterLobbyButton();
         }
 
-        [ConCommand(commandName = "ps_load", flags = ConVarFlags.None, helpText = "Load saved game")]
-        private static void CCRequestLoad(ConCommandArgs args)
+        #region Main registration
+        private void RegisterLanguage()
         {
-            if (Run.instance != null)
+            var flag = false;
+            foreach (var file in Directory.GetFiles(ExecutingDirectory, "ps_*.json", SearchOption.AllDirectories))
             {
-                Debug.Log("[ProperSave] Can't load while run is active");
-                return;
-            }
-            if (IsLoading)
-            {
-                Debug.Log("[ProperSave] Already loading");
-                return;
-            }
+                flag = true;
+                var languageToken = Regex.Match(file, ".+ps_(?<lang>[a-zA-Z]+).json\\Z").Groups["lang"].Value;
+                var tokens = JSON.Parse(File.ReadAllText(file));
 
-            Instance.StartCoroutine(LoadGame());
-        }
-
-        private static IEnumerator LoadGame()
-        {
-            var metadata = GetSingleplayerSaveMetadata();
-            if (metadata == null)
-            {
-                Debug.Log("[ProperSave] Save for current user not found");
-                yield break;
+                if (languageToken == "en")
+                {
+                    foreach (var key in tokens.Keys)
+                    {
+                        LanguageAPI.Add(key, tokens[key].Value);
+                    }
+                }
+                foreach (var key in tokens.Keys)
+                {
+                    LanguageAPI.Add(key, tokens[key].Value, languageToken);
+                }
             }
-
-            var filePath = metadata.FilePath;
-            if (!File.Exists(filePath))
+            if (!flag)
             {
-                Debug.Log($"[ProperSave] File \"{filePath}\" not found");
-                yield break;
+                Debug.LogWarning("Localizaiton files not found");
             }
-
-            IsLoading = true;
-            var saveJSON = File.ReadAllText(filePath);
-            Save = JSONParser.FromJson<SaveData>(saveJSON);
-            Save.SaveFileMeta = metadata;
-
-            GameNetworkManager.singleton.desiredHost = new GameNetworkManager.HostDescription(new GameNetworkManager.HostDescription.HostingParameters
-            {
-                listen = false,
-                maxPlayers = 1
-            });
-            yield return new WaitUntil(() => PreGameController.instance != null);
-            PreGameController.instance?.StartLaunch();
-        }
-
-        private static void SaveGame()
-        {
-            Save = new SaveData();
-            var metadata = Save.CreateMetadata();
-            var foundMetadata = SavesMetadata.FirstOrDefault(el => el == metadata);
-            var filePath = "";
-
-            if (foundMetadata != null)
-            {
-                Save.SaveFileMeta = foundMetadata;
-                filePath = foundMetadata.FilePath;
-            }
-            else
-            {
-                Save.SaveFileMeta = metadata;
-                var saveId = Guid.NewGuid();
-                metadata.FileName = saveId.ToString();
-                filePath = metadata.FilePath;
-                
-                SavesMetadata.Add(metadata);
-                UpdateSavesMetadata();
-            }
-
-            try
-            {
-                var json = JSONWriter.ToJson(Save);
-                File.WriteAllText(filePath, json);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e);
-            }
-        }
-
-        private static SaveFileMeta GetSingleplayerSaveMetadata()
-        {
-            if (LocalUserManager.readOnlyLocalUsersList.Count == 0)
-            {
-                return null;
-            }
-            var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
-            return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.SteamIds.Length == 1);
-        }
-
-        private static SaveFileMeta GetLobbySaveMetadata()
-        {
-            var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId.value).ToArray();
-            if (users.Length == 0)
-            {
-                return null;
-            }
-            if (users.Length == 1)
-            {
-                return GetSingleplayerSaveMetadata();
-            }
-            return SavesMetadata.FirstOrDefault(el => el.SteamIds.Except(users).Count() == 0);
         }
 
         private void RegisterGameLoading()
@@ -207,6 +127,8 @@ namespace ProperSave
                     IsLoading = false;
                 }
             };
+
+            RegisterLoopOnceHook();
         }
 
         private void RegisterGameSaving()
@@ -221,7 +143,7 @@ namespace ProperSave
                     FirstRunStage = false;
                     return;
                 }
-                Debug.Log("[ProperSave] Game Saved");
+
                 SaveGame();
             };
 
@@ -238,6 +160,7 @@ namespace ProperSave
                         File.Delete(metadata.FilePath);
                         SavesMetadata.Remove(metadata);
                         UpdateSavesMetadata();
+                        Save = null;
                     }
                 }
                 catch (Exception e)
@@ -267,8 +190,9 @@ namespace ProperSave
                         Save.LoadRun();
                         Save.LoadArtifacts();
                         Save.LoadPlayers();
+                        Debug.Log("[ProperSave] RunStart");
                     }
-                    RunArtifactData = new ArtifactsData();
+                    RunArtifactData = new RunArtifactsData();
 
                     return IsLoading;
                 });
@@ -277,13 +201,34 @@ namespace ProperSave
             };
         }
 
-        private void RegisterSingleplayerContinueButton()
+        //Disable LoopOnce achievement check if it's first loop.
+        //It was triggered every time run is loaded because 
+        //it checks for CurrentScene.stageOrder >= Run.instance.stageClearCount.
+        //This is wrong because I first set stageClearCount, then check happens 
+        //and only then CurrentScene and its stageOrder changes.
+        private void RegisterLoopOnceHook()
+        {
+            IL.RoR2.Achievements.LoopOnceAchievement.Check += (il) =>
+            {
+                var c = new ILCursor(il);
+                c.EmitDelegate<Func<bool>>(() =>
+                {
+                    return Run.instance?.loopClearCount == 0;
+                });
+                c.Emit(OpCodes.Brfalse, c.Next);
+                c.Emit(OpCodes.Ret);
+            };
+        }
+        #endregion
+
+        #region Buttons
+        private void RegisterMainMenuButton()
         {
             On.RoR2.UI.MainMenu.MainMenuController.Start += (orig, self) => {
                 var singlePlayerButton = GameObject.Find("GenericMenuButton (Singleplayer)");
                 var continueButton = Instantiate(singlePlayerButton, singlePlayerButton.transform.parent);
-                ProperSave.singleplayerContinueButton = new WeakReference<GameObject>(continueButton);
-                continueButton.name = "[PS] Continue";
+                ProperSave.mainMenuButton = new WeakReference<GameObject>(continueButton);
+                continueButton.name = "[ProperSave] Continue";
                 continueButton.transform.SetSiblingIndex(1);
 
                 var buttonComponent = continueButton.GetComponent<HGButton>();
@@ -297,7 +242,7 @@ namespace ProperSave
                 {
                     RoR2.Console.instance.SubmitCmd(null, "ps_load");
                 });
-                UpdateSingleplayerButton();
+                UpdateMainMenuButton();
 
                 orig(self);
             };
@@ -305,29 +250,29 @@ namespace ProperSave
             On.RoR2.UI.MainMenu.ProfileMainMenuScreen.SetMainProfile += (orig, self, profile) =>
             {
                 orig(self, profile);
-                UpdateSingleplayerButton();
+                UpdateMainMenuButton();
             };
 
         }
 
-        private void RegisterLobbyContinueButton()
+        private void RegisterLobbyButton()
         {
             On.RoR2.PreGameController.Awake += (orig, self) =>
             {
                 var quitButton = GameObject.Find("NakedButton (Quit)");
-                var continueButton = Instantiate(quitButton, quitButton.transform.parent);
-                ProperSave.lobbyContinueButton = new WeakReference<GameObject>(continueButton);
-                continueButton.name = "[PS] Continue";
-                continueButton.transform.SetSiblingIndex(1);
-                var rectTransform = continueButton.GetComponent<RectTransform>();
+                var loadButton = Instantiate(quitButton, quitButton.transform.parent);
+                ProperSave.lobbyButton = new WeakReference<GameObject>(loadButton);
+                loadButton.name = "[ProperSave] Load";
+                loadButton.transform.SetSiblingIndex(1);
+                var rectTransform = loadButton.GetComponent<RectTransform>();
                 rectTransform.anchorMin = new Vector2(1F, 1.5F);
                 rectTransform.anchorMax = new Vector2(1F, 1.5F);
 
-                var buttonComponent = continueButton.GetComponent<HGButton>();
+                var buttonComponent = loadButton.GetComponent<HGButton>();
                 buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
 
-                var languageComponent = continueButton.GetComponent<LanguageTextMeshController>();
-                languageComponent.token = LanguageConsts.PS_TITLE_CONTINUE;
+                var languageComponent = loadButton.GetComponent<LanguageTextMeshController>();
+                languageComponent.token = LanguageConsts.PS_TITLE_LOAD;
 
                 buttonComponent.onClick = new Button.ButtonClickedEvent();
                 buttonComponent.onClick.AddListener(() =>
@@ -365,32 +310,38 @@ namespace ProperSave
             };
         }
 
-        private void RegisterLanguage()
+        private static void UpdateMainMenuButton()
         {
-            var flag = false;
-            foreach (var file in Directory.GetFiles(ExecutingDirectory, "ps_*.json", SearchOption.AllDirectories))
+            try
             {
-                flag = true;
-                var languageToken = Regex.Match(file, ".+ps_(?<lang>[a-zA-Z]+).json\\Z").Groups["lang"].Value;
-                var tokens = JSON.Parse(File.ReadAllText(file));
-
-                if (languageToken == "en")
+                if (mainMenuButton.TryGetTarget(out var button))
                 {
-                    foreach (var key in tokens.Keys)
+                    var component = button?.GetComponent<HGButton>();
+                    if (component != null)
                     {
-                        LanguageAPI.Add(key, tokens[key].Value);
+                        component.interactable = File.Exists(GetSingleplayerSaveMetadata()?.FilePath);
                     }
                 }
-                foreach (var key in tokens.Keys)
+            }
+            catch (Exception e) { }
+        }
+
+        private static void UpdateLobbyButton()
+        {
+            try
+            {
+                if (lobbyButton.TryGetTarget(out var button))
                 {
-                    LanguageAPI.Add(key, tokens[key].Value, languageToken);
+                    var component = button?.GetComponent<HGButton>();
+                    if (component != null)
+                    {
+                        component.interactable = File.Exists(GetLobbySaveMetadata()?.FilePath);
+                    }
                 }
             }
-            if (!flag)
-            {
-                Debug.LogWarning("Localizaiton files not found");
-            }
+            catch (Exception e) { }
         }
+        #endregion
 
         #region Old TemporaryLunarCoins
         
@@ -419,36 +370,65 @@ namespace ProperSave
 
         #endregion
 
-        private static void UpdateSingleplayerButton()
+        #region Loading and saving
+        private static void SaveGame()
         {
+            Save = new SaveData();
+            var metadata = SaveFileMeta.CreateCurrentMetadata();
+            var foundMetadata = GetLobbySaveMetadata();
+
+            Save.SaveFileMeta = foundMetadata ?? metadata;
+            if (string.IsNullOrEmpty(Save.SaveFileMeta.FileName))
+            {
+                do
+                {
+                    Save.SaveFileMeta.FileName = Guid.NewGuid().ToString();
+                }
+                while (File.Exists(Save.SaveFileMeta.FilePath));
+            }
+
             try
             {
-                if (singleplayerContinueButton.TryGetTarget(out var button))
+                var json = JSONWriter.ToJson(Save);
+                File.WriteAllText(Save.SaveFileMeta.FilePath, json);
+                if (ReferenceEquals(Save.SaveFileMeta, metadata))
                 {
-                    var component = button?.GetComponent<HGButton>();
-                    if (component != null)
-                    {
-                        component.interactable = File.Exists(GetSingleplayerSaveMetadata()?.FilePath);
-                    }
+                    SavesMetadata.Add(metadata);
+                    UpdateSavesMetadata();
                 }
+                Chat.AddMessage(Language.GetString(LanguageConsts.PS_CHAT_SAVE));
             }
-            catch (Exception e) { }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[ProperSave] Couldn't save game");
+            }
         }
 
-        private static void UpdateLobbyButton()
+        private static IEnumerator LoadGame()
         {
-            try
+            var metadata = GetSingleplayerSaveMetadata();
+            if (metadata == null)
             {
-                if (lobbyContinueButton.TryGetTarget(out var button))
-                {
-                    var component = button?.GetComponent<HGButton>();
-                    if (component != null)
-                    {
-                        component.interactable = File.Exists(GetLobbySaveMetadata()?.FilePath);
-                    }
-                }
+                Debug.Log("[ProperSave] Save for current user not found");
+                yield break;
             }
-            catch (Exception e) { }
+
+            var filePath = metadata.FilePath;
+            if (!File.Exists(filePath))
+            {
+                Debug.Log($"[ProperSave] File \"{filePath}\" not found");
+                yield break;
+            }
+
+            IsLoading = true;
+            var saveJSON = File.ReadAllText(filePath);
+            Save = JSONParser.FromJson<SaveData>(saveJSON);
+            Save.SaveFileMeta = metadata;
+
+            RoR2.Console.instance.SubmitCmd(null, "host 0");
+
+            yield return new WaitUntil(() => PreGameController.instance != null);
+            PreGameController.instance?.StartLaunch();
         }
 
         private static IEnumerator LoadLobby()
@@ -485,7 +465,24 @@ namespace ProperSave
             PreGameController.instance?.StartLaunch();
         }
 
-        [ConCommand(commandName = "ps_load_lobby", flags = ConVarFlags.None, helpText = "Load saved multiplayer game")]
+        [ConCommand(commandName = "ps_load", flags = ConVarFlags.None, helpText = "Load saved game")]
+        private static void CCRequestLoad(ConCommandArgs args)
+        {
+            if (Run.instance != null)
+            {
+                Debug.Log("[ProperSave] Can't load while run is active");
+                return;
+            }
+            if (IsLoading)
+            {
+                Debug.Log("[ProperSave] Already loading");
+                return;
+            }
+
+            Instance.StartCoroutine(LoadGame());
+        }
+
+        [ConCommand(commandName = "ps_load_lobby", flags = ConVarFlags.None, helpText = "Load saved game suitable for current lobby")]
         private static void CCRequestLoadLobby(ConCommandArgs args)
         {
             if (Run.instance != null)
@@ -500,23 +497,31 @@ namespace ProperSave
             }
             Instance.StartCoroutine(LoadLobby());
         }
+        #endregion
 
-        private static void UpdateSavesMetadata()
+        #region SavesMetadata
+        private static SaveFileMeta GetSingleplayerSaveMetadata()
         {
-            var path = $"{SavesDirectory}\\SavesMetadata.json";
-            if (!Directory.Exists(SavesDirectory))
+            if (LocalUserManager.readOnlyLocalUsersList.Count == 0)
             {
-                Directory.CreateDirectory(SavesDirectory);
+                return null;
             }
+            var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
+            return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.SteamIds.Length == 1);
+        }
 
-            try
+        private static SaveFileMeta GetLobbySaveMetadata()
+        {
+            var users = NetworkUser.readOnlyInstancesList.ToArray().Select(el => el.Network_id.steamId.value);
+            if (users.Count() == 0)
             {
-                File.WriteAllText(path, JSONWriter.ToJson(SavesMetadata));
+                return null;
             }
-            catch (Exception e)
+            if (users.Count() == 1)
             {
-                Debug.LogWarning("[ProperSave] Can't update SavesMetadata file");
+                return GetSingleplayerSaveMetadata();
             }
+            return SavesMetadata.FirstOrDefault(el => el.SteamIds.Except(users).Count() == 0);
         }
 
         private static void PopulateSavesMetadata()
@@ -539,5 +544,25 @@ namespace ProperSave
                 Debug.LogWarning("[ProperSave] SavesMetadata file corrupted.");
             }
         }
+
+
+        private static void UpdateSavesMetadata()
+        {
+            var path = $"{SavesDirectory}\\SavesMetadata.json";
+            if (!Directory.Exists(SavesDirectory))
+            {
+                Directory.CreateDirectory(SavesDirectory);
+            }
+
+            try
+            {
+                File.WriteAllText(path, JSONWriter.ToJson(SavesMetadata));
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[ProperSave] Can't update SavesMetadata file");
+            }
+        }
+        #endregion
     }
 }

@@ -21,6 +21,8 @@ namespace ProperSave.Data
             inventory = new InventoryData(master);
         }
 
+        //Loads minion after scene was populated 
+        //so that minion's AI won't throw exceptions because it can't navigate 
         public void LoadMinion(CharacterMaster playerMaster)
         {
             SceneDirector.onPostPopulateSceneServer += SpawnMinion;

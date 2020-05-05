@@ -10,6 +10,8 @@ namespace ProperSave.Data
         public RunData RunData { get; set; }
         [DataMember(Name = "t")]
         public TeamData TeamData { get; set; }
+        [DataMember(Name = "ra")]
+        public RunArtifactsData RunArtifactsData { get; set; }
         [DataMember(Name = "a")]
         public ArtifactsData ArtifactsData { get; set; }
         [DataMember(Name = "p")]
@@ -21,7 +23,8 @@ namespace ProperSave.Data
         public SaveData() {
             RunData = new RunData();
             TeamData = new TeamData();
-            ArtifactsData = ProperSave.RunArtifactData;
+            RunArtifactsData = ProperSave.RunArtifactData;
+            ArtifactsData = new ArtifactsData();
             PlayersData = new List<PlayerData>();
 
             foreach (var item in NetworkUser.readOnlyInstancesList) {
@@ -36,6 +39,7 @@ namespace ProperSave.Data
 
         public void LoadArtifacts()
         {
+            RunArtifactsData.LoadData();
             ArtifactsData.LoadData();
         }
 
@@ -58,15 +62,6 @@ namespace ProperSave.Data
                 players.Remove(player);
                 player.LoadPlayer(user);
             }
-        }
-
-        public SaveFileMeta CreateMetadata()
-        {
-            return new SaveFileMeta
-            {
-                SteamIds = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId.value).ToArray(),
-                UserProfileId = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName
-            };
         }
     }
 }

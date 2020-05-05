@@ -32,7 +32,7 @@ namespace ProperSave.Data
         public string characterBodyName;
 
         [DataMember(Name = "l")]
-        public string loadoutXML;
+        public LoadoutData loadout;
 
         [DataMember(Name = "lccm")]
         public float lunarCoinChanceMultiplier;
@@ -45,7 +45,7 @@ namespace ProperSave.Data
 
             money = player.master.money;
             inventory = new InventoryData(player.master);
-            loadoutXML = player.master.loadout.ToXml("Loadout").ToString();
+            loadout = new LoadoutData(player.master);
             
             characterBodyName = player.master.bodyPrefab.name;
             lunarCoinChanceMultiplier = player.masterController.GetFieldValue<float>("lunarCoinChanceMultiplier");
@@ -91,36 +91,11 @@ namespace ProperSave.Data
 
             player.master.bodyPrefab = bodyPrefab;
 
-            player.master.loadout.Clear();
-            player.master.loadout.FromXml(XElement.Parse(loadoutXML));
+            loadout.LoadData(player.master);
 
             inventory.LoadInventory(player.master);
 
             player.master.money = money;
-
-            if (ProperSave.IsTLCDefined)
-            {
-                player.DeductLunarCoins(player.lunarCoins);
-                player.AwardLunarCoins(lunarCoins);
-            }
-
-            player.masterController.SetFieldValue("lunarCoinChanceMultiplier", lunarCoinChanceMultiplier);
-            var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
-            for (var i = 0; i < statsFields.Length; i++)
-            {
-                var fieldValue = statsFields[i];
-                stats.SetStatValueFromString(StatDef.allStatDefs[i], fieldValue);
-            }
-            for (var i = 0; i < statsUnlockables.Length; i++)
-            {
-                var unlockableIndex = statsUnlockables[i];
-                stats.AddUnlockable(new UnlockableIndex(unlockableIndex));
-            }
-            //ProperSave.Instance.StartCoroutine(WaitForStart(player));
-        }
-
-        IEnumerator WaitForStart(NetworkUser player) {
-            yield return null;
 
             if (ProperSave.IsTLCDefined)
             {

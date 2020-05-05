@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoR2;
+using System;
 using System.Linq;
 using System.Runtime.Serialization;
 
@@ -22,36 +23,13 @@ namespace ProperSave.Data
             }
         }
 
-        public static bool operator ==(SaveFileMeta first, SaveFileMeta second)
+        public static SaveFileMeta CreateCurrentMetadata()
         {
-            
-            if (first is null)
+            return new SaveFileMeta
             {
-                return second is null;
-            }
-            return first.Equals(second);
-        }
-
-        public static bool operator !=(SaveFileMeta first, SaveFileMeta second)
-        {
-            return !(first == second);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-            {
-                return false;
-            }
-
-            return obj is SaveFileMeta second ?
-                (UserProfileId == second.UserProfileId &&
-                SteamIds?.Except(second.SteamIds ?? Array.Empty<ulong>())?.Count() == 0) : false;
-        }
-
-        public override int GetHashCode()
-        {
-            return (SteamIds, UserProfileId).GetHashCode();
+                SteamIds = NetworkUser.readOnlyInstancesList.ToArray().Select(el => el.Network_id.steamId.value).ToArray(),
+                UserProfileId = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName
+            };
         }
     }
 }

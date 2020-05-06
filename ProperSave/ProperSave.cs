@@ -334,7 +334,10 @@ namespace ProperSave
                     var component = button?.GetComponent<HGButton>();
                     if (component != null)
                     {
-                        component.interactable = File.Exists(GetLobbySaveMetadata()?.FilePath);
+                        var listen = GameNetworkManager.singleton?.desiredHost.hostingParameters.listen ?? false;
+                        component.interactable = (!listen || 
+                            SteamworksLobbyManager.ownsLobby) && 
+                            File.Exists(GetLobbySaveMetadata()?.FilePath);
                     }
                 }
             }

@@ -520,7 +520,7 @@ namespace ProperSave
             {
                 return GetSingleplayerSaveMetadata();
             }
-            return SavesMetadata.FirstOrDefault(el => el.SteamIds.Except(users).Count() == 0);
+            return SavesMetadata.FirstOrDefault(el => el.SteamIds.DifferenceCount(users) == 0);
         }
 
         private static void PopulateSavesMetadata()

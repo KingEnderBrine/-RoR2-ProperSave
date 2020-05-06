@@ -190,7 +190,6 @@ namespace ProperSave
                         Save.LoadRun();
                         Save.LoadArtifacts();
                         Save.LoadPlayers();
-                        Debug.Log("[ProperSave] RunStart");
                     }
                     RunArtifactData = new RunArtifactsData();
 
@@ -526,6 +525,11 @@ namespace ProperSave
 
         private static void PopulateSavesMetadata()
         {
+            if (!Directory.Exists(SavesDirectory))
+            {
+                Directory.CreateDirectory(SavesDirectory);
+                return;
+            }
             var path = $"{SavesDirectory}\\SavesMetadata.json";
             if (!File.Exists(path))
             {

@@ -97,12 +97,6 @@ namespace ProperSave.Data
 
             player.master.money = money;
 
-            if (ProperSave.IsTLCDefined)
-            {
-                player.DeductLunarCoins(player.lunarCoins);
-                player.AwardLunarCoins(lunarCoins);
-            }
-
             player.masterController.SetFieldValue("lunarCoinChanceMultiplier", lunarCoinChanceMultiplier);
             var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
             for (var i = 0; i < statsFields.Length; i++)
@@ -114,6 +108,17 @@ namespace ProperSave.Data
             {
                 var unlockableIndex = statsUnlockables[i];
                 stats.AddUnlockable(new UnlockableIndex(unlockableIndex));
+            }
+
+            if (ProperSave.IsTLCDefined)
+            {
+                Stage.onStageStartGlobal += ResetLunarCoins;
+                void ResetLunarCoins(Stage stage)
+                {
+                    Stage.onStageStartGlobal -= ResetLunarCoins;
+                    player.DeductLunarCoins(player.lunarCoins);
+                    player.AwardLunarCoins(lunarCoins);
+                }
             }
         }
     }

@@ -5,11 +5,9 @@ Only 1 save file for each profile for a singleplayer. If you die, the save will 
 # Multiplayer support
 It's finally here.
 Only the host must have this mod for it to work.
-For multiplayer support, I added `Load` button to the character selection screen (it will appear in both, multiplayer and singleplayer and behavior the same way for both).
+For multiplayer support, I added `Load` button to the character selection screen (it will appear in both, multiplayer and singleplayer).
 ![LoadButton](https://cdn.discordapp.com/attachments/706089456855154778/706876815091826809/unknown.png)
-A button will be active if you are host and was found suitable save file. Here are the conditions:
-- If only 1 user in the lobby then finds a save file for the current user profile.
-- If there is more than one user finds a save file with the same steam ids as users in the lobby.
+A button will be active if you are host and was found suitable save file (if save file has the same set of players as in the current lobby).
 
 # Installation
 - Install dependencies.
@@ -23,11 +21,12 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 **2.0.0**
-* Changed saves structure, because of that, old version saves would be ignored, so consider end saved runs before updating.
+* Changed save files structure, because of that, old version saves would be ignored, so consider end saved runs before updating.
 * Added multiplayer support.
 * Fixed an issue with `lockbox` from `Rusted key` not spawned when loading game.
 * Saving some artifacts info for consistent gameplay.
 * Fixed an issue for characters added by mods, when their loadouts weren't saved.
+* Some minor fixes
 
 **1.1.0**
 * Added TemporaryLunarCoins mod support. When loading game lunar coins will be restored.

@@ -10,12 +10,15 @@ using RoR2.UI;
 using SimpleJSON;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using TinyJson;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ProperSave
 {
@@ -26,22 +29,25 @@ namespace ProperSave
     [BepInDependency("com.MagnusMagnuson.TemporaryLunarCoins", BepInDependency.DependencyFlags.SoftDependency)]
 
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "1.1.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.0.0")]
     public class ProperSave : BaseUnityPlugin
     {
-        private static WeakReference<GameObject> continueButton = new WeakReference<GameObject>(null);
+        private static WeakReference<GameObject> mainMenuButton = new WeakReference<GameObject>(null);
+        private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
 
         public static ProperSave Instance { get; private set; }
         public static bool IsTLCDefined { get; private set; }
         public static bool IsOldTLCDefined { get; private set; }
 
         public static string ExecutingDirectory { get; } = Assembly.GetExecutingAssembly().Location.Replace("\\ProperSave.dll", "");
-        public static string SavesDirectory { get; } = $"{ExecutingDirectory}\\Saves";
-        private static bool IsLoadingScene { get; set; }
+        public static string SavesDirectory { get; } = System.IO.Path.Combine(Application.persistentDataPath, "ProperSave", "Saves");
+        private static bool IsLoading { get; set; }
         private static bool FirstRunStage { get; set; }
         private static SaveData Save { get; set; }
+        private static List<SaveFileMeta> SavesMetadata { get; } = new List<SaveFileMeta>();
 
         public static RunRngData PreStageRng { get; private set; }
+        public static RunArtifactsData RunArtifactData { get; private set; }
 
         public void Awake()
         {
@@ -54,8 +60,10 @@ namespace ProperSave
                 Destroy(this);
             }
 
+            PopulateSavesMetadata();
+
             IsOldTLCDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.MagnusMagnuson.TemporaryLunarCoins");
-            IsTLCDefined = IsOldTLCDefined | BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.blazingdrummer.TemporaryLunarCoins");
+            IsTLCDefined = IsOldTLCDefined || BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.blazingdrummer.TemporaryLunarCoins");
             
             RegisterLanguage();
 
@@ -68,209 +76,14 @@ namespace ProperSave
 
             RegisterGameLoading();
 
-            RegisterContinueButton();
+            RegisterGameSaving();
+
+            RegisterMainMenuButton();
+
+            RegisterLobbyButton();
         }
 
-        [ConCommand(commandName = "ps_load", flags = ConVarFlags.None, helpText = "Load saved game")]
-        private static void CCRequestLoad(ConCommandArgs args)
-        {
-            if (Run.instance != null)
-            {
-                Debug.Log("Can't load while run is active");
-                return;
-            }
-            if (IsLoadingScene)
-            {
-                Debug.Log("Already loading");
-                return;
-            }
-
-            Instance.StartCoroutine(LoadGame());
-        }
-
-        private static IEnumerator LoadGame()
-        {
-            string filePath = GetSavePath();
-
-            if (!File.Exists(filePath))
-            {
-                Debug.Log($"File \"{filePath}\" not found");
-                yield break;
-            }
-
-            IsLoadingScene = true;
-            var saveJSON = File.ReadAllText(filePath);
-            Save = JSONParser.FromJson<SaveData>(saveJSON);
-
-            GameNetworkManager.singleton.desiredHost = new GameNetworkManager.HostDescription(new GameNetworkManager.HostDescription.HostingParameters
-            {
-                listen = false,
-                maxPlayers = 1
-            });
-            yield return new WaitUntil(() => PreGameController.instance != null);
-            PreGameController.instance?.StartLaunch();
-        }
-
-        private static void SaveGame()
-        {
-            string filePath = GetSavePath();
-
-            var save = new SaveData();
-            var json = JSONWriter.ToJson(save);
-
-            File.WriteAllText(filePath, json);
-        }
-
-        public static NetworkUser GetPlayerFromUsername(string username)
-        {
-            foreach (var item in NetworkUser.readOnlyInstancesList)
-            {
-                if (username == item.userName)
-                {
-                    return item;
-                }
-            }
-
-            return null;
-        }
-
-        private static string GetSavePath()
-        {
-            if (LocalUserManager.readOnlyLocalUsersList.Count == 0)
-            {
-                return null;
-            }
-            var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
-            if (!Directory.Exists(SavesDirectory))
-            {
-                Directory.CreateDirectory(SavesDirectory);
-            }
-            return $"{SavesDirectory}/{profile}.json";
-        }
-
-        private void RegisterGameLoading()
-        {
-            //Load players and theirs minions
-            On.RoR2.SceneDirector.PopulateScene += (orig, self) => {
-                try
-                {
-                    orig(self);
-                }
-                catch { }
-
-                if (IsLoadingScene)
-                {
-                    Save.LoadPlayers();
-                    IsLoadingScene = false;
-                }
-            };
-
-            //Replace with custom run load
-            RegisterRunStartHook();
-
-            //Restore team expirience
-            On.RoR2.TeamManager.Start += (orig, self) =>
-            {
-                orig(self);
-                if (IsLoadingScene)
-                {
-                    Save.LoadTeam();
-                }
-            };
-
-            //Save game after stage is loaded
-            On.RoR2.Stage.Start += (orig, self) =>
-            {
-                orig(self);
-                if (!RoR2Application.isInSinglePlayer)
-                {
-                    return;
-                }
-                if (FirstRunStage)
-                {
-                    FirstRunStage = false;
-                    return;
-                }
-
-                SaveGame();
-            };
-
-            On.RoR2.GameOverController.Awake += (orig, self) =>
-            {
-                orig(self);
-                if (!RoR2Application.isInSinglePlayer)
-                {
-                    return;
-                }
-                File.Delete(GetSavePath());
-            };
-
-            On.RoR2.Run.GenerateStageRNG += (orig, self) =>
-            {
-                PreStageRng = new RunRngData(Run.instance);
-                orig(self);
-            };
-        }
-
-        private void RegisterRunStartHook()
-        {
-            IL.RoR2.Run.Start += (il) =>
-            {
-                var c = new ILCursor(il);
-                c.EmitDelegate<Func<bool>>(() =>
-                {
-                    FirstRunStage = true;
-                    if (!IsLoadingScene)
-                    {
-                        return false;
-                    }
-
-                    Save.LoadRun();
-                    Save.LoadArtifacts();
-
-                    return true;
-                });
-                c.Emit(OpCodes.Brfalse, c.Next);
-                c.Emit(OpCodes.Ret);
-            };
-        }
-
-        private void RegisterContinueButton()
-        {
-            On.RoR2.UI.MainMenu.MainMenuController.Start += (orig, self) => {
-                var singlePlayerButton = GameObject.Find("GenericMenuButton (Singleplayer)");
-                var continueButton = Instantiate(singlePlayerButton, singlePlayerButton.transform.parent);
-                ProperSave.continueButton = new WeakReference<GameObject>(continueButton);
-                continueButton.name = "[PS] Continue";
-                continueButton.transform.SetSiblingIndex(1);
-
-                var buttonComponent = continueButton.GetComponent<HGButton>();
-                buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
-
-                var languageComponent = continueButton.GetComponent<LanguageTextMeshController>();
-                languageComponent.token = LanguageConsts.PS_TITLE_CONTINUE;
-
-                buttonComponent.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
-                buttonComponent.onClick.AddListener(() =>
-                {
-                    RoR2.Console.instance.SubmitCmd(null, "ps_load");
-                });
-                buttonComponent.interactable = File.Exists(GetSavePath());
-
-                orig(self);
-            };
-
-            On.RoR2.UI.MainMenu.ProfileMainMenuScreen.SetMainProfile += (orig, self, profile) =>
-            {
-                orig(self, profile);
-                if (continueButton.TryGetTarget(out var button))
-                {
-                    button.GetComponent<HGButton>().interactable = File.Exists(GetSavePath());
-                }
-            };
-
-        }
-
+        #region Main registration
         private void RegisterLanguage()
         {
             var flag = false;
@@ -298,6 +111,224 @@ namespace ProperSave
             }
         }
 
+        private void RegisterGameLoading()
+        {
+            //Replace with custom run load
+            RegisterRunStartHook();
+
+            //Restore team expirience
+            On.RoR2.TeamManager.Start += (orig, self) =>
+            {
+                orig(self);
+                if (IsLoading)
+                {
+                    Save.LoadTeam();
+                    //This is last part of loading process
+                    IsLoading = false;
+                }
+            };
+
+            RegisterLoopOnceHook();
+        }
+
+        private void RegisterGameSaving()
+        {
+            //Save game after stage is loaded
+            On.RoR2.Stage.Start += (orig, self) =>
+            {
+                orig(self);
+
+                if (FirstRunStage)
+                {
+                    FirstRunStage = false;
+                    return;
+                }
+
+                SaveGame();
+            };
+
+            //Delete save file when run is over
+            On.RoR2.GameOverController.Awake += (orig, self) =>
+            {
+                orig(self);
+
+                try
+                {
+                    var metadata = Save?.SaveFileMeta;
+                    if (metadata != null)
+                    {
+                        File.Delete(metadata.FilePath);
+                        SavesMetadata.Remove(metadata);
+                        UpdateSavesMetadata();
+                        Save = null;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(e);
+                }
+            };
+
+            //Save stage RNG before it changed
+            On.RoR2.Run.GenerateStageRNG += (orig, self) =>
+            {
+                PreStageRng = new RunRngData(Run.instance);
+                orig(self);
+            };
+        }
+
+        private void RegisterRunStartHook()
+        {
+            IL.RoR2.Run.Start += (il) =>
+            {
+                var c = new ILCursor(il);
+                c.EmitDelegate<Func<bool>>(() =>
+                {
+                    FirstRunStage = true;
+                    if (IsLoading)
+                    {
+                        Save.LoadRun();
+                        Save.LoadArtifacts();
+                        Save.LoadPlayers();
+                    }
+                    RunArtifactData = new RunArtifactsData();
+
+                    return IsLoading;
+                });
+                c.Emit(OpCodes.Brfalse, c.Next);
+                c.Emit(OpCodes.Ret);
+            };
+        }
+
+        //Disable LoopOnce achievement check if it's first loop.
+        //It was triggered every time run is loaded because 
+        //it checks for CurrentScene.stageOrder >= Run.instance.stageClearCount.
+        //This is wrong because I first set stageClearCount, then check happens 
+        //and only then CurrentScene and its stageOrder changes.
+        private void RegisterLoopOnceHook()
+        {
+            IL.RoR2.Achievements.LoopOnceAchievement.Check += (il) =>
+            {
+                var c = new ILCursor(il);
+                c.EmitDelegate<Func<bool>>(() =>
+                {
+                    return Run.instance?.loopClearCount == 0;
+                });
+                c.Emit(OpCodes.Brfalse, c.Next);
+                c.Emit(OpCodes.Ret);
+            };
+        }
+        #endregion
+
+        #region Buttons
+        private void RegisterMainMenuButton()
+        {
+            On.RoR2.UI.MainMenu.MainMenuController.Start += (orig, self) => {
+                var singlePlayerButton = GameObject.Find("GenericMenuButton (Singleplayer)");
+                var continueButton = Instantiate(singlePlayerButton, singlePlayerButton.transform.parent);
+                ProperSave.mainMenuButton = new WeakReference<GameObject>(continueButton);
+                continueButton.name = "[ProperSave] Continue";
+                continueButton.transform.SetSiblingIndex(1);
+
+                var buttonComponent = continueButton.GetComponent<HGButton>();
+                buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
+
+                var languageComponent = continueButton.GetComponent<LanguageTextMeshController>();
+                languageComponent.token = LanguageConsts.PS_TITLE_CONTINUE;
+
+                buttonComponent.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+                buttonComponent.onClick.AddListener(() =>
+                {
+                    RoR2.Console.instance.SubmitCmd(null, "ps_load");
+                });
+                UpdateMainMenuButton();
+
+                orig(self);
+            };
+
+            On.RoR2.UI.MainMenu.ProfileMainMenuScreen.SetMainProfile += (orig, self, profile) =>
+            {
+                orig(self, profile);
+                UpdateMainMenuButton();
+            };
+
+        }
+
+        private void RegisterLobbyButton()
+        {
+            On.RoR2.PreGameController.Awake += (orig, self) =>
+            {
+                var quitButton = GameObject.Find("NakedButton (Quit)");
+                var loadButton = Instantiate(quitButton, quitButton.transform.parent);
+                ProperSave.lobbyButton = new WeakReference<GameObject>(loadButton);
+                loadButton.name = "[ProperSave] Load";
+                loadButton.transform.SetSiblingIndex(1);
+                var rectTransform = loadButton.GetComponent<RectTransform>();
+                rectTransform.anchorMin = new Vector2(1F, 1.5F);
+                rectTransform.anchorMax = new Vector2(1F, 1.5F);
+
+                var buttonComponent = loadButton.GetComponent<HGButton>();
+                buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
+
+                var languageComponent = loadButton.GetComponent<LanguageTextMeshController>();
+                languageComponent.token = LanguageConsts.PS_TITLE_LOAD;
+
+                buttonComponent.onClick = new Button.ButtonClickedEvent();
+                buttonComponent.onClick.AddListener(() =>
+                {
+                    RoR2.Console.instance.SubmitCmd(null, "ps_load_lobby");
+                });
+                UpdateLobbyButton();
+
+                orig(self);
+            };
+
+            NetworkUser.OnPostNetworkUserStart += (user) =>
+            {
+                UpdateLobbyButton();
+            };
+
+            NetworkUser.onNetworkUserLost += (user) =>
+            {
+                UpdateLobbyButton(user);
+            };
+        }
+
+        private static void UpdateMainMenuButton()
+        {
+            try
+            {
+                if (mainMenuButton.TryGetTarget(out var button))
+                {
+                    var component = button?.GetComponent<HGButton>();
+                    if (component != null)
+                    {
+                        component.interactable = File.Exists(GetSingleplayerSaveMetadata()?.FilePath);
+                    }
+                }
+            }
+            catch (Exception e) { }
+        }
+
+        private static void UpdateLobbyButton(NetworkUser exceptUser = null)
+        {
+            try
+            {
+                if (lobbyButton.TryGetTarget(out var button))
+                {
+                    var component = button?.GetComponent<HGButton>();
+                    if (component != null)
+                    {
+                        component.interactable = 
+                            SteamworksLobbyManager.isInLobby == SteamworksLobbyManager.ownsLobby && 
+                            File.Exists(GetLobbySaveMetadata(exceptUser)?.FilePath);
+                    }
+                }
+            }
+            catch (Exception e) { }
+        }
+        #endregion
+
         #region Old TemporaryLunarCoins
         
         //Loads assembly only when method is called
@@ -318,11 +349,216 @@ namespace ProperSave
                 x => x.MatchCallvirt("On.RoR2.Run/orig_Start", "Invoke"));
             c.Index += 3;
             
-            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoadingScene), BindingFlags.NonPublic | BindingFlags.Static).GetMethod);
+            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.NonPublic | BindingFlags.Static).GetMethod);
             c.Emit(OpCodes.Brfalse, c.Next);
             c.Emit(OpCodes.Ret);
         }
-        
+
+        #endregion
+
+        #region Loading and saving
+        private static void SaveGame()
+        {
+            Save = new SaveData();
+            var metadata = SaveFileMeta.CreateCurrentMetadata();
+            var foundMetadata = GetLobbySaveMetadata();
+
+            Save.SaveFileMeta = foundMetadata ?? metadata;
+            if (string.IsNullOrEmpty(Save.SaveFileMeta.FileName))
+            {
+                do
+                {
+                    Save.SaveFileMeta.FileName = Guid.NewGuid().ToString();
+                }
+                while (File.Exists(Save.SaveFileMeta.FilePath));
+            }
+
+            try
+            {
+                var json = JSONWriter.ToJson(Save);
+                File.WriteAllText(Save.SaveFileMeta.FilePath, json);
+                if (ReferenceEquals(Save.SaveFileMeta, metadata))
+                {
+                    SavesMetadata.Add(metadata);
+                    UpdateSavesMetadata();
+                }
+                Chat.AddMessage(Language.GetString(LanguageConsts.PS_CHAT_SAVE));
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[ProperSave] Couldn't save game");
+            }
+        }
+
+        private static IEnumerator LoadGame()
+        {
+            var metadata = GetSingleplayerSaveMetadata();
+            if (metadata == null)
+            {
+                Debug.Log("[ProperSave] Save for current user not found");
+                yield break;
+            }
+
+            var filePath = metadata.FilePath;
+            if (!File.Exists(filePath))
+            {
+                Debug.Log($"[ProperSave] File \"{filePath}\" not found");
+                yield break;
+            }
+
+            IsLoading = true;
+            var saveJSON = File.ReadAllText(filePath);
+            Save = JSONParser.FromJson<SaveData>(saveJSON);
+            Save.SaveFileMeta = metadata;
+
+            RoR2.Console.instance.SubmitCmd(null, "host 0");
+
+            yield return new WaitUntil(() => PreGameController.instance != null);
+            PreGameController.instance?.StartLaunch();
+        }
+
+        private static IEnumerator LoadLobby()
+        {
+            if (PreGameController.instance == null)
+            {
+                Debug.Log("[ProperSave] PreGameController not found");
+                yield break;
+            }
+            if (GameNetworkManager.singleton?.desiredHost.hostingParameters.listen == true && !SteamworksLobbyManager.ownsLobby)
+            {
+                Debug.Log("[ProperSave] Must be lobby leader to load game");
+                yield break;
+            }
+            var metadata = GetLobbySaveMetadata();
+
+            if (metadata == null)
+            {
+                Debug.Log("[ProperSave] Save for current users not found");
+                yield break;
+            }
+            var filePath = metadata.FilePath;
+            if (!File.Exists(filePath))
+            {
+                Debug.Log($"[ProperSave] File \"{filePath}\" not found");
+                yield break;
+            }
+
+            IsLoading = true;
+            var saveJSON = File.ReadAllText(filePath);
+            Save = JSONParser.FromJson<SaveData>(saveJSON);
+            Save.SaveFileMeta = metadata;
+
+            PreGameController.instance?.StartLaunch();
+        }
+
+        [ConCommand(commandName = "ps_load", flags = ConVarFlags.None, helpText = "Load saved game")]
+        private static void CCRequestLoad(ConCommandArgs args)
+        {
+            if (Run.instance != null)
+            {
+                Debug.Log("[ProperSave] Can't load while run is active");
+                return;
+            }
+            if (IsLoading)
+            {
+                Debug.Log("[ProperSave] Already loading");
+                return;
+            }
+
+            Instance.StartCoroutine(LoadGame());
+        }
+
+        [ConCommand(commandName = "ps_load_lobby", flags = ConVarFlags.None, helpText = "Load saved game suitable for current lobby")]
+        private static void CCRequestLoadLobby(ConCommandArgs args)
+        {
+            if (Run.instance != null)
+            {
+                Debug.Log("[ProperSave] Can't load while run is active");
+                return;
+            }
+            if (IsLoading)
+            {
+                Debug.Log("[ProperSave] Already loading");
+                return;
+            }
+            Instance.StartCoroutine(LoadLobby());
+        }
+        #endregion
+
+        #region SavesMetadata
+        private static SaveFileMeta GetSingleplayerSaveMetadata()
+        {
+            if (LocalUserManager.readOnlyLocalUsersList.Count == 0)
+            {
+                return null;
+            }
+            var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
+            return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.SteamIds.Length == 1);
+        }
+
+        private static SaveFileMeta GetLobbySaveMetadata(NetworkUser exceptUser = null)
+        {
+            var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId.value).ToList();
+            if (exceptUser != null)
+            {
+                users.Remove(exceptUser.Network_id.steamId.value);
+            }
+            var usersCount = users.Count();
+            if (usersCount == 0)
+            {
+                return null;
+            }
+            if (usersCount == 1)
+            {
+                return GetSingleplayerSaveMetadata();
+            }
+            return SavesMetadata.FirstOrDefault(el => el.SteamIds.DifferenceCount(users) == 0);
+        }
+
+        private static void PopulateSavesMetadata()
+        {
+            if (!Directory.Exists(SavesDirectory))
+            {
+                Directory.CreateDirectory(SavesDirectory);
+                return;
+            }
+            var path = $"{SavesDirectory}\\SavesMetadata.json";
+            if (!File.Exists(path))
+            {
+                return;
+            }
+
+            try
+            {
+                var json = File.ReadAllText(path);
+                var metadata = JSONParser.FromJson<SaveFileMeta[]>(json);
+
+                SavesMetadata.AddRange(metadata);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[ProperSave] SavesMetadata file corrupted.");
+            }
+        }
+
+
+        private static void UpdateSavesMetadata()
+        {
+            var path = $"{SavesDirectory}\\SavesMetadata.json";
+            if (!Directory.Exists(SavesDirectory))
+            {
+                Directory.CreateDirectory(SavesDirectory);
+            }
+
+            try
+            {
+                File.WriteAllText(path, JSONWriter.ToJson(SavesMetadata));
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[ProperSave] Can't update SavesMetadata file");
+            }
+        }
         #endregion
     }
 }

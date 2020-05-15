@@ -1,12 +1,10 @@
 ﻿using R2API.Utils;
 using RoR2;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
-using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
@@ -15,7 +13,7 @@ namespace ProperSave.Data
     public class RunData
     {
         [DataMember(Name = "s")]
-        public string seed;
+        public ulong seed;
         [DataMember(Name = "d")]
         public int difficulty;
         [DataMember(Name = "ft")]
@@ -47,7 +45,7 @@ namespace ProperSave.Data
         public RunData()
         {
             var run = Run.instance;
-            seed = run.seed.ToString();
+            seed = run.seed;
             difficulty = (int)run.selectedDifficulty;
 
             var stopWatch = run.GetFieldValue<Run.RunStopwatch>("runStopwatch");
@@ -68,7 +66,8 @@ namespace ProperSave.Data
 
             eventFlags = run.GetFieldValue<HashSet<string>>("eventFlags").ToArray();
 
-            trialArtifact = (int)(ArtifactTrialMissionController.trialArtifact?.artifactIndex ?? ArtifactIndex.None);
+            var artifactController = UnityEngine.Object.FindObjectOfType<ArtifactTrialMissionController>();
+            trialArtifact = artifactController?.GetFieldValue<int>("currentArtifactIndex") ?? -1;
         }
 
         //Upgraded copy of Run.Start
@@ -81,7 +80,7 @@ namespace ProperSave.Data
 
             var instance = Run.instance;
 
-            instance.seed = ulong.Parse(seed);
+            instance.seed = seed;
             instance.selectedDifficulty = (DifficultyIndex)difficulty;
             instance.fixedTime = fixedTime;
             instance.shopPortalCount = shopPortalCount;
@@ -97,7 +96,6 @@ namespace ProperSave.Data
                 runRng.LoadData(instance);
                 instance.InvokeMethod("GenerateStageRNG");
                 typeof(Run).GetMethod("PopulateValidStages", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
-
             }
 
             instance.SetFieldValue("allowNewParticipants", true);
@@ -114,8 +112,8 @@ namespace ProperSave.Data
             {
                 instance.nextStageScene = SceneCatalog.GetSceneDefFromSceneName(nextSceneName);
                 NetworkManager.singleton.ServerChangeScene(sceneName);
-                ProperSave.Instance.StartCoroutine(WaitForSceneChange());
             }
+            instance.stageClearCount = stageClearCount;
 
             itemMask.LoadData(out instance.availableItems);
             equipmentMask.LoadData(out instance.availableEquipment);
@@ -135,12 +133,6 @@ namespace ProperSave.Data
                     handler.Method.Invoke(handler.Target, new object[] { instance });
                 }
             }
-        }
-
-        private IEnumerator WaitForSceneChange()
-        {
-            yield return new WaitUntil(() => SceneCatalog.GetSceneDefForCurrentScene().baseSceneName == sceneName);
-            Run.instance.stageClearCount = stageClearCount;
         }
     }
 }

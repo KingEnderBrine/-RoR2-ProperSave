@@ -6,7 +6,6 @@ Only 1 save file for each profile for a singleplayer. If you die, the save will 
 It's finally here.
 Only the host must have this mod for it to work.
 For multiplayer support, I added `Load` button to the character selection screen (it will appear in both, multiplayer and singleplayer).
-![LoadButton](https://cdn.discordapp.com/attachments/706089456855154778/706876815091826809/unknown.png)
 A button will be active if you are host and was found suitable save file (if save file has the same set of players as in the current lobby).
 
 # Installation

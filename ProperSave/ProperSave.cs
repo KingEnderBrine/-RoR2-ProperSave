@@ -40,7 +40,7 @@ namespace ProperSave
         public static bool IsOldTLCDefined { get; private set; }
 
         public static string ExecutingDirectory { get; } = Assembly.GetExecutingAssembly().Location.Replace("\\ProperSave.dll", "");
-        public static string SavesDirectory { get; } = $"{ExecutingDirectory}\\Saves";
+        public static string SavesDirectory { get; } = System.IO.Path.Combine(Application.persistentDataPath, "ProperSave", "Saves");
         private static bool IsLoading { get; set; }
         private static bool FirstRunStage { get; set; }
         private static SaveData Save { get; set; }
@@ -283,29 +283,14 @@ namespace ProperSave
                 orig(self);
             };
 
-            SteamworksLobbyManager.onLobbyOwnershipGained += () =>
+            NetworkUser.OnPostNetworkUserStart += (user) =>
             {
                 UpdateLobbyButton();
             };
-            SteamworksLobbyManager.onLobbyOwnershipLost += () =>
+
+            NetworkUser.onNetworkUserLost += (user) =>
             {
-                UpdateLobbyButton();
-            };
-            SteamworksLobbyManager.onLobbyChanged += () =>
-            {
-                UpdateLobbyButton();
-            };
-            SteamworksLobbyManager.onLobbyJoined += (obj) =>
-            {
-                UpdateLobbyButton();
-            };
-            SteamworksLobbyManager.onLobbyLeave += (obj) =>
-            {
-                UpdateLobbyButton();
-            };
-            SteamworksLobbyManager.onPlayerCountUpdated += () =>
-            {
-                UpdateLobbyButton();
+                UpdateLobbyButton(user);
             };
         }
 
@@ -325,7 +310,7 @@ namespace ProperSave
             catch (Exception e) { }
         }
 
-        private static void UpdateLobbyButton()
+        private static void UpdateLobbyButton(NetworkUser exceptUser = null)
         {
             try
             {
@@ -334,10 +319,9 @@ namespace ProperSave
                     var component = button?.GetComponent<HGButton>();
                     if (component != null)
                     {
-                        var listen = GameNetworkManager.singleton?.desiredHost.hostingParameters.listen ?? false;
-                        component.interactable = (!listen || 
-                            SteamworksLobbyManager.ownsLobby) && 
-                            File.Exists(GetLobbySaveMetadata()?.FilePath);
+                        component.interactable = 
+                            SteamworksLobbyManager.isInLobby == SteamworksLobbyManager.ownsLobby && 
+                            File.Exists(GetLobbySaveMetadata(exceptUser)?.FilePath);
                     }
                 }
             }
@@ -512,14 +496,19 @@ namespace ProperSave
             return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.SteamIds.Length == 1);
         }
 
-        private static SaveFileMeta GetLobbySaveMetadata()
+        private static SaveFileMeta GetLobbySaveMetadata(NetworkUser exceptUser = null)
         {
-            var users = NetworkUser.readOnlyInstancesList.ToArray().Select(el => el.Network_id.steamId.value);
-            if (users.Count() == 0)
+            var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId.value).ToList();
+            if (exceptUser != null)
+            {
+                users.Remove(exceptUser.Network_id.steamId.value);
+            }
+            var usersCount = users.Count();
+            if (usersCount == 0)
             {
                 return null;
             }
-            if (users.Count() == 1)
+            if (usersCount == 1)
             {
                 return GetSingleplayerSaveMetadata();
             }

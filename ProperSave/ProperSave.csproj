@@ -30,6 +30,9 @@
     <Reference Include="R2API">
       <HintPath>..\Libs\R2API.dll</HintPath>
     </Reference>
+    <Reference Include="StartingItemsGUI">
+      <HintPath>..\Libs\StartingItemsGUI.dll</HintPath>
+    </Reference>
     <Reference Include="TemporaryLunarCoins">
       <HintPath>..\Libs\TemporaryLunarCoins.dll</HintPath>
     </Reference>

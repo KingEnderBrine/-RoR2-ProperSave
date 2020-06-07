@@ -19,7 +19,12 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.1.0**
+
+* Added 'StartingItemGUI' support. (Items adding disabled while loading the game). Requested by 'Thunderer1101' on GitHub.
+
 **2.0.0**
+
 * Changed save files structure, because of that, old version saves would be ignored, so consider end saved runs before updating.
 * Added multiplayer support.
 * Fixed an issue with `lockbox` from `Rusted key` not spawned when loading game.
@@ -28,11 +33,14 @@ I tried to save all necessary data so that when you load the game would continue
 * Some minor fixes
 
 **1.1.0**
+
 * Added TemporaryLunarCoins mod support. When loading game lunar coins will be restored.
 
 **1.0.1**
+
 * Fixed crash when the mod was installed using mod managers.
 * Saving lunar coins drop chance.
 
 **1.0.0**
+
 * Mod release.

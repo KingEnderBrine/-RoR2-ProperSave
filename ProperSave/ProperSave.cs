@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using Phedg1Studios.StartingItemsGUI;
 using ProperSave.Data;
 using R2API;
 using R2API.Utils;
@@ -18,6 +19,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using TinyJson;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace ProperSave
@@ -28,16 +30,21 @@ namespace ProperSave
     [BepInDependency("com.blazingdrummer.TemporaryLunarCoins", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.MagnusMagnuson.TemporaryLunarCoins", BepInDependency.DependencyFlags.SoftDependency)]
 
+    //Support for StartingItemsGUI
+    [BepInDependency("com.Phedg1Studios.StartingItemsGUI", BepInDependency.DependencyFlags.SoftDependency)]
+
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.0.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.1.0")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> mainMenuButton = new WeakReference<GameObject>(null);
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
 
         public static ProperSave Instance { get; private set; }
+
         public static bool IsTLCDefined { get; private set; }
         public static bool IsOldTLCDefined { get; private set; }
+        public static bool IsSIGUIDefined { get; private set; }
 
         public static string ExecutingDirectory { get; } = Assembly.GetExecutingAssembly().Location.Replace("\\ProperSave.dll", "");
         public static string SavesDirectory { get; } = System.IO.Path.Combine(Application.persistentDataPath, "ProperSave", "Saves");
@@ -64,7 +71,8 @@ namespace ProperSave
 
             IsOldTLCDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.MagnusMagnuson.TemporaryLunarCoins");
             IsTLCDefined = IsOldTLCDefined || BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.blazingdrummer.TemporaryLunarCoins");
-            
+            IsSIGUIDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.Phedg1Studios.StartingItemsGUI");
+
             RegisterLanguage();
 
             CommandHelper.AddToConsoleWhenReady();
@@ -72,6 +80,11 @@ namespace ProperSave
             if (IsOldTLCDefined)
             {
                 RegisterTLCOverride();
+            }
+
+            if (IsSIGUIDefined)
+            {
+                RegisterSIGUIOverride();
             }
 
             RegisterGameLoading();
@@ -356,6 +369,32 @@ namespace ProperSave
 
         #endregion
 
+        #region StartingItemGUI
+        //Loads assembly only when method is called
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private void RegisterSIGUIOverride()
+        {
+            var tlcRunStart = typeof(StartingItemsGUI).GetMethod("<Start>b__8_2", BindingFlags.NonPublic | BindingFlags.Instance);
+            MonoMod.RuntimeDetour.HookGen.HookEndpointManager.Modify(tlcRunStart, (Action<ILContext>)SIGUIHook);
+        }
+
+        //Hook to StartingItemGUI Start/RoR2.Run.onRunStartGlobal override and disable adding items when loading saved game
+        private void SIGUIHook(ILContext il)
+        {
+            var c = new ILCursor(il);
+            ILLabel retLabel = null;
+            c.GotoNext(
+                x => x.MatchCall(typeof(NetworkClient), "get_active"),
+                x => x.MatchStloc(7),
+                x => x.MatchLdloc(7),
+                x => x.MatchBrfalse(out retLabel));
+            c.Index += 4;
+            
+            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.NonPublic | BindingFlags.Static).GetMethod);
+            c.Emit(OpCodes.Brtrue, retLabel);
+        }
+        #endregion
+        
         #region Loading and saving
         private static void SaveGame()
         {

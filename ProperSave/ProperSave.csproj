@@ -39,6 +39,9 @@
     <Reference Include="TemporaryLunarCoins">
       <HintPath>..\Libs\TemporaryLunarCoins.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>..\..\CommonLibs\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\Libs\UnityEngine.dll</HintPath>
     </Reference>

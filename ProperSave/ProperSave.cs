@@ -18,6 +18,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using TinyJson;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -34,13 +35,14 @@ namespace ProperSave
     [BepInDependency("com.Phedg1Studios.StartingItemsGUI", BepInDependency.DependencyFlags.SoftDependency)]
 
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.1.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.1.1")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> mainMenuButton = new WeakReference<GameObject>(null);
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
+        private static WeakReference<GameObject> lobbySubmenuLegend = new WeakReference<GameObject>(null);
         private static WeakReference<GameObject> lobbyGlyphAndDescription = new WeakReference<GameObject>(null);
-
+        
         public static ProperSave Instance { get; private set; }
 
         public static bool IsTLCDefined { get; private set; }
@@ -309,8 +311,8 @@ namespace ProperSave
                 #region Load GlypAndDescription
                 var submenuLegend = self.transform.GetChild(2).GetChild(4).GetChild(1).gameObject;
                 var loadSubmenuLegend = Instantiate(submenuLegend, submenuLegend.transform.parent);
-                lobbyGlyphAndDescription = new WeakReference<GameObject>(loadSubmenuLegend);
-
+                lobbySubmenuLegend = new WeakReference<GameObject>(loadSubmenuLegend);
+                
                 foreach (var filter in self.GetComponents<InputSourceFilter>())
                 {
                     if (filter.requiredInputSource == MPEventSystem.InputSource.Gamepad)
@@ -335,9 +337,11 @@ namespace ProperSave
                 rectTransformComponent.anchorMax = new Vector2(1, 2);
 
                 var glyphAndDescription = loadSubmenuLegend.transform.GetChild(0);
+                lobbyGlyphAndDescription = new WeakReference<GameObject>(glyphAndDescription.gameObject);
+
                 var glyph = glyphAndDescription.GetChild(0).GetComponent<InputBindingDisplayController>();
                 glyph.actionName = "UISubmenuUp";
-                
+
                 var description = glyphAndDescription.GetChild(1).GetComponent<LanguageTextMeshController>();
                 description.token = LanguageConsts.PS_TITLE_LOAD;
 
@@ -349,7 +353,17 @@ namespace ProperSave
 
                 UpdateLobbyControls();
 
-                self.gameObject.AddComponent<LobbyGamepadInputManager>();
+                void GamepadInputEvent()
+                {
+                    RoR2.Console.instance?.SubmitCmd(null, "ps_load");
+                }
+
+                var gamepadInputEvent = self.gameObject.AddComponent<HGGamepadInputEvent>();
+                gamepadInputEvent.actionName = "UISubmenuUp";
+                gamepadInputEvent.enabledObjectsIfActive = new GameObject[0];
+
+                gamepadInputEvent.actionEvent = new UnityEngine.Events.UnityEvent();
+                gamepadInputEvent.actionEvent.AddListener(new UnityEngine.Events.UnityAction(GamepadInputEvent));
 
                 orig(self);
             };
@@ -400,14 +414,15 @@ namespace ProperSave
             catch { }
             try
             {
-                //TODO Find a way to visualy disable GlyphAndDescription
                 if (lobbyGlyphAndDescription.TryGetTarget(out var glyphAndDescription))
                 {
-                    var component = glyphAndDescription?.GetComponent<HGButton>();
-                    if (component != null)
-                    {
-                        component.interactable = interactable;
-                    }
+                    var color = interactable ? Color.white : new Color(0.3F, 0.3F, 0.3F);
+                    
+                    var glyphText = glyphAndDescription.transform.GetChild(0).GetComponent<HGTextMeshProUGUI>();
+                    glyphText.color = color;
+
+                    var descriptionText = glyphAndDescription.transform.GetChild(1).GetComponent<HGTextMeshProUGUI>();
+                    descriptionText.color = color;
                 }
             }
             catch { }

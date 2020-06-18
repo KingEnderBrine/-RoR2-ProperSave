@@ -19,9 +19,13 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.1.1**
+
+* Fixed a bug: when entering the lobby when using a gamepad is causing the lobby glitches.
+
 **2.1.0**
 
-* Added 'StartingItemGUI' support. (Items adding disabled while loading the game). Requested by 'Thunderer1101' on GitHub.
+* Added `StartingItemGUI` support. (Items adding disabled while loading the game). Requested by `Thunderer1101` on GitHub.
 
 **2.0.0**
 

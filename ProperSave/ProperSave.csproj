@@ -5,7 +5,7 @@
   </PropertyGroup>
   
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="set &quot;pluginsDir=D:\Steam\steamapps\common\Risk of Rain 2\BepInEx\plugins&quot;&#xD;&#xA;if not exist &quot;%25pluginsDir%25&quot; exit&#xD;&#xA;&#xD;&#xA;set &quot;dir=%25pluginsDir%25\ProperSave&quot;&#xD;&#xA;if not exist &quot;%25dir%25&quot; mkdir &quot;%25dir%25&quot;&#xD;&#xA;xcopy /Y /D &quot;$(TargetPath)&quot; &quot;%25dir%25&quot;&#xD;&#xA;if not exist &quot;%25dir%25&quot; mkdir &quot;%25dir%25\Language&quot;&#xD;&#xA;xcopy /Y /D &quot;$(ProjectDir)Language&quot; &quot;%25dir%25\Language&quot;" />
+    <Exec Command="set &quot;pluginsDir=D:\Steam\steamapps\common\Risk of Rain 2\BepInEx\plugins&quot;&#xD;&#xA;if not exist &quot;%25pluginsDir%25&quot; exit&#xD;&#xA;&#xD;&#xA;set &quot;dir=%25pluginsDir%25\ProperSave&quot;&#xD;&#xA;if not exist &quot;%25dir%25&quot; mkdir &quot;%25dir%25&quot;&#xD;&#xA;xcopy /Y /D &quot;$(TargetPath)&quot; &quot;%25dir%25&quot;&#xD;&#xA;if not exist &quot;%25dir%25\Language&quot; mkdir &quot;%25dir%25\Language&quot;&#xD;&#xA;xcopy /Y /D &quot;$(ProjectDir)Language&quot; &quot;%25dir%25\Language&quot;" />
   </Target>
   
   <ItemGroup>
@@ -29,6 +29,9 @@
     </Reference>
     <Reference Include="R2API">
       <HintPath>..\Libs\R2API.dll</HintPath>
+    </Reference>
+    <Reference Include="Rewired_Core">
+      <HintPath>..\Libs\Rewired_Core.dll</HintPath>
     </Reference>
     <Reference Include="StartingItemsGUI">
       <HintPath>..\Libs\StartingItemsGUI.dll</HintPath>

@@ -39,6 +39,7 @@ namespace ProperSave
     {
         private static WeakReference<GameObject> mainMenuButton = new WeakReference<GameObject>(null);
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
+        private static WeakReference<GameObject> lobbyGlyphAndDescription = new WeakReference<GameObject>(null);
 
         public static ProperSave Instance { get; private set; }
 
@@ -269,41 +270,98 @@ namespace ProperSave
 
         private void RegisterLobbyButton()
         {
-            On.RoR2.PreGameController.Awake += (orig, self) =>
+            On.RoR2.UI.CharacterSelectController.Awake += (orig, self) =>
             {
-                var quitButton = GameObject.Find("NakedButton (Quit)");
+                #region LoadButton
+                var quitButton = self.transform.GetChild(2).GetChild(4).GetChild(0).gameObject;
                 var loadButton = Instantiate(quitButton, quitButton.transform.parent);
-                ProperSave.lobbyButton = new WeakReference<GameObject>(loadButton);
+                lobbyButton = new WeakReference<GameObject>(loadButton);
+                
+                foreach(var filter in self.GetComponents<InputSourceFilter>())
+                {
+                    if (filter.requiredInputSource == MPEventSystem.InputSource.MouseAndKeyboard)
+                    {
+                        Array.Resize(ref filter.objectsToFilter, filter.objectsToFilter.Length + 1);
+                        filter.objectsToFilter[filter.objectsToFilter.Length - 1] = loadButton;
+                        break;
+                    }
+                }
+
                 loadButton.name = "[ProperSave] Load";
-                loadButton.transform.SetSiblingIndex(1);
+
                 var rectTransform = loadButton.GetComponent<RectTransform>();
                 rectTransform.anchorMin = new Vector2(1F, 1.5F);
                 rectTransform.anchorMax = new Vector2(1F, 1.5F);
-
+                
                 var buttonComponent = loadButton.GetComponent<HGButton>();
                 buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
-
+                
                 var languageComponent = loadButton.GetComponent<LanguageTextMeshController>();
                 languageComponent.token = LanguageConsts.PS_TITLE_LOAD;
-
+                
                 buttonComponent.onClick = new Button.ButtonClickedEvent();
                 buttonComponent.onClick.AddListener(() =>
                 {
                     RoR2.Console.instance.SubmitCmd(null, "ps_load_lobby");
                 });
-                UpdateLobbyButton();
+                #endregion
+
+                #region Load GlypAndDescription
+                var submenuLegend = self.transform.GetChild(2).GetChild(4).GetChild(1).gameObject;
+                var loadSubmenuLegend = Instantiate(submenuLegend, submenuLegend.transform.parent);
+                lobbyGlyphAndDescription = new WeakReference<GameObject>(loadSubmenuLegend);
+
+                foreach (var filter in self.GetComponents<InputSourceFilter>())
+                {
+                    if (filter.requiredInputSource == MPEventSystem.InputSource.Gamepad)
+                    {
+                        Array.Resize(ref filter.objectsToFilter, filter.objectsToFilter.Length + 1);
+                        filter.objectsToFilter[filter.objectsToFilter.Length - 1] = loadSubmenuLegend;
+                        break;
+                    }
+                }
+
+                loadSubmenuLegend.name = "[ProperSave] SubmenuLegend";
+
+                var uiJuiceComponent = loadSubmenuLegend.GetComponent<UIJuice>();
+                var enableEventComponent = loadSubmenuLegend.GetComponent<OnEnableEvent>();
+
+                enableEventComponent.action.RemoveAllListeners();
+                enableEventComponent.action.AddListener(new UnityEngine.Events.UnityAction(uiJuiceComponent.TransitionPanFromTop));
+                enableEventComponent.action.AddListener(new UnityEngine.Events.UnityAction(uiJuiceComponent.TransitionAlphaFadeIn));
+
+                var rectTransformComponent = loadSubmenuLegend.GetComponent<RectTransform>();
+                rectTransformComponent.anchorMin = new Vector2(1, 1);
+                rectTransformComponent.anchorMax = new Vector2(1, 2);
+
+                var glyphAndDescription = loadSubmenuLegend.transform.GetChild(0);
+                var glyph = glyphAndDescription.GetChild(0).GetComponent<InputBindingDisplayController>();
+                glyph.actionName = "UISubmenuUp";
+                
+                var description = glyphAndDescription.GetChild(1).GetComponent<LanguageTextMeshController>();
+                description.token = LanguageConsts.PS_TITLE_LOAD;
+
+                for (var i = 1; i < loadSubmenuLegend.transform.childCount; i++)
+                {
+                    Destroy(loadSubmenuLegend.transform.GetChild(i).gameObject);
+                }
+                #endregion
+
+                UpdateLobbyControls();
+
+                self.gameObject.AddComponent<LobbyGamepadInputManager>();
 
                 orig(self);
             };
 
             NetworkUser.OnPostNetworkUserStart += (user) =>
             {
-                UpdateLobbyButton();
+                UpdateLobbyControls();
             };
 
             NetworkUser.onNetworkUserLost += (user) =>
             {
-                UpdateLobbyButton(user);
+                UpdateLobbyControls(user);
             };
         }
 
@@ -323,8 +381,11 @@ namespace ProperSave
             catch (Exception e) { }
         }
 
-        private static void UpdateLobbyButton(NetworkUser exceptUser = null)
+        private static void UpdateLobbyControls(NetworkUser exceptUser = null)
         {
+            var interactable = 
+                SteamworksLobbyManager.isInLobby == SteamworksLobbyManager.ownsLobby &&
+                File.Exists(GetLobbySaveMetadata(exceptUser)?.FilePath);
             try
             {
                 if (lobbyButton.TryGetTarget(out var button))
@@ -332,18 +393,29 @@ namespace ProperSave
                     var component = button?.GetComponent<HGButton>();
                     if (component != null)
                     {
-                        component.interactable = 
-                            SteamworksLobbyManager.isInLobby == SteamworksLobbyManager.ownsLobby && 
-                            File.Exists(GetLobbySaveMetadata(exceptUser)?.FilePath);
+                        component.interactable = interactable;
                     }
                 }
             }
-            catch (Exception e) { }
+            catch { }
+            try
+            {
+                //TODO Find a way to visualy disable GlyphAndDescription
+                if (lobbyGlyphAndDescription.TryGetTarget(out var glyphAndDescription))
+                {
+                    var component = glyphAndDescription?.GetComponent<HGButton>();
+                    if (component != null)
+                    {
+                        component.interactable = interactable;
+                    }
+                }
+            }
+            catch { }
         }
         #endregion
 
         #region Old TemporaryLunarCoins
-        
+
         //Loads assembly only when method is called
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         private void RegisterTLCOverride()

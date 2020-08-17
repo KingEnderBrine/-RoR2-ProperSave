@@ -75,8 +75,6 @@ namespace ProperSave
             IsTLCDefined = IsOldTLCDefined || BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.blazingdrummer.TemporaryLunarCoins");
             IsSIGUIDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.Phedg1Studios.StartingItemsGUI");
 
-            RegisterLanguage();
-
             CommandHelper.AddToConsoleWhenReady();
 
             if (IsOldTLCDefined)
@@ -111,33 +109,6 @@ namespace ProperSave
         }
 
         #region Main registration
-        private void RegisterLanguage()
-        {
-            var flag = false;
-            foreach (var file in Directory.GetFiles(ExecutingDirectory, "lang_*.json", SearchOption.AllDirectories))
-            {
-                flag = true;
-                var languageToken = Regex.Match(file, ".+lang_(?<lang>[a-zA-Z]+).json\\Z").Groups["lang"].Value;
-                var tokens = JSON.Parse(File.ReadAllText(file));
-
-                if (languageToken == "en")
-                {
-                    foreach (var key in tokens.Keys)
-                    {
-                        LanguageAPI.Add(key, tokens[key].Value);
-                    }
-                }
-                foreach (var key in tokens.Keys)
-                {
-                    LanguageAPI.Add(key, tokens[key].Value, languageToken);
-                }
-            }
-            if (!flag)
-            {
-                Debug.LogWarning("Localizaiton files not found");
-            }
-        }
-
         private void RegisterGameLoading()
         {
             //Replace with custom run load

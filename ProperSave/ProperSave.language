@@ -1,0 +1,14 @@
+﻿{
+	"en": {
+    "PS_TITLE_CONTINUE_DESC": "Continue saved game",
+    "PS_TITLE_CONTINUE": "Continue",
+    "PS_TITLE_LOAD": "Load",
+    "PS_CHAT_SAVE": "<b>[ProperSave]</b> Game saved"
+  },
+  "RU": {
+    "PS_TITLE_CONTINUE_DESC": "Продолжить сохранённую игру",
+    "PS_TITLE_CONTINUE": "Продолжить",
+    "PS_TITLE_LOAD": "Загрузить",
+    "PS_CHAT_SAVE": "<b>[ProperSave]</b> Игра сохранена"
+  }
+}

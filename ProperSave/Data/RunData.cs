@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
@@ -42,6 +43,15 @@ namespace ProperSave.Data
         [DataMember(Name = "ta")]
         public int trialArtifact;
 
+        [IgnoreDataMember]
+        private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField("onRunStartGlobal", BindingFlags.NonPublic | BindingFlags.Static);
+        [IgnoreDataMember]
+        private static readonly MethodInfo onRuleBookUpdateMethod = typeof(Run).GetMethod("OnRuleBookUpdated", BindingFlags.NonPublic | BindingFlags.Instance);
+        [IgnoreDataMember]
+        private static readonly MethodInfo generateStageRNGMethod = typeof(Run).GetMethod("GenerateStageRNG", BindingFlags.NonPublic | BindingFlags.Instance);
+        [IgnoreDataMember]
+        private static readonly MethodInfo buildUnlockAvailabilityMethod = typeof(Run).GetMethod("BuildUnlockAvailability", BindingFlags.NonPublic | BindingFlags.Instance);
+        
         public RunData()
         {
             var run = Run.instance;
@@ -80,22 +90,23 @@ namespace ProperSave.Data
 
             var instance = Run.instance;
 
-            instance.seed = seed;
-            instance.selectedDifficulty = (DifficultyIndex)difficulty;
-            instance.fixedTime = fixedTime;
-            instance.shopPortalCount = shopPortalCount;
-
-            var stopwatch = instance.GetFieldValue<Run.RunStopwatch>("runStopwatch");
-            stopwatch.offsetFromFixedTime = offsetFromFixedTime;
-            stopwatch.isPaused = isPaused;
-
-            instance.SetFieldValue("runStopwatch", stopwatch);
+            onRuleBookUpdateMethod.Invoke(instance, new object[] { instance.GetFieldValue<NetworkRuleBook>("networkRuleBookComponent") });
 
             if (NetworkServer.active)
             {
+                instance.seed = seed;
+                instance.selectedDifficulty = (DifficultyIndex)difficulty;
+                instance.fixedTime = fixedTime;
+                instance.shopPortalCount = shopPortalCount;
+
+                var stopwatch = instance.GetFieldValue<Run.RunStopwatch>("runStopwatch");
+                stopwatch.offsetFromFixedTime = offsetFromFixedTime;
+                stopwatch.isPaused = isPaused;
+
+                instance.SetFieldValue("runStopwatch", stopwatch);
+
                 runRng.LoadData(instance);
-                instance.InvokeMethod("GenerateStageRNG");
-                typeof(Run).GetMethod("PopulateValidStages", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null);
+                generateStageRNGMethod.Invoke(instance, null);
             }
 
             instance.SetFieldValue("allowNewParticipants", true);
@@ -118,7 +129,7 @@ namespace ProperSave.Data
             itemMask.LoadData(out instance.availableItems);
             equipmentMask.LoadData(out instance.availableEquipment);
 
-            instance.InvokeMethod("BuildUnlockAvailability");
+            buildUnlockAvailabilityMethod.Invoke(instance, null);
             instance.BuildDropTable();
 
             foreach (var flag in eventFlags)
@@ -126,7 +137,7 @@ namespace ProperSave.Data
                 instance.SetEventFlag(flag);
             }
 
-            if (typeof(Run).GetField("onRunStartGlobal", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null) is MulticastDelegate onRunStartGlobal && onRunStartGlobal != null)
+            if (onRunStartGlobalDelegate.GetValue(null) is MulticastDelegate onRunStartGlobal && onRunStartGlobal != null)
             {
                 foreach (var handler in onRunStartGlobal.GetInvocationList())
                 {

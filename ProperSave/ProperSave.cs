@@ -18,7 +18,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using TinyJson;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -34,11 +33,11 @@ namespace ProperSave
     //Support for StartingItemsGUI
     [BepInDependency("com.Phedg1Studios.StartingItemsGUI", BepInDependency.DependencyFlags.SoftDependency)]
 
+    [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.1.1")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.2.0")]
     public class ProperSave : BaseUnityPlugin
     {
-        private static WeakReference<GameObject> mainMenuButton = new WeakReference<GameObject>(null);
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
         private static WeakReference<GameObject> lobbySubmenuLegend = new WeakReference<GameObject>(null);
         private static WeakReference<GameObject> lobbyGlyphAndDescription = new WeakReference<GameObject>(null);
@@ -82,19 +81,31 @@ namespace ProperSave
 
             if (IsOldTLCDefined)
             {
-                RegisterTLCOverride();
+                try
+                {
+                    RegisterTLCOverride();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("Failed to add support for TemporaryLunarCoins");
+                }
             }
 
             if (IsSIGUIDefined)
             {
-                RegisterSIGUIOverride();
+                try
+                {
+                    RegisterSIGUIOverride();
+                }
+                catch(Exception e)
+                {
+                    Debug.LogError("Failed to add support for StartingItemsGUI");
+                }
             }
 
             RegisterGameLoading();
 
             RegisterGameSaving();
-
-            RegisterMainMenuButton();
 
             RegisterLobbyButton();
         }
@@ -103,10 +114,10 @@ namespace ProperSave
         private void RegisterLanguage()
         {
             var flag = false;
-            foreach (var file in Directory.GetFiles(ExecutingDirectory, "ps_*.json", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(ExecutingDirectory, "lang_*.json", SearchOption.AllDirectories))
             {
                 flag = true;
-                var languageToken = Regex.Match(file, ".+ps_(?<lang>[a-zA-Z]+).json\\Z").Groups["lang"].Value;
+                var languageToken = Regex.Match(file, ".+lang_(?<lang>[a-zA-Z]+).json\\Z").Groups["lang"].Value;
                 var tokens = JSON.Parse(File.ReadAllText(file));
 
                 if (languageToken == "en")
@@ -237,134 +248,107 @@ namespace ProperSave
         #endregion
 
         #region Buttons
-        private void RegisterMainMenuButton()
-        {
-            On.RoR2.UI.MainMenu.MainMenuController.Start += (orig, self) => {
-                var singlePlayerButton = GameObject.Find("GenericMenuButton (Singleplayer)");
-                var continueButton = Instantiate(singlePlayerButton, singlePlayerButton.transform.parent);
-                ProperSave.mainMenuButton = new WeakReference<GameObject>(continueButton);
-                continueButton.name = "[ProperSave] Continue";
-                continueButton.transform.SetSiblingIndex(1);
-
-                var buttonComponent = continueButton.GetComponent<HGButton>();
-                buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
-
-                var languageComponent = continueButton.GetComponent<LanguageTextMeshController>();
-                languageComponent.token = LanguageConsts.PS_TITLE_CONTINUE;
-
-                buttonComponent.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
-                buttonComponent.onClick.AddListener(() =>
-                {
-                    RoR2.Console.instance.SubmitCmd(null, "ps_load");
-                });
-                UpdateMainMenuButton();
-
-                orig(self);
-            };
-
-            On.RoR2.UI.MainMenu.ProfileMainMenuScreen.SetMainProfile += (orig, self, profile) =>
-            {
-                orig(self, profile);
-                UpdateMainMenuButton();
-            };
-
-        }
-
         private void RegisterLobbyButton()
         {
             On.RoR2.UI.CharacterSelectController.Awake += (orig, self) =>
             {
-                #region LoadButton
-                var quitButton = self.transform.GetChild(2).GetChild(4).GetChild(0).gameObject;
-                var loadButton = Instantiate(quitButton, quitButton.transform.parent);
-                lobbyButton = new WeakReference<GameObject>(loadButton);
-                
-                foreach(var filter in self.GetComponents<InputSourceFilter>())
+                try
                 {
-                    if (filter.requiredInputSource == MPEventSystem.InputSource.MouseAndKeyboard)
+                    #region LoadButton
+                    var quitButton = self.transform.GetChild(2).GetChild(4).GetChild(0).gameObject;
+                    var loadButton = Instantiate(quitButton, quitButton.transform.parent);
+                    lobbyButton = new WeakReference<GameObject>(loadButton);
+
+                    foreach (var filter in self.GetComponents<InputSourceFilter>())
                     {
-                        Array.Resize(ref filter.objectsToFilter, filter.objectsToFilter.Length + 1);
-                        filter.objectsToFilter[filter.objectsToFilter.Length - 1] = loadButton;
-                        break;
+                        if (filter.requiredInputSource == MPEventSystem.InputSource.MouseAndKeyboard)
+                        {
+                            Array.Resize(ref filter.objectsToFilter, filter.objectsToFilter.Length + 1);
+                            filter.objectsToFilter[filter.objectsToFilter.Length - 1] = loadButton;
+                            break;
+                        }
                     }
-                }
 
-                loadButton.name = "[ProperSave] Load";
+                    loadButton.name = "[ProperSave] Load";
 
-                var rectTransform = loadButton.GetComponent<RectTransform>();
-                rectTransform.anchorMin = new Vector2(1F, 1.5F);
-                rectTransform.anchorMax = new Vector2(1F, 1.5F);
-                
-                var buttonComponent = loadButton.GetComponent<HGButton>();
-                buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
-                
-                var languageComponent = loadButton.GetComponent<LanguageTextMeshController>();
-                languageComponent.token = LanguageConsts.PS_TITLE_LOAD;
-                
-                buttonComponent.onClick = new Button.ButtonClickedEvent();
-                buttonComponent.onClick.AddListener(() =>
-                {
-                    RoR2.Console.instance.SubmitCmd(null, "ps_load_lobby");
-                });
-                #endregion
+                    var rectTransform = loadButton.GetComponent<RectTransform>();
+                    rectTransform.anchorMin = new Vector2(1F, 1.5F);
+                    rectTransform.anchorMax = new Vector2(1F, 1.5F);
 
-                #region Load GlypAndDescription
-                var submenuLegend = self.transform.GetChild(2).GetChild(4).GetChild(1).gameObject;
-                var loadSubmenuLegend = Instantiate(submenuLegend, submenuLegend.transform.parent);
-                lobbySubmenuLegend = new WeakReference<GameObject>(loadSubmenuLegend);
-                
-                foreach (var filter in self.GetComponents<InputSourceFilter>())
-                {
-                    if (filter.requiredInputSource == MPEventSystem.InputSource.Gamepad)
+                    var buttonComponent = loadButton.GetComponent<HGButton>();
+                    buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
+
+                    var languageComponent = loadButton.GetComponent<LanguageTextMeshController>();
+                    languageComponent.token = LanguageConsts.PS_TITLE_LOAD;
+
+                    buttonComponent.onClick = new Button.ButtonClickedEvent();
+                    buttonComponent.onClick.AddListener(() =>
                     {
-                        Array.Resize(ref filter.objectsToFilter, filter.objectsToFilter.Length + 1);
-                        filter.objectsToFilter[filter.objectsToFilter.Length - 1] = loadSubmenuLegend;
-                        break;
+                        RoR2.Console.instance.SubmitCmd(null, "ps_load_lobby");
+                    });
+                    #endregion
+
+                    #region Load GlypAndDescription
+                    var submenuLegend = self.transform.GetChild(2).GetChild(4).GetChild(1).gameObject;
+                    var loadSubmenuLegend = Instantiate(submenuLegend, submenuLegend.transform.parent);
+                    lobbySubmenuLegend = new WeakReference<GameObject>(loadSubmenuLegend);
+
+                    foreach (var filter in self.GetComponents<InputSourceFilter>())
+                    {
+                        if (filter.requiredInputSource == MPEventSystem.InputSource.Gamepad)
+                        {
+                            Array.Resize(ref filter.objectsToFilter, filter.objectsToFilter.Length + 1);
+                            filter.objectsToFilter[filter.objectsToFilter.Length - 1] = loadSubmenuLegend;
+                            break;
+                        }
                     }
+
+                    loadSubmenuLegend.name = "[ProperSave] SubmenuLegend";
+
+                    var uiJuiceComponent = loadSubmenuLegend.GetComponent<UIJuice>();
+                    var enableEventComponent = loadSubmenuLegend.GetComponent<OnEnableEvent>();
+
+                    enableEventComponent.action.RemoveAllListeners();
+                    enableEventComponent.action.AddListener(new UnityEngine.Events.UnityAction(uiJuiceComponent.TransitionPanFromTop));
+                    enableEventComponent.action.AddListener(new UnityEngine.Events.UnityAction(uiJuiceComponent.TransitionAlphaFadeIn));
+
+                    var rectTransformComponent = loadSubmenuLegend.GetComponent<RectTransform>();
+                    rectTransformComponent.anchorMin = new Vector2(1, 1);
+                    rectTransformComponent.anchorMax = new Vector2(1, 2);
+
+                    var glyphAndDescription = loadSubmenuLegend.transform.GetChild(0);
+                    lobbyGlyphAndDescription = new WeakReference<GameObject>(glyphAndDescription.gameObject);
+
+                    var glyph = glyphAndDescription.GetChild(0).GetComponent<InputBindingDisplayController>();
+                    glyph.actionName = "UISubmenuUp";
+
+                    var description = glyphAndDescription.GetChild(1).GetComponent<LanguageTextMeshController>();
+                    description.token = LanguageConsts.PS_TITLE_LOAD;
+
+                    for (var i = 1; i < loadSubmenuLegend.transform.childCount; i++)
+                    {
+                        Destroy(loadSubmenuLegend.transform.GetChild(i).gameObject);
+                    }
+                    #endregion
+
+                    UpdateLobbyControls();
+
+                    void GamepadInputEvent()
+                    {
+                        RoR2.Console.instance?.SubmitCmd(null, "ps_load_lobby");
+                    }
+
+                    var gamepadInputEvent = self.gameObject.AddComponent<HGGamepadInputEvent>();
+                    gamepadInputEvent.actionName = "UISubmenuUp";
+                    gamepadInputEvent.enabledObjectsIfActive = new GameObject[0];
+
+                    gamepadInputEvent.actionEvent = new UnityEngine.Events.UnityEvent();
+                    gamepadInputEvent.actionEvent.AddListener(new UnityEngine.Events.UnityAction(GamepadInputEvent));
                 }
-
-                loadSubmenuLegend.name = "[ProperSave] SubmenuLegend";
-
-                var uiJuiceComponent = loadSubmenuLegend.GetComponent<UIJuice>();
-                var enableEventComponent = loadSubmenuLegend.GetComponent<OnEnableEvent>();
-
-                enableEventComponent.action.RemoveAllListeners();
-                enableEventComponent.action.AddListener(new UnityEngine.Events.UnityAction(uiJuiceComponent.TransitionPanFromTop));
-                enableEventComponent.action.AddListener(new UnityEngine.Events.UnityAction(uiJuiceComponent.TransitionAlphaFadeIn));
-
-                var rectTransformComponent = loadSubmenuLegend.GetComponent<RectTransform>();
-                rectTransformComponent.anchorMin = new Vector2(1, 1);
-                rectTransformComponent.anchorMax = new Vector2(1, 2);
-
-                var glyphAndDescription = loadSubmenuLegend.transform.GetChild(0);
-                lobbyGlyphAndDescription = new WeakReference<GameObject>(glyphAndDescription.gameObject);
-
-                var glyph = glyphAndDescription.GetChild(0).GetComponent<InputBindingDisplayController>();
-                glyph.actionName = "UISubmenuUp";
-
-                var description = glyphAndDescription.GetChild(1).GetComponent<LanguageTextMeshController>();
-                description.token = LanguageConsts.PS_TITLE_LOAD;
-
-                for (var i = 1; i < loadSubmenuLegend.transform.childCount; i++)
+                catch(Exception e)
                 {
-                    Destroy(loadSubmenuLegend.transform.GetChild(i).gameObject);
+                    Debug.LogException(e);
                 }
-                #endregion
-
-                UpdateLobbyControls();
-
-                void GamepadInputEvent()
-                {
-                    RoR2.Console.instance?.SubmitCmd(null, "ps_load");
-                }
-
-                var gamepadInputEvent = self.gameObject.AddComponent<HGGamepadInputEvent>();
-                gamepadInputEvent.actionName = "UISubmenuUp";
-                gamepadInputEvent.enabledObjectsIfActive = new GameObject[0];
-
-                gamepadInputEvent.actionEvent = new UnityEngine.Events.UnityEvent();
-                gamepadInputEvent.actionEvent.AddListener(new UnityEngine.Events.UnityAction(GamepadInputEvent));
-
                 orig(self);
             };
 
@@ -377,22 +361,6 @@ namespace ProperSave
             {
                 UpdateLobbyControls(user);
             };
-        }
-
-        private static void UpdateMainMenuButton()
-        {
-            try
-            {
-                if (mainMenuButton.TryGetTarget(out var button))
-                {
-                    var component = button?.GetComponent<HGButton>();
-                    if (component != null)
-                    {
-                        component.interactable = File.Exists(GetSingleplayerSaveMetadata()?.FilePath);
-                    }
-                }
-            }
-            catch (Exception e) { }
         }
 
         private static void UpdateLobbyControls(NetworkUser exceptUser = null)
@@ -516,33 +484,6 @@ namespace ProperSave
             }
         }
 
-        private static IEnumerator LoadGame()
-        {
-            var metadata = GetSingleplayerSaveMetadata();
-            if (metadata == null)
-            {
-                Debug.Log("[ProperSave] Save for current user not found");
-                yield break;
-            }
-
-            var filePath = metadata.FilePath;
-            if (!File.Exists(filePath))
-            {
-                Debug.Log($"[ProperSave] File \"{filePath}\" not found");
-                yield break;
-            }
-
-            IsLoading = true;
-            var saveJSON = File.ReadAllText(filePath);
-            Save = JSONParser.FromJson<SaveData>(saveJSON);
-            Save.SaveFileMeta = metadata;
-
-            RoR2.Console.instance.SubmitCmd(null, "host 0");
-
-            yield return new WaitUntil(() => PreGameController.instance != null);
-            PreGameController.instance?.StartLaunch();
-        }
-
         private static IEnumerator LoadLobby()
         {
             if (PreGameController.instance == null)
@@ -577,23 +518,6 @@ namespace ProperSave
             PreGameController.instance?.StartLaunch();
         }
 
-        [ConCommand(commandName = "ps_load", flags = ConVarFlags.None, helpText = "Load saved game")]
-        private static void CCRequestLoad(ConCommandArgs args)
-        {
-            if (Run.instance != null)
-            {
-                Debug.Log("[ProperSave] Can't load while run is active");
-                return;
-            }
-            if (IsLoading)
-            {
-                Debug.Log("[ProperSave] Already loading");
-                return;
-            }
-
-            Instance.StartCoroutine(LoadGame());
-        }
-
         [ConCommand(commandName = "ps_load_lobby", flags = ConVarFlags.None, helpText = "Load saved game suitable for current lobby")]
         private static void CCRequestLoadLobby(ConCommandArgs args)
         {
@@ -612,16 +536,6 @@ namespace ProperSave
         #endregion
 
         #region SavesMetadata
-        private static SaveFileMeta GetSingleplayerSaveMetadata()
-        {
-            if (LocalUserManager.readOnlyLocalUsersList.Count == 0)
-            {
-                return null;
-            }
-            var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
-            return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.SteamIds.Length == 1);
-        }
-
         private static SaveFileMeta GetLobbySaveMetadata(NetworkUser exceptUser = null)
         {
             var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId.value).ToList();
@@ -634,11 +548,13 @@ namespace ProperSave
             {
                 return null;
             }
+            var gameMode = PreGameController.instance ? PreGameController.instance.gameModeIndex : Run.instance.gameModeIndex;
             if (usersCount == 1)
             {
-                return GetSingleplayerSaveMetadata();
+                var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
+                return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.SteamIds.Length == 1 && el.GameMode == gameMode);
             }
-            return SavesMetadata.FirstOrDefault(el => el.SteamIds.DifferenceCount(users) == 0);
+            return SavesMetadata.FirstOrDefault(el => el.SteamIds.DifferenceCount(users) == 0 && el.GameMode == gameMode);
         }
 
         private static void PopulateSavesMetadata()

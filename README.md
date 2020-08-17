@@ -3,10 +3,11 @@ Saves your progress at the start of each stage. You can leave run as soon as the
 Only 1 save file for each profile for a singleplayer. If you die, the save will be deleted.
 
 # Multiplayer support
-It's finally here.
 Only the host must have this mod for it to work.
-For multiplayer support, I added `Load` button to the character selection screen (it will appear in both, multiplayer and singleplayer).
-A button will be active if you are host and was found suitable save file (if save file has the same set of players as in the current lobby).
+A `Load` button will be active if you are host and was found suitable save file (if save file has the same set of players as in the current lobby).
+
+# Game modes support
+Each game mode (for now `Classic` and `Eclipse`) has it's own save files, so that you can switch between game modes and not losing your progress.
 
 # Installation
 - Install dependencies.
@@ -19,6 +20,13 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+
+**2.2.0**
+
+* Updated for `RoR2` release.
+* Removed `Continue` button from the main menu (for game modes support).
+* Game modes support.
+
 **2.1.1**
 
 * Fixed a bug: when entering the lobby when using a gamepad is causing the lobby glitches.

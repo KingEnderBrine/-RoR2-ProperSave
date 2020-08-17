@@ -13,6 +13,8 @@ namespace ProperSave.Data
         public string UserProfileId { get; set; }
         [DataMember(Name = "si")]
         public ulong[] SteamIds { get; set; }
+        [DataMember(Name = "gm")]
+        public GameModeIndex GameMode { get; set; } = 0;
 
         [IgnoreDataMember]
         public string FilePath
@@ -28,7 +30,8 @@ namespace ProperSave.Data
             return new SaveFileMeta
             {
                 SteamIds = NetworkUser.readOnlyInstancesList.ToArray().Select(el => el.Network_id.steamId.value).ToArray(),
-                UserProfileId = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName
+                UserProfileId = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName,
+                GameMode = Run.instance.gameModeIndex
             };
         }
     }

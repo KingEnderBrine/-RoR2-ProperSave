@@ -35,7 +35,7 @@ namespace ProperSave
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.2.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.2.2")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
@@ -519,7 +519,11 @@ namespace ProperSave
             {
                 return null;
             }
-            var gameMode = PreGameController.instance ? PreGameController.instance.gameModeIndex : Run.instance.gameModeIndex;
+            var gameMode = PreGameController.instance ? PreGameController.instance.gameModeIndex : Run.instance ? Run.instance.gameModeIndex : GameModeIndex.Invalid;
+            if (gameMode == GameModeIndex.Invalid)
+            {
+                return null;
+            }
             if (usersCount == 1)
             {
                 var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");

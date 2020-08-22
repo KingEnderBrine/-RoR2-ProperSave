@@ -21,6 +21,14 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 
+**2.2.2**
+
+* Fixed `Load` button being active when returned to lobby after death.
+
+**2.2.1**
+
+* Updated langauge stuff
+
 **2.2.0**
 
 * Updated for `RoR2` release.

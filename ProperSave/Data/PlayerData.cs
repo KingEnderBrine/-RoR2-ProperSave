@@ -4,6 +4,7 @@ using RoR2.Stats;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Xml.Linq;
 using UnityEngine;
@@ -95,6 +96,10 @@ namespace ProperSave.Data
 
             inventory.LoadInventory(player.master);
 
+            if (ProperSave.IsSSDefined)
+            {
+                ProperSave.Instance.StartCoroutine(LoadShareSuiteMoney(money));
+            }
             player.master.money = money;
 
             player.masterController.SetFieldValue("lunarCoinChanceMultiplier", lunarCoinChanceMultiplier);
@@ -120,6 +125,13 @@ namespace ProperSave.Data
                     player.AwardLunarCoins(lunarCoins);
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private IEnumerator LoadShareSuiteMoney(uint money)
+        {
+            yield return new WaitUntil(() => !ShareSuite.MoneySharingHooks.MapTransitionActive);
+            ShareSuite.MoneySharingHooks.SharedMoneyValue = (int)money;
         }
     }
 }

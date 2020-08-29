@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -83,6 +84,10 @@ namespace ProperSave.Data
         //Upgraded copy of Run.Start
         public void LoadData()
         {
+            if (ProperSave.IsSSDefined)
+            {
+                ShareSuiteMapTransion();
+            }
             if (trialArtifact != -1)
             {
                 ArtifactTrialMissionController.trialArtifact = ArtifactCatalog.GetArtifactDef((ArtifactIndex)trialArtifact);
@@ -119,12 +124,12 @@ namespace ProperSave.Data
             }
             instance.SetFieldValue("allowNewParticipants", false);
 
+            instance.stageClearCount = stageClearCount;
             if (NetworkServer.active)
             {
                 instance.nextStageScene = SceneCatalog.GetSceneDefFromSceneName(nextSceneName);
                 NetworkManager.singleton.ServerChangeScene(sceneName);
             }
-            instance.stageClearCount = stageClearCount;
 
             itemMask.LoadData(out instance.availableItems);
             equipmentMask.LoadData(out instance.availableEquipment);
@@ -144,6 +149,12 @@ namespace ProperSave.Data
                     handler.Method.Invoke(handler.Target, new object[] { instance });
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private void ShareSuiteMapTransion()
+        {
+            ShareSuite.MoneySharingHooks.MapTransitionActive = true;
         }
     }
 }

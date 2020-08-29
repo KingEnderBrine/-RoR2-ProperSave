@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BiggerBazaar;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using Phedg1Studios.StartingItemsGUI;
@@ -33,9 +34,15 @@ namespace ProperSave
     //Support for StartingItemsGUI
     [BepInDependency("com.Phedg1Studios.StartingItemsGUI", BepInDependency.DependencyFlags.SoftDependency)]
 
+    //Support for BiggerBazaar
+    [BepInDependency("com.MagnusMagnuson.BiggerBazaar", BepInDependency.DependencyFlags.SoftDependency)]
+
+    //Support for ShareSuit 
+    [BepInDependency("com.funkfrog_sipondo.sharesuite", BepInDependency.DependencyFlags.SoftDependency)]
+
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.2.2")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.3.0")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
@@ -47,11 +54,13 @@ namespace ProperSave
         public static bool IsTLCDefined { get; private set; }
         public static bool IsOldTLCDefined { get; private set; }
         public static bool IsSIGUIDefined { get; private set; }
+        public static bool IsBBDefined { get; private set; }
+        public static bool IsSSDefined { get; private set; }
 
         public static string ExecutingDirectory { get; } = Assembly.GetExecutingAssembly().Location.Replace("\\ProperSave.dll", "");
         public static string SavesDirectory { get; } = System.IO.Path.Combine(Application.persistentDataPath, "ProperSave", "Saves");
-        private static bool IsLoading { get; set; }
-        private static bool FirstRunStage { get; set; }
+        public static bool IsLoading { get; private set; }
+        public static bool FirstRunStage { get; private set; }
         private static SaveData Save { get; set; }
         private static List<SaveFileMeta> SavesMetadata { get; } = new List<SaveFileMeta>();
 
@@ -74,6 +83,8 @@ namespace ProperSave
             IsOldTLCDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.MagnusMagnuson.TemporaryLunarCoins");
             IsTLCDefined = IsOldTLCDefined || BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.blazingdrummer.TemporaryLunarCoins");
             IsSIGUIDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.Phedg1Studios.StartingItemsGUI");
+            IsBBDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.MagnusMagnuson.BiggerBazaar");
+            IsSSDefined = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.funkfrog_sipondo.sharesuite");
 
             CommandHelper.AddToConsoleWhenReady();
 
@@ -85,7 +96,8 @@ namespace ProperSave
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError("Failed to add support for TemporaryLunarCoins");
+                    Logger.LogError("Failed to add support for TemporaryLunarCoins");
+                    Logger.LogError(e);
                 }
             }
 
@@ -97,7 +109,21 @@ namespace ProperSave
                 }
                 catch(Exception e)
                 {
-                    Debug.LogError("Failed to add support for StartingItemsGUI");
+                    Logger.LogError("Failed to add support for StartingItemsGUI");
+                    Logger.LogError(e);
+                }
+            }
+
+            if (IsBBDefined)
+            {
+                try
+                {
+                    RegisterBBOverride();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError("Failed to add support for BiggerBazaar");
+                    Logger.LogError(e);
                 }
             }
 
@@ -420,7 +446,32 @@ namespace ProperSave
             c.Emit(OpCodes.Brtrue, retLabel);
         }
         #endregion
-        
+
+        #region BiggerBazaar
+        //Loads assembly only when method is called
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+        private void RegisterBBOverride()
+        {
+            var bbRunAdvanceStage = typeof(BiggerBazaar.BiggerBazaar).Assembly.GetType("BiggerBazaar.Bazaar").GetMethod("StartBazaar", BindingFlags.Public | BindingFlags.Instance);
+            MonoMod.RuntimeDetour.HookGen.HookEndpointManager.Modify(bbRunAdvanceStage, (Action<ILContext>)BBHook);
+        }
+
+        private static void BBHook(ILContext il)
+        {
+            var bazaar = typeof(BiggerBazaar.BiggerBazaar).Assembly.GetType("BiggerBazaar.Bazaar");
+            var c = new ILCursor(il);
+            c.Index++;
+            var next = c.Next;
+
+            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(FirstRunStage)).GetGetMethod());
+            c.Emit(OpCodes.Brfalse, next);
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Call, bazaar.GetMethod("ResetBazaarPlayers"));
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Call, bazaar.GetMethod("CalcDifficultyCoefficient"));
+        }
+        #endregion
+
         #region Loading and saving
         private static void SaveGame()
         {

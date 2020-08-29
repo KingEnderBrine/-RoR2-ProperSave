@@ -21,6 +21,11 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 
+**2.3.0**
+
+* Added `ShareSuite` support. (No longer reseting gold to 0 when loading run).
+* Added `BiggerBazaar` support.
+
 **2.2.2**
 
 * Fixed `Load` button being active when returned to lobby after death.
@@ -54,7 +59,7 @@ I tried to save all necessary data so that when you load the game would continue
 
 **1.1.0**
 
-* Added TemporaryLunarCoins mod support. When loading game lunar coins will be restored.
+* Added `TemporaryLunarCoins` mod support. When loading game lunar coins will be restored.
 
 **1.0.1**
 

@@ -21,6 +21,10 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 
+**2.3.2**
+
+* Fixed `StartingItemsGUI` support. (This time for real)
+
 **2.3.1**
 
 * Fixed `TemporaryLunarCoins` support.

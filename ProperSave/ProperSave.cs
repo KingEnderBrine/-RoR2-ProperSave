@@ -42,7 +42,7 @@ namespace ProperSave
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.3.1")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.3.2")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
@@ -426,7 +426,7 @@ namespace ProperSave
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         private void RegisterSIGUIOverride()
         {
-            var tlcRunStart = typeof(StartingItemsGUI).GetMethod("<Start>b__8_2", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tlcRunStart = typeof(StartingItemsGUI).GetMethod("<Start>b__4_2", BindingFlags.NonPublic | BindingFlags.Instance);
             MonoMod.RuntimeDetour.HookGen.HookEndpointManager.Modify(tlcRunStart, (Action<ILContext>)SIGUIHook);
         }
 

@@ -21,6 +21,11 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 
+**2.3.1**
+
+* Fixed `TemporaryLunarCoins` support.
+* Fixed `StartingItemsGUI` support.
+
 **2.3.0**
 
 * Added `ShareSuite` support. (No longer reseting gold to 0 when loading run).
@@ -46,7 +51,7 @@ I tried to save all necessary data so that when you load the game would continue
 
 **2.1.0**
 
-* Added `StartingItemGUI` support. (Items adding disabled while loading the game). Requested by `Thunderer1101` on GitHub.
+* Added `StartingItemsGUI` support. (Items adding disabled while loading the game). Requested by `Thunderer1101` on GitHub.
 
 **2.0.0**
 

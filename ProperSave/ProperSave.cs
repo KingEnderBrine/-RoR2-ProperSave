@@ -42,7 +42,7 @@ namespace ProperSave
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.3.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.3.1")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
@@ -414,7 +414,7 @@ namespace ProperSave
                 x => x.MatchCallvirt("On.RoR2.Run/orig_Start", "Invoke"));
             c.Index += 3;
             
-            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.NonPublic | BindingFlags.Static).GetMethod);
+            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.Public | BindingFlags.Static).GetMethod);
             c.Emit(OpCodes.Brfalse, c.Next);
             c.Emit(OpCodes.Ret);
         }
@@ -442,7 +442,7 @@ namespace ProperSave
                 x => x.MatchBrfalse(out retLabel));
             c.Index += 4;
             
-            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.NonPublic | BindingFlags.Static).GetMethod);
+            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.Public | BindingFlags.Static).GetMethod);
             c.Emit(OpCodes.Brtrue, retLabel);
         }
         #endregion

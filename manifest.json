@@ -1,6 +1,6 @@
 {
     "name": "ProperSave",
-    "version_number": "2.3.0",
+    "version_number": "2.3.1",
     "website_url": "https://github.com/KingEnderBrine/-RoR2-ProperSave",
     "description": "Saves your progress at the start of the stage so you can load later",
     "dependencies": [

@@ -21,6 +21,14 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 
+**2.4.1**
+
+* Fixed `StartingItemsGUI` support.
+
+**2.4.0**
+
+* Updated for `1.0.1.1` version. Old saves are not compatible with new version!
+
 **2.3.2**
 
 * Fixed `StartingItemsGUI` support. (This time for real)

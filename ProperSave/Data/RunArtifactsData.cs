@@ -17,6 +17,14 @@ namespace ProperSave.Data
             {
                 artifacts[(int)artifact.artifactIndex] = true;
             }
+
+            var artifactController = UnityEngine.Object.FindObjectOfType<ArtifactTrialMissionController>();
+            var trialArtifact = artifactController?.GetFieldValue<int>("currentArtifactIndex") ?? -1;
+
+            if (trialArtifact != -1)
+            {
+                artifacts[trialArtifact] = artifactController.artifactWasEnabled;
+            }
         }
 
         public void LoadData()

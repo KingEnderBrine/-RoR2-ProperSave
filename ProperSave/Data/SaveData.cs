@@ -23,7 +23,7 @@ namespace ProperSave.Data
         public SaveData() {
             RunData = new RunData();
             TeamData = new TeamData();
-            RunArtifactsData = ProperSave.RunArtifactData;
+            RunArtifactsData = new RunArtifactsData();
             ArtifactsData = new ArtifactsData();
             PlayersData = new List<PlayerData>();
 

@@ -1,14 +1,11 @@
 ﻿using BepInEx;
-using BiggerBazaar;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using ProperSave.Data;
-using R2API;
 using R2API.Utils;
 using RoR2;
 using RoR2.Networking;
 using RoR2.UI;
-using SimpleJSON;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,7 +15,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Permissions;
-using System.Text.RegularExpressions;
 using TinyJson;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -45,7 +41,7 @@ namespace ProperSave
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.4.1")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.4.2")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
@@ -68,7 +64,6 @@ namespace ProperSave
         private static List<SaveFileMeta> SavesMetadata { get; } = new List<SaveFileMeta>();
 
         public static RunRngData PreStageRng { get; private set; }
-        public static RunArtifactsData RunArtifactData { get; private set; }
 
         public void Awake()
         {
@@ -218,7 +213,6 @@ namespace ProperSave
                         Save.LoadArtifacts();
                         Save.LoadPlayers();
                     }
-                    RunArtifactData = new RunArtifactsData();
 
                     return IsLoading;
                 });

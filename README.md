@@ -21,6 +21,10 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 
+**2.4.2**
+
+* Changed artifacts saving. Now they are saved at the start of the stage (previously they were saved at the start of the run).
+
 **2.4.1**
 
 * Fixed `StartingItemsGUI` support.

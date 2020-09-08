@@ -41,7 +41,7 @@ namespace ProperSave
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.4.2")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.4.3")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
@@ -163,6 +163,10 @@ namespace ProperSave
                 if (FirstRunStage)
                 {
                     FirstRunStage = false;
+                    return;
+                }
+                if (self.sceneDef.baseSceneName == "outro")
+                {
                     return;
                 }
 

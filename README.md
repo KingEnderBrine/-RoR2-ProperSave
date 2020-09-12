@@ -21,6 +21,10 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 
+**2.4.5**
+
+* Fixed `StartingItemsGUI` support. Hopefully, this is the last time. Thanks `Phedg1` for making changes to `StartingItemsGUI` that will make my mod support last longer.
+
 **2.4.4**
 
 * Fixed `StartingItemsGUI` support.

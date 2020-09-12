@@ -41,7 +41,7 @@ namespace ProperSave
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.4.4")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.4.5")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
@@ -427,7 +427,7 @@ namespace ProperSave
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         private void RegisterSIGUIOverride()
         {
-            var tlcRunStart = typeof(Phedg1Studios.StartingItemsGUI.StartingItemsGUI).GetMethod("<Start>b__5_2", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tlcRunStart = typeof(Phedg1Studios.StartingItemsGUI.StartingItemsGUI).GetMethod("OnRunStartGlobal", BindingFlags.NonPublic | BindingFlags.Instance);
             MonoMod.RuntimeDetour.HookGen.HookEndpointManager.Modify(tlcRunStart, (Action<ILContext>)SIGUIHook);
         }
 
@@ -435,15 +435,13 @@ namespace ProperSave
         private void SIGUIHook(ILContext il)
         {
             var c = new ILCursor(il);
-            ILLabel retLabel = null;
-            c.GotoNext(
-                x => x.MatchEndfinally(),
-                x => x.MatchCall(typeof(NetworkClient), "get_active"),
-                x => x.MatchBrfalse(out retLabel));
-            c.Index += 3;
+            c.GotoNext(MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchCall(typeof(Phedg1Studios.StartingItemsGUI.StartingItemsGUI), "SetLocalUsers"));
             
             c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.Public | BindingFlags.Static).GetMethod);
-            c.Emit(OpCodes.Brtrue, retLabel);
+            c.Emit(OpCodes.Brfalse, c.Next);
+            c.Emit(OpCodes.Ret);
         }
         #endregion
 

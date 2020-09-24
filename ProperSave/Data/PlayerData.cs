@@ -49,7 +49,7 @@ namespace ProperSave.Data
             loadout = new LoadoutData(player.master);
             
             characterBodyName = player.master.bodyPrefab.name;
-            lunarCoinChanceMultiplier = player.masterController.GetFieldValue<float>("lunarCoinChanceMultiplier");
+            lunarCoinChanceMultiplier = player.masterController.lunarCoinChanceMultiplier;
             lunarCoins = player.lunarCoins;
 
             var tmpMinions = new List<MinionData>();
@@ -102,7 +102,7 @@ namespace ProperSave.Data
             }
             player.master.money = money;
 
-            player.masterController.SetFieldValue("lunarCoinChanceMultiplier", lunarCoinChanceMultiplier);
+            player.masterController.lunarCoinChanceMultiplier = lunarCoinChanceMultiplier;
             var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
             for (var i = 0; i < statsFields.Length; i++)
             {

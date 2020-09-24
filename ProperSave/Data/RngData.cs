@@ -12,8 +12,8 @@ namespace ProperSave.Data
 
         public RngData(Xoroshiro128Plus rng)
         {
-            state0 = rng.GetFieldValue<ulong>("state0");
-            state1 = rng.GetFieldValue<ulong>("state1");
+            state0 = rng.state0;
+            state1 = rng.state1;
         }
 
         public void LoadDataOut(out Xoroshiro128Plus rng)
@@ -24,8 +24,8 @@ namespace ProperSave.Data
 
         public void LoadDataRef(ref Xoroshiro128Plus rng)
         {
-            rng.SetFieldValue("state0", state0);
-            rng.SetFieldValue("state1", state1);
+            rng.state0 = state0;
+            rng.state1 = state1;
         }
     }
 }

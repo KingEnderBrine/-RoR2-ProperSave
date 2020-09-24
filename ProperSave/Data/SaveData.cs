@@ -17,7 +17,7 @@ namespace ProperSave.Data
         [DataMember(Name = "p")]
         public List<PlayerData> PlayersData { get; set; }
 
-        [IgnoreDataMember()]
+        [IgnoreDataMember]
         public SaveFileMeta SaveFileMeta { get; set; }
 
         public SaveData() {

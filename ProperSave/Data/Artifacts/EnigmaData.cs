@@ -16,17 +16,14 @@ namespace ProperSave.Data.Artifacts
 
         public EnigmaData()
         {
-            serverInitialEquipmentRng = new RngData(typeof(EnigmaArtifactManager).GetPrivateStaticField<Xoroshiro128Plus>("serverInitialEquipmentRng"));
-            serverActivationEquipmentRng = new RngData(typeof(EnigmaArtifactManager).GetPrivateStaticField<Xoroshiro128Plus>("serverActivationEquipmentRng"));
+            serverInitialEquipmentRng = new RngData(EnigmaArtifactManager.serverInitialEquipmentRng);
+            serverActivationEquipmentRng = new RngData(EnigmaArtifactManager.serverActivationEquipmentRng);
         }
 
         public void LoadData()
         {
-            var sier = typeof(EnigmaArtifactManager).GetPrivateStaticField<Xoroshiro128Plus>("serverInitialEquipmentRng");
-            serverInitialEquipmentRng.LoadDataRef(ref sier);
-
-            var saer = typeof(EnigmaArtifactManager).GetPrivateStaticField<Xoroshiro128Plus>("serverActivationEquipmentRng");
-            serverActivationEquipmentRng.LoadDataRef(ref saer);
+            serverInitialEquipmentRng.LoadDataRef(ref EnigmaArtifactManager.serverInitialEquipmentRng);
+            serverActivationEquipmentRng.LoadDataRef(ref EnigmaArtifactManager.serverActivationEquipmentRng);
         }
     }
 }

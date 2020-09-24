@@ -25,8 +25,7 @@ namespace ProperSave.Data
         public void LoadEquipment(CharacterMaster player, byte equipmentSlot)
         {
             var inventory = player.inventory;
-            var timeStampConstructor = typeof(FixedTimeStamp).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(float) }, null);
-            var chargeTime = (FixedTimeStamp)timeStampConstructor.Invoke(new object[] { chargeFinishTime });
+            var chargeTime = new FixedTimeStamp(chargeFinishTime);
             var state = new EquipmentState(
                 (EquipmentIndex)index,
                 chargeTime,

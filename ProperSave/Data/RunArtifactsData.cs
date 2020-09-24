@@ -19,7 +19,7 @@ namespace ProperSave.Data
             }
 
             var artifactController = UnityEngine.Object.FindObjectOfType<ArtifactTrialMissionController>();
-            var trialArtifact = artifactController?.GetFieldValue<int>("currentArtifactIndex") ?? -1;
+            var trialArtifact = artifactController?.currentArtifactIndex ?? -1;
 
             if (trialArtifact != -1)
             {
@@ -32,7 +32,7 @@ namespace ProperSave.Data
             for (int i = 0; i < ArtifactCatalog.artifactCount; i++)
             {
                 var artifactDef = ArtifactCatalog.GetArtifactDef((ArtifactIndex)i);
-                RunArtifactManager.instance.InvokeMethod("SetArtifactEnabled", new object[] { artifactDef, artifacts.ElementAtOrDefault(i) });
+                RunArtifactManager.instance.SetArtifactEnabled(artifactDef, artifacts.ElementAtOrDefault(i));
             }
         }
     }

@@ -46,12 +46,6 @@ namespace ProperSave.Data
 
         [IgnoreDataMember]
         private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField("onRunStartGlobal", BindingFlags.NonPublic | BindingFlags.Static);
-        [IgnoreDataMember]
-        private static readonly MethodInfo onRuleBookUpdateMethod = typeof(Run).GetMethod("OnRuleBookUpdated", BindingFlags.NonPublic | BindingFlags.Instance);
-        [IgnoreDataMember]
-        private static readonly MethodInfo generateStageRNGMethod = typeof(Run).GetMethod("GenerateStageRNG", BindingFlags.NonPublic | BindingFlags.Instance);
-        [IgnoreDataMember]
-        private static readonly MethodInfo buildUnlockAvailabilityMethod = typeof(Run).GetMethod("BuildUnlockAvailability", BindingFlags.NonPublic | BindingFlags.Instance);
         
         public RunData()
         {
@@ -75,10 +69,10 @@ namespace ProperSave.Data
 
             runRng = ProperSave.PreStageRng;
 
-            eventFlags = run.GetFieldValue<HashSet<string>>("eventFlags").ToArray();
+            eventFlags = run.eventFlags.ToArray();
 
             var artifactController = UnityEngine.Object.FindObjectOfType<ArtifactTrialMissionController>();
-            trialArtifact = artifactController?.GetFieldValue<int>("currentArtifactIndex") ?? -1;
+            trialArtifact = artifactController?.currentArtifactIndex ?? -1;
         }
 
         //Upgraded copy of Run.Start
@@ -95,7 +89,7 @@ namespace ProperSave.Data
 
             var instance = Run.instance;
 
-            onRuleBookUpdateMethod.Invoke(instance, new object[] { instance.GetFieldValue<NetworkRuleBook>("networkRuleBookComponent") });
+            instance.OnRuleBookUpdated(instance.networkRuleBookComponent);
 
             if (NetworkServer.active)
             {
@@ -111,7 +105,7 @@ namespace ProperSave.Data
                 instance.SetFieldValue("runStopwatch", stopwatch);
 
                 runRng.LoadData(instance);
-                generateStageRNGMethod.Invoke(instance, null);
+                instance.GenerateStageRNG();
             }
 
             instance.SetFieldValue("allowNewParticipants", true);
@@ -134,7 +128,7 @@ namespace ProperSave.Data
             itemMask.LoadData(out instance.availableItems);
             equipmentMask.LoadData(out instance.availableEquipment);
 
-            buildUnlockAvailabilityMethod.Invoke(instance, null);
+            instance.BuildUnlockAvailability();
             instance.BuildDropTable();
 
             foreach (var flag in eventFlags)

@@ -38,7 +38,7 @@ namespace ProperSave
         internal static string SavesDirectory { get; } = System.IO.Path.Combine(Application.persistentDataPath, "ProperSave", "Saves");
         internal static SaveData CurrentSave { get; set; }
 
-        public void OnEnabled()
+        private void OnEnabled()
         {
             Instance = this;
 
@@ -55,7 +55,7 @@ namespace ProperSave
             LobbyUI.RegisterHooks();
         }
 
-        public void OnDisabled()
+        private void OnDisabled()
         {
             Instance = null;
             ModSupport.UnregisterHooks();

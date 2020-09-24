@@ -78,7 +78,7 @@ namespace ProperSave.Data
         //Upgraded copy of Run.Start
         public void LoadData()
         {
-            if (ProperSave.IsSSDefined)
+            if (ModSupport.IsSSLoaded)
             {
                 ShareSuiteMapTransion();
             }

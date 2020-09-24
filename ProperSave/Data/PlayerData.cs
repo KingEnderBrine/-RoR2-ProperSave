@@ -96,7 +96,7 @@ namespace ProperSave.Data
 
             inventory.LoadInventory(player.master);
 
-            if (ProperSave.IsSSDefined)
+            if (ModSupport.IsSSLoaded)
             {
                 ProperSave.Instance.StartCoroutine(LoadShareSuiteMoney(money));
             }
@@ -115,7 +115,7 @@ namespace ProperSave.Data
                 stats.AddUnlockable(new UnlockableIndex(unlockableIndex));
             }
 
-            if (ProperSave.IsTLCDefined)
+            if (ModSupport.IsTLCLoaded || ModSupport.IsBDTLCLoaded)
             {
                 Stage.onStageStartGlobal += ResetLunarCoins;
                 void ResetLunarCoins(Stage stage)

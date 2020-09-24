@@ -20,7 +20,8 @@ namespace ProperSave.Data
         [IgnoreDataMember]
         public SaveFileMeta SaveFileMeta { get; set; }
 
-        public SaveData() {
+        public SaveData() 
+        {
             RunData = new RunData();
             TeamData = new TeamData();
             RunArtifactsData = new RunArtifactsData();

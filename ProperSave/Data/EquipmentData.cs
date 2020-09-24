@@ -1,8 +1,5 @@
 ﻿using RoR2;
-using System;
-using System.Reflection;
 using System.Runtime.Serialization;
-using static RoR2.Run;
 
 namespace ProperSave.Data
 {
@@ -25,7 +22,7 @@ namespace ProperSave.Data
         public void LoadEquipment(CharacterMaster player, byte equipmentSlot)
         {
             var inventory = player.inventory;
-            var chargeTime = new FixedTimeStamp(chargeFinishTime);
+            var chargeTime = new Run.FixedTimeStamp(chargeFinishTime);
             var state = new EquipmentState(
                 (EquipmentIndex)index,
                 chargeTime,

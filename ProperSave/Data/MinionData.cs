@@ -1,10 +1,8 @@
 ﻿using RoR2;
 using RoR2.CharacterAI;
-using System.Collections;
 using System.Runtime.Serialization;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 
 namespace ProperSave.Data
 {

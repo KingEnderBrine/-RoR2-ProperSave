@@ -1,12 +1,9 @@
-﻿using R2API.Utils;
-using RoR2;
+﻿using RoR2;
 using RoR2.Stats;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using System.Xml.Linq;
 using UnityEngine;
 
 namespace ProperSave.Data

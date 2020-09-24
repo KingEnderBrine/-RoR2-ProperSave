@@ -1,9 +1,8 @@
-﻿using RoR2;
+﻿using ProperSave.Data;
+using RoR2;
 using RoR2.UI;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -76,7 +75,7 @@ namespace ProperSave
 
                 #region Load GlypAndDescription
                 var submenuLegend = self.transform.GetChild(2).GetChild(4).GetChild(1).gameObject;
-                var lobbySubmenuLegend = GameObject.Instantiate(submenuLegend, submenuLegend.transform.parent);
+                lobbySubmenuLegend = GameObject.Instantiate(submenuLegend, submenuLegend.transform.parent);
 
                 foreach (var filter in self.GetComponents<InputSourceFilter>())
                 {
@@ -101,12 +100,12 @@ namespace ProperSave
                 rectTransformComponent.anchorMin = new Vector2(1, 1);
                 rectTransformComponent.anchorMax = new Vector2(1, 2);
 
-                var lobbyGlyphAndDescription = lobbySubmenuLegend.transform.GetChild(0);
+                lobbyGlyphAndDescription = lobbySubmenuLegend.transform.GetChild(0).gameObject;
 
-                var glyph = lobbyGlyphAndDescription.GetChild(0).GetComponent<InputBindingDisplayController>();
+                var glyph = lobbyGlyphAndDescription.transform.GetChild(0).GetComponent<InputBindingDisplayController>();
                 glyph.actionName = "UISubmenuUp";
 
-                var description = lobbyGlyphAndDescription.GetChild(1).GetComponent<LanguageTextMeshController>();
+                var description = lobbyGlyphAndDescription.transform.GetChild(1).GetComponent<LanguageTextMeshController>();
                 description.token = LanguageConsts.PS_TITLE_LOAD;
 
                 for (var i = 1; i < lobbySubmenuLegend.transform.childCount; i++)
@@ -141,7 +140,7 @@ namespace ProperSave
         {
             var interactable =
                 SteamworksLobbyManager.isInLobby == SteamworksLobbyManager.ownsLobby &&
-                File.Exists(ProperSave.GetLobbySaveMetadata(exceptUser)?.FilePath);
+                File.Exists(SaveFileMeta.GetCurrentLobbySaveMetadata(exceptUser)?.FilePath);
             try
             {
                 if (lobbyButton)

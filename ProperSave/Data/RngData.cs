@@ -1,5 +1,4 @@
-﻿using R2API.Utils;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {

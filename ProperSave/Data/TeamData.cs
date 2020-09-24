@@ -1,5 +1,4 @@
 ﻿using RoR2;
-using System;
 using System.Runtime.Serialization;
 
 namespace ProperSave.Data

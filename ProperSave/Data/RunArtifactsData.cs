@@ -1,5 +1,4 @@
-﻿using R2API.Utils;
-using RoR2;
+﻿using RoR2;
 using System.Linq;
 using System.Runtime.Serialization;
 

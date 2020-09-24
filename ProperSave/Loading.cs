@@ -5,9 +5,7 @@ using RoR2;
 using RoR2.Networking;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using TinyJson;
 
 namespace ProperSave

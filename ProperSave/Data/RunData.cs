@@ -1,12 +1,9 @@
-﻿using R2API.Utils;
-using RoR2;
+﻿using RoR2;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
@@ -45,7 +42,7 @@ namespace ProperSave.Data
         public int trialArtifact;
 
         [IgnoreDataMember]
-        private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField("onRunStartGlobal", BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField(nameof(Run.onRunStartGlobal), BindingFlags.NonPublic | BindingFlags.Static);
         
         public RunData()
         {
@@ -53,7 +50,7 @@ namespace ProperSave.Data
             seed = run.seed;
             difficulty = (int)run.selectedDifficulty;
 
-            var stopWatch = run.GetFieldValue<Run.RunStopwatch>("runStopwatch");
+            var stopWatch = run.runStopwatch;
             isPaused = stopWatch.isPaused;
             offsetFromFixedTime = stopWatch.offsetFromFixedTime;
             fixedTime = run.fixedTime;
@@ -67,7 +64,7 @@ namespace ProperSave.Data
             itemMask = new ItemMaskData(run.availableItems);
             equipmentMask = new EquipmentMaskData(run.availableEquipment);
 
-            runRng = ProperSave.PreStageRng;
+            runRng = Saving.PreStageRng;
 
             eventFlags = run.eventFlags.ToArray();
 
@@ -98,17 +95,17 @@ namespace ProperSave.Data
                 instance.fixedTime = fixedTime;
                 instance.shopPortalCount = shopPortalCount;
 
-                var stopwatch = instance.GetFieldValue<Run.RunStopwatch>("runStopwatch");
-                stopwatch.offsetFromFixedTime = offsetFromFixedTime;
-                stopwatch.isPaused = isPaused;
-
-                instance.SetFieldValue("runStopwatch", stopwatch);
+                instance.runStopwatch = new Run.RunStopwatch
+                {
+                    offsetFromFixedTime = offsetFromFixedTime,
+                    isPaused = isPaused
+                };
 
                 runRng.LoadData(instance);
                 instance.GenerateStageRNG();
             }
 
-            instance.SetFieldValue("allowNewParticipants", true);
+            instance.allowNewParticipants = true;
             UnityEngine.Object.DontDestroyOnLoad(instance.gameObject);
 
             var onlyInstancesList = NetworkUser.readOnlyInstancesList;
@@ -116,7 +113,7 @@ namespace ProperSave.Data
             {
                 instance.OnUserAdded(onlyInstancesList[index]);
             }
-            instance.SetFieldValue("allowNewParticipants", false);
+            instance.allowNewParticipants = false;
 
             instance.stageClearCount = stageClearCount;
             if (NetworkServer.active)

@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace ProperSave
 {
@@ -117,7 +116,7 @@ namespace ProperSave
                 x => x.MatchCallvirt("On.RoR2.Run/orig_Start", "Invoke"));
             c.Index += 3;
 
-            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(ProperSave.IsLoading), BindingFlags.Public | BindingFlags.Static).GetMethod);
+            c.Emit(OpCodes.Call, typeof(Loading).GetProperty(nameof(Loading.IsLoading), BindingFlags.Public | BindingFlags.Static).GetMethod);
             c.Emit(OpCodes.Brfalse, c.Next);
             c.Emit(OpCodes.Ret);
         }
@@ -144,7 +143,7 @@ namespace ProperSave
                 x => x.MatchLdarg(0),
                 x => x.MatchCall(typeof(Phedg1Studios.StartingItemsGUI.StartingItemsGUI), "SetLocalUsers"));
 
-            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(ProperSave.IsLoading), BindingFlags.Public | BindingFlags.Static).GetMethod);
+            c.Emit(OpCodes.Call, typeof(Loading).GetProperty(nameof(Loading.IsLoading), BindingFlags.Public | BindingFlags.Static).GetMethod);
             c.Emit(OpCodes.Brfalse, c.Next);
             c.Emit(OpCodes.Ret);
         }
@@ -169,7 +168,7 @@ namespace ProperSave
             c.Index++;
             var next = c.Next;
 
-            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(ProperSave.FirstRunStage)).GetGetMethod());
+            c.Emit(OpCodes.Call, typeof(Loading).GetProperty(nameof(Loading.FirstRunStage)).GetGetMethod());
             c.Emit(OpCodes.Brfalse, next);
             c.Emit(OpCodes.Ldarg_0);
             c.Emit(OpCodes.Call, bazaar.GetMethod("ResetBazaarPlayers"));

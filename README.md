@@ -21,6 +21,39 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 
+**2.4.5**
+
+* Fixed `StartingItemsGUI` support. Hopefully, this is the last time. Thanks `Phedg1` for making changes to `StartingItemsGUI` that will make my mod support last longer.
+
+**2.4.4**
+
+* Fixed `StartingItemsGUI` support.
+
+**2.4.3**
+
+* Fixed an issue where the game would be saved in the ending cutscene and you could load in it if you restart the game.
+
+**2.4.2**
+
+* Changed artifacts saving. Now they are saved at the start of the stage (previously they were saved at the start of the run).
+
+**2.4.1**
+
+* Fixed `StartingItemsGUI` support.
+
+**2.4.0**
+
+* Updated for `1.0.1.1` version. Old saves are not compatible with new version!
+
+**2.3.2**
+
+* Fixed `StartingItemsGUI` support. (This time for real)
+
+**2.3.1**
+
+* Fixed `TemporaryLunarCoins` support.
+* Fixed `StartingItemsGUI` support.
+
 **2.3.0**
 
 * Added `ShareSuite` support. (No longer reseting gold to 0 when loading run).
@@ -46,7 +79,7 @@ I tried to save all necessary data so that when you load the game would continue
 
 **2.1.0**
 
-* Added `StartingItemGUI` support. (Items adding disabled while loading the game). Requested by `Thunderer1101` on GitHub.
+* Added `StartingItemsGUI` support. (Items adding disabled while loading the game). Requested by `Thunderer1101` on GitHub.
 
 **2.0.0**
 

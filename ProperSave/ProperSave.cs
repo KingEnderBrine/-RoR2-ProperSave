@@ -1,15 +1,11 @@
 ﻿using BepInEx;
-using BiggerBazaar;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using Phedg1Studios.StartingItemsGUI;
 using ProperSave.Data;
-using R2API;
 using R2API.Utils;
 using RoR2;
 using RoR2.Networking;
 using RoR2.UI;
-using SimpleJSON;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,12 +13,15 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
+using System.Security;
+using System.Security.Permissions;
 using TinyJson;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
+[module: UnverifiableCode]
+[assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 namespace ProperSave
 {
     [R2APISubmoduleDependency("LanguageAPI", "CommandHelper")]
@@ -42,7 +41,7 @@ namespace ProperSave
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.3.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.4.5")]
     public class ProperSave : BaseUnityPlugin
     {
         private static WeakReference<GameObject> lobbyButton = new WeakReference<GameObject>(null);
@@ -65,7 +64,6 @@ namespace ProperSave
         private static List<SaveFileMeta> SavesMetadata { get; } = new List<SaveFileMeta>();
 
         public static RunRngData PreStageRng { get; private set; }
-        public static RunArtifactsData RunArtifactData { get; private set; }
 
         public void Awake()
         {
@@ -167,6 +165,10 @@ namespace ProperSave
                     FirstRunStage = false;
                     return;
                 }
+                if (self.sceneDef.baseSceneName == "outro")
+                {
+                    return;
+                }
 
                 SaveGame();
             };
@@ -215,7 +217,6 @@ namespace ProperSave
                         Save.LoadArtifacts();
                         Save.LoadPlayers();
                     }
-                    RunArtifactData = new RunArtifactsData();
 
                     return IsLoading;
                 });
@@ -414,7 +415,7 @@ namespace ProperSave
                 x => x.MatchCallvirt("On.RoR2.Run/orig_Start", "Invoke"));
             c.Index += 3;
             
-            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.NonPublic | BindingFlags.Static).GetMethod);
+            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.Public | BindingFlags.Static).GetMethod);
             c.Emit(OpCodes.Brfalse, c.Next);
             c.Emit(OpCodes.Ret);
         }
@@ -426,7 +427,7 @@ namespace ProperSave
         [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
         private void RegisterSIGUIOverride()
         {
-            var tlcRunStart = typeof(StartingItemsGUI).GetMethod("<Start>b__8_2", BindingFlags.NonPublic | BindingFlags.Instance);
+            var tlcRunStart = typeof(Phedg1Studios.StartingItemsGUI.StartingItemsGUI).GetMethod("OnRunStartGlobal", BindingFlags.NonPublic | BindingFlags.Instance);
             MonoMod.RuntimeDetour.HookGen.HookEndpointManager.Modify(tlcRunStart, (Action<ILContext>)SIGUIHook);
         }
 
@@ -434,16 +435,13 @@ namespace ProperSave
         private void SIGUIHook(ILContext il)
         {
             var c = new ILCursor(il);
-            ILLabel retLabel = null;
-            c.GotoNext(
-                x => x.MatchCall(typeof(NetworkClient), "get_active"),
-                x => x.MatchStloc(7),
-                x => x.MatchLdloc(7),
-                x => x.MatchBrfalse(out retLabel));
-            c.Index += 4;
+            c.GotoNext(MoveType.After,
+                x => x.MatchLdarg(0),
+                x => x.MatchCall(typeof(Phedg1Studios.StartingItemsGUI.StartingItemsGUI), "SetLocalUsers"));
             
-            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.NonPublic | BindingFlags.Static).GetMethod);
-            c.Emit(OpCodes.Brtrue, retLabel);
+            c.Emit(OpCodes.Call, typeof(ProperSave).GetProperty(nameof(IsLoading), BindingFlags.Public | BindingFlags.Static).GetMethod);
+            c.Emit(OpCodes.Brfalse, c.Next);
+            c.Emit(OpCodes.Ret);
         }
         #endregion
 

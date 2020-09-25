@@ -140,7 +140,7 @@ namespace ProperSave
         {
             var interactable =
                 SteamworksLobbyManager.isInLobby == SteamworksLobbyManager.ownsLobby &&
-                File.Exists(SaveFileMeta.GetCurrentLobbySaveMetadata(exceptUser)?.FilePath);
+                File.Exists(SaveFileMetadata.GetCurrentLobbySaveMetadata(exceptUser)?.FilePath);
             try
             {
                 if (lobbyButton)

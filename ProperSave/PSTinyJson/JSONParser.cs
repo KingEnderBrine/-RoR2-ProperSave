@@ -1,11 +1,12 @@
-﻿using System;
+﻿using ProperSave.TinyJson;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace TinyJson {
+namespace PSTinyJson {
     // Really simple JSON parser in ~300 lines
     // - Attempts to parse JSON files with minimal GC allocation
     // - Nice and simple "[1,2,3]".FromJson<List<int>>() API
@@ -316,9 +317,15 @@ namespace TinyJson {
                 FieldInfo fieldInfo;
                 PropertyInfo propertyInfo;
                 if (nameToField.TryGetValue(key, out fieldInfo))
-                    fieldInfo.SetValue(instance, ParseValue(fieldInfo.FieldType, value));
+                {
+                    var objectTypeAttribute = fieldInfo.GetCustomAttribute<ObjectTypeFromPropertyAttribute>();
+                    fieldInfo.SetValue(instance, ParseValue(objectTypeAttribute?.GetObjectType(instance) ?? fieldInfo.FieldType, value));
+                }
                 else if (nameToProperty.TryGetValue(key, out propertyInfo))
-                    propertyInfo.SetValue(instance, ParseValue(propertyInfo.PropertyType, value), null);
+                {
+                    var objectTypeAttribute = propertyInfo.GetCustomAttribute<ObjectTypeFromPropertyAttribute>();
+                    propertyInfo.SetValue(instance, ParseValue(objectTypeAttribute?.GetObjectType(instance) ?? propertyInfo.PropertyType, value), null);
+                }
             }
 
             return instance;

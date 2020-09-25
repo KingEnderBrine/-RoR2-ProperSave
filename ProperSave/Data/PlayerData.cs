@@ -38,7 +38,7 @@ namespace ProperSave.Data
         [DataMember(Name = "lc")]
         public uint lunarCoins;
 
-        public PlayerData(NetworkUser player) {
+        internal PlayerData(NetworkUser player) {
             steamId = player.Network_id.steamId.value;
 
             money = player.master.money;
@@ -79,7 +79,7 @@ namespace ProperSave.Data
             }
         }
 
-        public void LoadPlayer(NetworkUser player) {
+        internal void LoadPlayer(NetworkUser player) {
             foreach(var minion in minions)
             {
                 minion.LoadMinion(player.master);

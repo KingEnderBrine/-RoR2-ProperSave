@@ -1,11 +1,13 @@
-﻿using RoR2;
+﻿using ProperSave.Data;
+using RoR2;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace ProperSave.Data
+namespace ProperSave
 {
-    public class SaveData {
+    public class SaveFile {
         [DataMember(Name = "r")]
         public RunData RunData { get; set; }
         [DataMember(Name = "t")]
@@ -16,11 +18,15 @@ namespace ProperSave.Data
         public ArtifactsData ArtifactsData { get; set; }
         [DataMember(Name = "p")]
         public List<PlayerData> PlayersData { get; set; }
+        [DataMember(Name = "md")]
+        public Dictionary<string, ModdedData> ModdedData { get; set; }
 
         [IgnoreDataMember]
-        public SaveFileMeta SaveFileMeta { get; set; }
+        public SaveFileMetadata SaveFileMeta { get; set; }
 
-        public SaveData() 
+        public static event Action<Dictionary<string, object>> OnGatgherSaveData;
+
+        internal SaveFile() 
         {
             RunData = new RunData();
             TeamData = new TeamData();
@@ -31,25 +37,36 @@ namespace ProperSave.Data
             foreach (var item in NetworkUser.readOnlyInstancesList) {
                 PlayersData.Add(new PlayerData(item));
             }
+
+            var gatheredData = new Dictionary<string, object>();
+            OnGatgherSaveData?.Invoke(gatheredData);
+
+            ModdedData = gatheredData.ToDictionary(
+                el => el.Key, 
+                el => new ModdedData 
+                { 
+                    ObjectType = el.Value.GetType().AssemblyQualifiedName, 
+                    Value = el.Value 
+                });
         }
 
-        public void LoadRun()
+        internal void LoadRun()
         {
             RunData.LoadData();
         }
 
-        public void LoadArtifacts()
+        internal void LoadArtifacts()
         {
             RunArtifactsData.LoadData();
             ArtifactsData.LoadData();
         }
 
-        public void LoadTeam()
+        internal void LoadTeam()
         {
             TeamData.LoadData();
         }
 
-        public void LoadPlayers() 
+        internal void LoadPlayers() 
         {
             var players = PlayersData.ToList();
             foreach (var user in NetworkUser.readOnlyInstancesList) {
@@ -63,6 +80,11 @@ namespace ProperSave.Data
                 players.Remove(player);
                 player.LoadPlayer(user);
             }
+        }
+
+        public T GetModdedData<T>(string key)
+        {
+            return (T)ModdedData[key].Value;
         }
     }
 }

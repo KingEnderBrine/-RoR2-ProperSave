@@ -13,38 +13,37 @@ namespace ProperSave
 {
     [R2APISubmoduleDependency(nameof(LanguageAPI), nameof(CommandHelper))]
 
-    //Support for both versions of TLC
-    [BepInDependency("com.blazingdrummer.TemporaryLunarCoins", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency("com.MagnusMagnuson.TemporaryLunarCoins", BepInDependency.DependencyFlags.SoftDependency)]
+    //Support for BlazingDrummer's TemporaryLunarCoins
+    [BepInDependency(ModSupport.BDTemporaryLunarCoinsGUID, BepInDependency.DependencyFlags.SoftDependency)]
+    //Support for TemporaryLunarCoins
+    [BepInDependency(ModSupport.TemporaryLunarCoinsGUID, BepInDependency.DependencyFlags.SoftDependency)]
 
     //Support for StartingItemsGUI
-    [BepInDependency("com.Phedg1Studios.StartingItemsGUI", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(ModSupport.StartingItemsGUIGUID, BepInDependency.DependencyFlags.SoftDependency)]
 
     //Support for BiggerBazaar
-    [BepInDependency("com.MagnusMagnuson.BiggerBazaar", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(ModSupport.BiggerBazaarGUID, BepInDependency.DependencyFlags.SoftDependency)]
 
     //Support for ShareSuit 
-    [BepInDependency("com.funkfrog_sipondo.sharesuite", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(ModSupport.ShareSuiteGUID, BepInDependency.DependencyFlags.SoftDependency)]
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.4.5")]
     [DisallowMultipleComponent]
-    public class ProperSave : BaseUnityPlugin
+    internal class ProperSave : BaseUnityPlugin
     {
         internal static ProperSave Instance { get; private set; }
         internal static ManualLogSource InstanceLogger => Instance?.Logger;
 
         internal static string SavesDirectory { get; } = System.IO.Path.Combine(Application.persistentDataPath, "ProperSave", "Saves");
-        internal static SaveData CurrentSave { get; set; }
+        internal static SaveFile CurrentSave { get; set; }
 
-        private void OnEnabled()
+        private void Awake()
         {
             Instance = this;
 
-            SaveFileMeta.PopulateSavesMetadata();
-
-            CommandHelper.AddToConsoleWhenReady();
+            SaveFileMetadata.PopulateSavesMetadata();
 
             ModSupport.GatherLoadedPlugins();
             ModSupport.RegisterHooks();
@@ -53,11 +52,16 @@ namespace ProperSave
             Loading.RegisterHooks();
 
             LobbyUI.RegisterHooks();
+
+            Commands.RegisterCommands();
         }
 
-        private void OnDisabled()
+        private void Destroy()
         {
             Instance = null;
+
+            Commands.UnregisterCommands();
+
             ModSupport.UnregisterHooks();
 
             Saving.UnregisterHooks();

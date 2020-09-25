@@ -10,13 +10,13 @@ namespace ProperSave.Data.Artifacts
         [DataMember(Name = "saer")]
         public RngData serverActivationEquipmentRng;
 
-        public EnigmaData()
+        internal EnigmaData()
         {
             serverInitialEquipmentRng = new RngData(EnigmaArtifactManager.serverInitialEquipmentRng);
             serverActivationEquipmentRng = new RngData(EnigmaArtifactManager.serverActivationEquipmentRng);
         }
 
-        public void LoadData()
+        internal void LoadData()
         {
             serverInitialEquipmentRng.LoadDataRef(ref EnigmaArtifactManager.serverInitialEquipmentRng);
             serverActivationEquipmentRng.LoadDataRef(ref EnigmaArtifactManager.serverActivationEquipmentRng);

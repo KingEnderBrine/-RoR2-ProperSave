@@ -1,12 +1,11 @@
 ﻿using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using ProperSave.Data;
 using RoR2;
 using RoR2.Networking;
 using System;
 using System.Collections;
 using System.IO;
-using TinyJson;
+using PSTinyJson;
 
 namespace ProperSave
 {
@@ -25,18 +24,20 @@ namespace ProperSave
                 isLoading = value;
                 if (isLoading)
                 {
-                    OnLoadingStarted?.Invoke();
+                    OnLoadingStarted?.Invoke(CurrentSave);
                 }
                 else
                 {
-                    OnLoadingEnded?.Invoke();
+                    OnLoadingEnded?.Invoke(CurrentSave);
                 }
             }
         }
         public static bool FirstRunStage { get; internal set; }
 
-        public static event Action OnLoadingStarted;
-        public static event Action OnLoadingEnded;
+        public static event Action<SaveFile> OnLoadingStarted;
+        public static event Action<SaveFile> OnLoadingEnded;
+
+        public static SaveFile CurrentSave => ProperSave.CurrentSave;
 
         internal static void RegisterHooks()
         {
@@ -72,9 +73,9 @@ namespace ProperSave
                 FirstRunStage = true;
                 if (IsLoading)
                 {
-                    ProperSave.CurrentSave.LoadRun();
-                    ProperSave.CurrentSave.LoadArtifacts();
-                    ProperSave.CurrentSave.LoadPlayers();
+                    CurrentSave.LoadRun();
+                    CurrentSave.LoadArtifacts();
+                    CurrentSave.LoadPlayers();
                 }
 
                 return IsLoading;
@@ -83,7 +84,7 @@ namespace ProperSave
             c.Emit(OpCodes.Ret);
         }
 
-        private static IEnumerator LoadLobby()
+        internal static IEnumerator LoadLobby()
         {
             if (PreGameController.instance == null)
             {
@@ -95,7 +96,7 @@ namespace ProperSave
                 ProperSave.InstanceLogger.LogInfo("You must be a lobby leader to load the game");
                 yield break;
             }
-            var metadata = SaveFileMeta.GetCurrentLobbySaveMetadata();
+            var metadata = SaveFileMetadata.GetCurrentLobbySaveMetadata();
 
             if (metadata == null)
             {
@@ -109,28 +110,12 @@ namespace ProperSave
                 yield break;
             }
 
-            IsLoading = true;
             var saveJSON = File.ReadAllText(filePath);
-            ProperSave.CurrentSave = JSONParser.FromJson<SaveData>(saveJSON);
+            ProperSave.CurrentSave = JSONParser.FromJson<SaveFile>(saveJSON);
             ProperSave.CurrentSave.SaveFileMeta = metadata;
+            IsLoading = true;
 
             PreGameController.instance.StartLaunch();
-        }
-
-        [ConCommand(commandName = "ps_load_lobby", flags = ConVarFlags.None, helpText = "Load saved game suitable for current lobby")]
-        private static void CCRequestLoadLobby(ConCommandArgs args)
-        {
-            if (Run.instance != null)
-            {
-                ProperSave.InstanceLogger.LogInfo("Can't load while run is active");
-                return;
-            }
-            if (IsLoading)
-            {
-                ProperSave.InstanceLogger.LogInfo("Already loading");
-                return;
-            }
-            ProperSave.Instance.StartCoroutine(LoadLobby());
         }
     }
 }

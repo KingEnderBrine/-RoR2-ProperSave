@@ -41,10 +41,9 @@ namespace ProperSave.Data
         [DataMember(Name = "ta")]
         public int trialArtifact;
 
-        [IgnoreDataMember]
         private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField(nameof(Run.onRunStartGlobal), BindingFlags.NonPublic | BindingFlags.Static);
         
-        public RunData()
+        internal RunData()
         {
             var run = Run.instance;
             seed = run.seed;
@@ -73,7 +72,7 @@ namespace ProperSave.Data
         }
 
         //Upgraded copy of Run.Start
-        public void LoadData()
+        internal void LoadData()
         {
             if (ModSupport.IsSSLoaded)
             {
@@ -122,8 +121,8 @@ namespace ProperSave.Data
                 NetworkManager.singleton.ServerChangeScene(sceneName);
             }
 
-            itemMask.LoadData(out instance.availableItems);
-            equipmentMask.LoadData(out instance.availableEquipment);
+            itemMask.LoadDataOut(out instance.availableItems);
+            equipmentMask.LoadDataOut(out instance.availableEquipment);
 
             instance.BuildUnlockAvailability();
             instance.BuildDropTable();

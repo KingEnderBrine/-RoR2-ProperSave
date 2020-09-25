@@ -2,13 +2,13 @@
 using RoR2;
 using System;
 using System.IO;
-using TinyJson;
+using PSTinyJson;
 
 namespace ProperSave
 {
-    public static class Saving
+    internal static class Saving
     {
-        public static RunRngData PreStageRng { get; private set; }
+        internal static RunRngData PreStageRng { get; private set; }
 
         internal static void RegisterHooks()
         {
@@ -43,7 +43,7 @@ namespace ProperSave
                 if (metadata != null)
                 {
                     File.Delete(metadata.FilePath);
-                    SaveFileMeta.Remove(metadata);
+                    SaveFileMetadata.Remove(metadata);
                     ProperSave.CurrentSave = null;
                 }
             }
@@ -71,9 +71,9 @@ namespace ProperSave
 
         private static void SaveGame()
         {
-            var save = ProperSave.CurrentSave = new SaveData
+            var save = ProperSave.CurrentSave = new SaveFile
             {
-                SaveFileMeta = SaveFileMeta.GetCurrentLobbySaveMetadata() ?? SaveFileMeta.CreateMetadataForCurrentLobby()
+                SaveFileMeta = SaveFileMetadata.GetCurrentLobbySaveMetadata() ?? SaveFileMetadata.CreateMetadataForCurrentLobby()
             };
 
             if (string.IsNullOrEmpty(save.SaveFileMeta.FileName))
@@ -90,7 +90,7 @@ namespace ProperSave
                 var json = JSONWriter.ToJson(save);
                 File.WriteAllText(save.SaveFileMeta.FilePath, json);
 
-                SaveFileMeta.AddIfNotExists(save.SaveFileMeta);
+                SaveFileMetadata.AddIfNotExists(save.SaveFileMeta);
                 Chat.AddMessage(Language.GetString(LanguageConsts.PS_CHAT_SAVE));
             }
             catch (Exception e)

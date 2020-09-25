@@ -12,7 +12,7 @@ namespace ProperSave.Data
             array = mask.array.ToArray();
         }
 
-        public void LoadData(out EquipmentMask mask)
+        public void LoadDataOut(out EquipmentMask mask)
         {
             mask = new EquipmentMask() { array = array.ToArray() };
         }

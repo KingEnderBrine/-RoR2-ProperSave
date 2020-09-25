@@ -8,12 +8,12 @@ namespace ProperSave.Data
         [DataMember(Name = "ed")]
         public EnigmaData EnigmaData;
 
-        public ArtifactsData()
+        internal ArtifactsData()
         {
             EnigmaData = new EnigmaData();
         }
 
-        public void LoadData()
+        internal void LoadData()
         {
             EnigmaData.LoadData();
         }

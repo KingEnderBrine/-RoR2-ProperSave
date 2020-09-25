@@ -27,7 +27,7 @@ namespace ProperSave.Data
             items = new List<ItemData>();
             foreach (var item in inventory.itemAcquisitionOrder)
             {
-                items.Add(new ItemData((int)item, inventory.GetItemCount(item)));
+                items.Add(new ItemData { itemIndex = (int)item, count = inventory.GetItemCount(item) });
             }
 
             equipments = new EquipmentData[inventory.GetEquipmentSlotCount()];

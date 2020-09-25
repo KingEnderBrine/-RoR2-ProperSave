@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
-using TinyJson;
+using PSTinyJson;
 
-namespace ProperSave.Data
+namespace ProperSave
 {
-    public class SaveFileMeta
+    public class SaveFileMetadata
     {
         [DataMember(Name = "fn")]
         public string FileName { get; set; }
@@ -28,11 +28,11 @@ namespace ProperSave.Data
             }
         }
 
-        private static List<SaveFileMeta> SavesMetadata { get; } = new List<SaveFileMeta>();
+        private static List<SaveFileMetadata> SavesMetadata { get; } = new List<SaveFileMetadata>();
         
-        public static SaveFileMeta CreateMetadataForCurrentLobby()
+        internal static SaveFileMetadata CreateMetadataForCurrentLobby()
         {
-            return new SaveFileMeta
+            return new SaveFileMetadata
             {
                 SteamIds = NetworkUser.readOnlyInstancesList.ToArray().Select(el => el.Network_id.steamId.value).ToArray(),
                 UserProfileId = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName,
@@ -40,7 +40,7 @@ namespace ProperSave.Data
             };
         }
 
-        internal static SaveFileMeta GetCurrentLobbySaveMetadata(NetworkUser exceptUser = null)
+        internal static SaveFileMetadata GetCurrentLobbySaveMetadata(NetworkUser exceptUser = null)
         {
             var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId.value).ToList();
             if (exceptUser != null)
@@ -81,8 +81,9 @@ namespace ProperSave.Data
             try
             {
                 var json = File.ReadAllText(path);
-                var metadata = JSONParser.FromJson<SaveFileMeta[]>(json);
-
+                var metadata = JSONParser.FromJson<SaveFileMetadata[]>(json);
+                
+                SavesMetadata.Clear();
                 SavesMetadata.AddRange(metadata);
             }
             catch (Exception e)
@@ -93,7 +94,7 @@ namespace ProperSave.Data
         }
 
 
-        public static void AddIfNotExists(SaveFileMeta metadata)
+        internal static void AddIfNotExists(SaveFileMetadata metadata)
         {
             if (SavesMetadata.Contains(metadata))
             {
@@ -103,7 +104,7 @@ namespace ProperSave.Data
             UpdateSaveMetadata();
         }
 
-        public static void Remove(SaveFileMeta metadata)
+        internal static void Remove(SaveFileMetadata metadata)
         {
             if (SavesMetadata.Remove(metadata))
             {

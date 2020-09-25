@@ -9,7 +9,7 @@ namespace ProperSave.Data
         [DataMember(Name = "a")]
         public bool[] artifacts;
         
-        public RunArtifactsData()
+        internal RunArtifactsData()
         {
             artifacts = new bool[ArtifactCatalog.artifactCount];
             foreach (var artifact in RunArtifactManager.enabledArtifactsEnumerable)
@@ -26,7 +26,7 @@ namespace ProperSave.Data
             }
         }
 
-        public void LoadData()
+        internal void LoadData()
         {
             for (int i = 0; i < ArtifactCatalog.artifactCount; i++)
             {

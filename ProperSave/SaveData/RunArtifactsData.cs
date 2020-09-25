@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class RunArtifactsData
     {

@@ -1,7 +1,7 @@
-﻿using ProperSave.Data.Artifacts;
+﻿using ProperSave.SaveData.Artifacts;
 using System.Runtime.Serialization;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class ArtifactsData
     {

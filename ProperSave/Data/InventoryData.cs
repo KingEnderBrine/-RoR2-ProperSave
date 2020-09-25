@@ -1,5 +1,4 @@
-﻿using R2API.Utils;
-using RoR2;
+﻿using RoR2;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -19,9 +18,10 @@ namespace ProperSave.Data
         [DataMember(Name = "aes")]
         public byte activeEquipmentSlot;
 
-        public InventoryData(CharacterMaster master)
+        private static FieldInfo onInventoryChangedDelagate = typeof(Inventory).GetField("onInventoryChanged", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        public InventoryData(Inventory inventory)
         {
-            var inventory = master.inventory;
             infusionBonus = (int)inventory.infusionBonus;
 
             items = new List<ItemData>();
@@ -38,10 +38,9 @@ namespace ProperSave.Data
             activeEquipmentSlot = inventory.activeEquipmentSlot;
         }
 
-        public void LoadInventory(CharacterMaster master)
+        public void LoadInventory(Inventory inventory)
         {
-            var inventory = master.inventory;
-            var itemStacks = inventory.GetFieldValue<int[]>("itemStacks");
+            var itemStacks = inventory.itemStacks;
             var itemAcquisitionOrder = inventory.itemAcquisitionOrder;
 
             foreach (var item in items)
@@ -50,17 +49,17 @@ namespace ProperSave.Data
                 itemAcquisitionOrder.Add((ItemIndex)item.itemIndex);
             }
 
-            if (typeof(Inventory).GetField("onInventoryChanged", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(inventory) is MulticastDelegate onInventoryChanged)
+            if (onInventoryChangedDelagate.GetValue(inventory) is MulticastDelegate onInventoryChanged)
             {
                 foreach (var handler in onInventoryChanged.GetInvocationList())
                 {
-                    handler.Method.Invoke(handler.Target, new object[0]);
+                    handler.Method.Invoke(handler.Target, Array.Empty<object>());
                 }
             }
 
             for (byte i = 0; i < equipments.Length; i++)
             {
-                equipments[i].LoadEquipment(master, i);
+                equipments[i].LoadEquipment(inventory, i);
             }
             inventory.SetActiveEquipmentSlot(activeEquipmentSlot);
 

@@ -9,17 +9,17 @@ namespace ProperSave.Data
         [DataMember(Name = "ml")]
         public LoadoutBodyData[] modifiedLoadouts;
 
-        public LoadoutData(CharacterMaster master)
+        public LoadoutData(Loadout loadout)
         {
-            var modifiedBodyLoadouts = master.loadout.bodyLoadoutManager.modifiedBodyLoadouts;
+            var modifiedBodyLoadouts = loadout.bodyLoadoutManager.modifiedBodyLoadouts;
             modifiedLoadouts = modifiedBodyLoadouts.Select(el => new LoadoutBodyData(el)).ToArray();
         }
 
-        public void LoadData(CharacterMaster master)
+        public void LoadData(Loadout loadout)
         {
-            master.loadout.Clear();
+            loadout.Clear();
 
-            var manager = master.loadout.bodyLoadoutManager;
+            var manager = loadout.bodyLoadoutManager;
             manager.modifiedBodyLoadouts = modifiedLoadouts.Select(el => el.Load()).ToArray();
         }
     }

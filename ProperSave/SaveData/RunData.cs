@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using ProperSave.Data;
+using RoR2;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -7,7 +8,7 @@ using System.Runtime.Serialization;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class RunData
     {

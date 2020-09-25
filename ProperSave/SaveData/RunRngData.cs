@@ -1,7 +1,8 @@
-﻿using RoR2;
+﻿using ProperSave.Data;
+using RoR2;
 using System.Runtime.Serialization;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class RunRngData
     {

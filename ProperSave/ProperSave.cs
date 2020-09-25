@@ -1,6 +1,5 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
-using ProperSave.Data;
 using R2API;
 using R2API.Utils;
 using System.Security;
@@ -31,7 +30,7 @@ namespace ProperSave
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
     [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.4.5")]
     [DisallowMultipleComponent]
-    internal class ProperSave : BaseUnityPlugin
+    public class ProperSave : BaseUnityPlugin
     {
         internal static ProperSave Instance { get; private set; }
         internal static ManualLogSource InstanceLogger => Instance?.Logger;

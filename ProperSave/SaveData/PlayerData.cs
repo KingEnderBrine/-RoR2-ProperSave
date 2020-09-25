@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using ProperSave.Data;
+using RoR2;
 using RoR2.Stats;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using UnityEngine;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class PlayerData {
         [DataMember(Name = "si")]
@@ -39,11 +40,12 @@ namespace ProperSave.Data
         public uint lunarCoins;
 
         internal PlayerData(NetworkUser player) {
+            var master = player.master;
             steamId = player.Network_id.steamId.value;
 
             money = player.master.money;
-            inventory = new InventoryData(player.master);
-            loadout = new LoadoutData(player.master);
+            inventory = new InventoryData(master.inventory);
+            loadout = new LoadoutData(master.loadout);
             
             characterBodyName = player.master.bodyPrefab.name;
             lunarCoinChanceMultiplier = player.masterController.lunarCoinChanceMultiplier;
@@ -80,18 +82,19 @@ namespace ProperSave.Data
         }
 
         internal void LoadPlayer(NetworkUser player) {
+            var master = player.master;
             foreach(var minion in minions)
             {
-                minion.LoadMinion(player.master);
+                minion.LoadMinion(master);
             }
 
             var bodyPrefab = BodyCatalog.FindBodyPrefab(characterBodyName);
 
-            player.master.bodyPrefab = bodyPrefab;
+            master.bodyPrefab = bodyPrefab;
 
-            loadout.LoadData(player.master);
+            loadout.LoadData(master.loadout);
 
-            inventory.LoadInventory(player.master);
+            inventory.LoadInventory(master.inventory);
 
             if (ModSupport.IsSSLoaded)
             {

@@ -19,9 +19,8 @@ namespace ProperSave.Data
             chargeFinishTime = state.chargeFinishTime.t;
         }
 
-        public void LoadEquipment(CharacterMaster player, byte equipmentSlot)
+        public void LoadEquipment(Inventory inventory, byte equipmentSlot)
         {
-            var inventory = player.inventory;
             var chargeTime = new Run.FixedTimeStamp(chargeFinishTime);
             var state = new EquipmentState(
                 (EquipmentIndex)index,

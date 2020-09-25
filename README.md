@@ -9,9 +9,8 @@ A `Load` button will be active if you are host and was found suitable save file 
 # Game modes support
 Each game mode (for now `Classic` and `Eclipse`) has it's own save files, so that you can switch between game modes and not losing your progress.
 
-# Installation
-- Install dependencies.
-- Put `ProperSave` folder into `plugins` folder.
+# For mod developers
+
 
 # Known issues
 I tried to save all necessary data so that when you load the game would continue as it should have been without saving.
@@ -20,6 +19,11 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+
+**2.5.0**
+
+* Added mods support. Now any other dev can add data they want to be saved from their mods. 
+* A lot of refactoring.
 
 **2.4.5**
 

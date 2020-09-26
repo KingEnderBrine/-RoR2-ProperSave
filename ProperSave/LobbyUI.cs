@@ -125,8 +125,8 @@ namespace ProperSave
             }
             catch (Exception e)
             {
-                ProperSave.InstanceLogger.LogWarning("Failed while adding lobby buttons");
-                ProperSave.InstanceLogger.LogError(e);
+                ProperSavePlugin.InstanceLogger.LogWarning("Failed while adding lobby buttons");
+                ProperSavePlugin.InstanceLogger.LogError(e);
             }
             orig(self);
         }

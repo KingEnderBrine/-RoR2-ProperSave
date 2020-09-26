@@ -47,8 +47,8 @@ namespace ProperSave
                 }
                 catch (Exception e)
                 {
-                    ProperSave.InstanceLogger.LogWarning("Failed to add support for TemporaryLunarCoins");
-                    ProperSave.InstanceLogger.LogError(e);
+                    ProperSavePlugin.InstanceLogger.LogWarning("Failed to add support for TemporaryLunarCoins");
+                    ProperSavePlugin.InstanceLogger.LogError(e);
                 }
             }
             if (IsSIGUILoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(StartingItemsGUIGUID))
@@ -59,8 +59,8 @@ namespace ProperSave
                 }
                 catch (Exception e)
                 {
-                    ProperSave.InstanceLogger.LogWarning("Failed to add support for StartingItemsGUI");
-                    ProperSave.InstanceLogger.LogError(e);
+                    ProperSavePlugin.InstanceLogger.LogWarning("Failed to add support for StartingItemsGUI");
+                    ProperSavePlugin.InstanceLogger.LogError(e);
                 }
             }
             if (IsBBLoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(BiggerBazaarGUID))
@@ -71,8 +71,8 @@ namespace ProperSave
                 }
                 catch (Exception e)
                 {
-                    ProperSave.InstanceLogger.LogError("Failed to add support for BiggerBazaar");
-                    ProperSave.InstanceLogger.LogError(e);
+                    ProperSavePlugin.InstanceLogger.LogError("Failed to add support for BiggerBazaar");
+                    ProperSavePlugin.InstanceLogger.LogError(e);
                 }
             }
             AreHooksRegistered = true;

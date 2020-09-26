@@ -24,7 +24,7 @@ namespace ProperSave
         {
             get
             {
-                return string.IsNullOrEmpty(FileName) ? null : $"{ProperSave.SavesDirectory}\\{FileName}.json";
+                return string.IsNullOrEmpty(FileName) ? null : $"{ProperSavePlugin.SavesDirectory}\\{FileName}.json";
             }
         }
 
@@ -67,12 +67,12 @@ namespace ProperSave
 
         internal static void PopulateSavesMetadata()
         {
-            if (!Directory.Exists(ProperSave.SavesDirectory))
+            if (!Directory.Exists(ProperSavePlugin.SavesDirectory))
             {
-                Directory.CreateDirectory(ProperSave.SavesDirectory);
+                Directory.CreateDirectory(ProperSavePlugin.SavesDirectory);
                 return;
             }
-            var path = $"{ProperSave.SavesDirectory}\\SavesMetadata.json";
+            var path = $"{ProperSavePlugin.SavesDirectory}\\SavesMetadata.json";
             if (!File.Exists(path))
             {
                 return;
@@ -88,8 +88,8 @@ namespace ProperSave
             }
             catch (Exception e)
             {
-                ProperSave.InstanceLogger.LogWarning("SavesMetadata file corrupted.");
-                ProperSave.InstanceLogger.LogError(e);
+                ProperSavePlugin.InstanceLogger.LogWarning("SavesMetadata file corrupted.");
+                ProperSavePlugin.InstanceLogger.LogError(e);
             }
         }
 
@@ -114,10 +114,10 @@ namespace ProperSave
 
         private static void UpdateSaveMetadata()
         {
-            var path = $"{ProperSave.SavesDirectory}\\SavesMetadata.json";
-            if (!Directory.Exists(ProperSave.SavesDirectory))
+            var path = $"{ProperSavePlugin.SavesDirectory}\\SavesMetadata.json";
+            if (!Directory.Exists(ProperSavePlugin.SavesDirectory))
             {
-                Directory.CreateDirectory(ProperSave.SavesDirectory);
+                Directory.CreateDirectory(ProperSavePlugin.SavesDirectory);
             }
 
             try
@@ -126,8 +126,8 @@ namespace ProperSave
             }
             catch (Exception e)
             {
-                ProperSave.InstanceLogger.LogWarning("Can't update SavesMetadata file");
-                ProperSave.InstanceLogger.LogError(e);
+                ProperSavePlugin.InstanceLogger.LogWarning("Can't update SavesMetadata file");
+                ProperSavePlugin.InstanceLogger.LogError(e);
             }
         }
     }

@@ -98,7 +98,7 @@ namespace ProperSave.SaveData
 
             if (ModSupport.IsSSLoaded)
             {
-                ProperSave.Instance.StartCoroutine(LoadShareSuiteMoney(money));
+                ProperSavePlugin.Instance.StartCoroutine(LoadShareSuiteMoney(money));
             }
             player.master.money = money;
 

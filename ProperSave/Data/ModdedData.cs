@@ -5,10 +5,10 @@ namespace ProperSave.Data
 {
     public class ModdedData
     {
-        [DataMember(Name = "ot", Order = 1)]
+        [DataMember(Name = "ot")]
         public string ObjectType { get; set; }
 
-        [DataMember(Name = "v", Order = 2)]
+        [DataMember(Name = "v")]
         [ObjectTypeFromProperty(nameof(ObjectType))]
         public object Value { get; set; }
     }

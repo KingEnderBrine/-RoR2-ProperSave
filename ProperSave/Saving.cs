@@ -39,18 +39,18 @@ namespace ProperSave
         {
             try
             {
-                var metadata = ProperSave.CurrentSave?.SaveFileMeta;
+                var metadata = ProperSavePlugin.CurrentSave?.SaveFileMeta;
                 if (metadata != null)
                 {
                     File.Delete(metadata.FilePath);
                     SaveFileMetadata.Remove(metadata);
-                    ProperSave.CurrentSave = null;
+                    ProperSavePlugin.CurrentSave = null;
                 }
             }
             catch (Exception e)
             {
-                ProperSave.InstanceLogger.LogWarning("Failed to delete save file");
-                ProperSave.InstanceLogger.LogError(e);
+                ProperSavePlugin.InstanceLogger.LogWarning("Failed to delete save file");
+                ProperSavePlugin.InstanceLogger.LogError(e);
             }
         }
 
@@ -71,7 +71,7 @@ namespace ProperSave
 
         private static void SaveGame()
         {
-            var save = ProperSave.CurrentSave = new SaveFile
+            var save = ProperSavePlugin.CurrentSave = new SaveFile
             {
                 SaveFileMeta = SaveFileMetadata.GetCurrentLobbySaveMetadata() ?? SaveFileMetadata.CreateMetadataForCurrentLobby()
             };
@@ -95,8 +95,8 @@ namespace ProperSave
             }
             catch (Exception e)
             {
-                ProperSave.InstanceLogger.LogWarning("Failed to save the game");
-                ProperSave.InstanceLogger.LogError(e);
+                ProperSavePlugin.InstanceLogger.LogWarning("Failed to save the game");
+                ProperSavePlugin.InstanceLogger.LogError(e);
             }
         }
     }

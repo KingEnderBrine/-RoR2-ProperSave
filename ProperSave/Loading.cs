@@ -37,7 +37,7 @@ namespace ProperSave
         public static event Action<SaveFile> OnLoadingStarted;
         public static event Action<SaveFile> OnLoadingEnded;
 
-        public static SaveFile CurrentSave => ProperSave.CurrentSave;
+        public static SaveFile CurrentSave => ProperSavePlugin.CurrentSave;
 
         internal static void RegisterHooks()
         {
@@ -59,7 +59,7 @@ namespace ProperSave
             orig(self);
             if (IsLoading)
             {
-                ProperSave.CurrentSave.LoadTeam();
+                ProperSavePlugin.CurrentSave.LoadTeam();
                 //This is last part of loading process
                 IsLoading = false;
             }
@@ -88,31 +88,31 @@ namespace ProperSave
         {
             if (PreGameController.instance == null)
             {
-                ProperSave.InstanceLogger.LogInfo("PreGameController instance not found");
+                ProperSavePlugin.InstanceLogger.LogInfo("PreGameController instance not found");
                 yield break;
             }
             if (GameNetworkManager.singleton?.desiredHost.hostingParameters.listen == true && !SteamworksLobbyManager.ownsLobby)
             {
-                ProperSave.InstanceLogger.LogInfo("You must be a lobby leader to load the game");
+                ProperSavePlugin.InstanceLogger.LogInfo("You must be a lobby leader to load the game");
                 yield break;
             }
             var metadata = SaveFileMetadata.GetCurrentLobbySaveMetadata();
 
             if (metadata == null)
             {
-                ProperSave.InstanceLogger.LogInfo("Save file for current users is not found");
+                ProperSavePlugin.InstanceLogger.LogInfo("Save file for current users is not found");
                 yield break;
             }
             var filePath = metadata.FilePath;
             if (!File.Exists(filePath))
             {
-                ProperSave.InstanceLogger.LogInfo($"File \"{filePath}\" is not found");
+                ProperSavePlugin.InstanceLogger.LogInfo($"File \"{filePath}\" is not found");
                 yield break;
             }
 
             var saveJSON = File.ReadAllText(filePath);
-            ProperSave.CurrentSave = JSONParser.FromJson<SaveFile>(saveJSON);
-            ProperSave.CurrentSave.SaveFileMeta = metadata;
+            ProperSavePlugin.CurrentSave = JSONParser.FromJson<SaveFile>(saveJSON);
+            ProperSavePlugin.CurrentSave.SaveFileMeta = metadata;
             IsLoading = true;
 
             PreGameController.instance.StartLaunch();

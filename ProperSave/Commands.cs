@@ -21,15 +21,15 @@ namespace ProperSave
         {
             if (Run.instance != null)
             {
-                ProperSave.InstanceLogger.LogInfo("Can't load while run is active");
+                ProperSavePlugin.InstanceLogger.LogInfo("Can't load while run is active");
                 return;
             }
             if (Loading.IsLoading)
             {
-                ProperSave.InstanceLogger.LogInfo("Already loading");
+                ProperSavePlugin.InstanceLogger.LogInfo("Already loading");
                 return;
             }
-            ProperSave.Instance.StartCoroutine(Loading.LoadLobby());
+            ProperSavePlugin.Instance.StartCoroutine(Loading.LoadLobby());
         }
     }
 }

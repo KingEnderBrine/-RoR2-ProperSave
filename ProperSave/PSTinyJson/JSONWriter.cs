@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace TinyJson {
+namespace PSTinyJson {
     //Really simple JSON writer
     //- Outputs JSON structures from an object
     //- Really simple API (new List<int> { 1, 2, 3 }).ToJson() == "[1,2,3]"

@@ -1,66 +1,26 @@
-﻿using R2API.Utils;
-using RoR2;
-using System;
+﻿using RoR2;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {
-    public class LoadoutData
+    public partial class LoadoutData
     {
         [DataMember(Name = "ml")]
         public LoadoutBodyData[] modifiedLoadouts;
 
-        public LoadoutData(CharacterMaster master)
+        public LoadoutData(Loadout loadout)
         {
-            var modifiedBodyLoadouts = master.loadout.bodyLoadoutManager.GetFieldValue<object[]>("modifiedBodyLoadouts");
-
-            modifiedLoadouts = new LoadoutBodyData[modifiedBodyLoadouts.Length];
-            for(var i = 0; i < modifiedBodyLoadouts.Length; i++)
-            {
-                var loadoutBody = modifiedBodyLoadouts[i];
-                modifiedLoadouts[i] = new LoadoutBodyData()
-                {
-                    bodyIndex = loadoutBody.GetFieldValue<int>("bodyIndex"),
-                    skinPreference = loadoutBody.GetFieldValue<uint>("skinPreference"),
-                    skillPreferences = loadoutBody.GetFieldValue<uint[]>("skillPreferences").ToArray()
-                };
-            }
+            var modifiedBodyLoadouts = loadout.bodyLoadoutManager.modifiedBodyLoadouts;
+            modifiedLoadouts = modifiedBodyLoadouts.Select(el => new LoadoutBodyData(el)).ToArray();
         }
 
-        public void LoadData(CharacterMaster master)
+        public void LoadData(Loadout loadout)
         {
-            master.loadout.Clear();
+            loadout.Clear();
 
-            var manager = master.loadout.bodyLoadoutManager;
-            var bodyLoadoutType = typeof(Loadout.BodyLoadoutManager).GetNestedType("BodyLoadout", BindingFlags.NonPublic);
-            var bodyLoadoutArrayType = bodyLoadoutType.MakeArrayType();
-
-            var modifiedBodyLoadouts = Activator.CreateInstance(bodyLoadoutArrayType, new object[] { modifiedLoadouts.Length }) as object[];
-
-            for (var i = 0; i < modifiedLoadouts.Length; i++)
-            {
-                var modifiedLoadout = modifiedLoadouts[i];
-                
-                var bodyLoadout = FormatterServices.GetUninitializedObject(bodyLoadoutType);
-                bodyLoadout.SetFieldValue("bodyIndex", modifiedLoadout.bodyIndex);
-                bodyLoadout.SetFieldValue("skinPreference", modifiedLoadout.skinPreference);
-                bodyLoadout.SetFieldValue("skillPreferences", modifiedLoadout.skillPreferences.ToArray());
-
-                modifiedBodyLoadouts[i] = bodyLoadout;
-            }
-            typeof(Loadout.BodyLoadoutManager).GetField("modifiedBodyLoadouts", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(manager, modifiedBodyLoadouts);
-        }
-
-        public class LoadoutBodyData
-        {
-            [DataMember(Name = "bi")]
-            public int bodyIndex;
-            [DataMember(Name = "sp")]
-            public uint skinPreference;
-            [DataMember(Name = "sps")]
-            public uint[] skillPreferences;
+            var manager = loadout.bodyLoadoutManager;
+            manager.modifiedBodyLoadouts = modifiedLoadouts.Select(el => el.Load()).ToArray();
         }
     }
 }

@@ -1,12 +1,11 @@
-﻿using RoR2;
+﻿using ProperSave.Data;
+using RoR2;
 using RoR2.CharacterAI;
-using System.Collections;
 using System.Runtime.Serialization;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class MinionData
     {
@@ -15,15 +14,15 @@ namespace ProperSave.Data
         [DataMember(Name = "i")]
         public InventoryData inventory;
 
-        public MinionData(CharacterMaster master)
+        internal MinionData(CharacterMaster master)
         {
             masterIndex = (int)master.masterIndex;
-            inventory = new InventoryData(master);
+            inventory = new InventoryData(master.inventory);
         }
 
         //Loads minion after scene was populated 
         //so that minion's AI won't throw exceptions because it can't navigate 
-        public void LoadMinion(CharacterMaster playerMaster)
+        internal void LoadMinion(CharacterMaster playerMaster)
         {
             SceneDirector.onPostPopulateSceneServer += SpawnMinion;
 
@@ -52,7 +51,7 @@ namespace ProperSave.Data
 
                 NetworkServer.Spawn(minionGameObject);
 
-                inventory.LoadInventory(minionMaster);
+                inventory.LoadInventory(minionMaster.inventory);
             }
         }
     }

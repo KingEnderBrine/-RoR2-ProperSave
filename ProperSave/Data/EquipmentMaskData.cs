@@ -1,8 +1,5 @@
 ﻿using RoR2;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace ProperSave.Data
 {
@@ -15,7 +12,7 @@ namespace ProperSave.Data
             array = mask.array.ToArray();
         }
 
-        public void LoadData(out EquipmentMask mask)
+        public void LoadDataOut(out EquipmentMask mask)
         {
             mask = new EquipmentMask() { array = array.ToArray() };
         }

@@ -1,7 +1,8 @@
-﻿using RoR2;
+﻿using ProperSave.Data;
+using RoR2;
 using System.Runtime.Serialization;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class RunRngData
     {
@@ -12,14 +13,14 @@ namespace ProperSave.Data
         [DataMember(Name = "srg")]
         public RngData stageRngGenerator;
 
-        public RunRngData(Run run)
+        internal RunRngData(Run run)
         {
             runRng = new RngData(run.runRNG);
             nextStageRng = new RngData(run.nextStageRng);
             stageRngGenerator = new RngData(run.stageRngGenerator);
         }
 
-        public void LoadData(Run run)
+        internal void LoadData(Run run)
         {
             runRng.LoadDataOut(out run.runRNG);
             nextStageRng.LoadDataOut(out run.nextStageRng);

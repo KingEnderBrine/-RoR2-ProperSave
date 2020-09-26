@@ -1,19 +1,19 @@
-﻿using ProperSave.Data.Artifacts;
+﻿using ProperSave.SaveData.Artifacts;
 using System.Runtime.Serialization;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class ArtifactsData
     {
         [DataMember(Name = "ed")]
         public EnigmaData EnigmaData;
 
-        public ArtifactsData()
+        internal ArtifactsData()
         {
             EnigmaData = new EnigmaData();
         }
 
-        public void LoadData()
+        internal void LoadData()
         {
             EnigmaData.LoadData();
         }

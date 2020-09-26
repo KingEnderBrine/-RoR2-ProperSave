@@ -1,16 +1,14 @@
-﻿using R2API.Utils;
+﻿using ProperSave.Data;
 using RoR2;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class RunData
     {
@@ -44,22 +42,15 @@ namespace ProperSave.Data
         [DataMember(Name = "ta")]
         public int trialArtifact;
 
-        [IgnoreDataMember]
-        private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField("onRunStartGlobal", BindingFlags.NonPublic | BindingFlags.Static);
-        [IgnoreDataMember]
-        private static readonly MethodInfo onRuleBookUpdateMethod = typeof(Run).GetMethod("OnRuleBookUpdated", BindingFlags.NonPublic | BindingFlags.Instance);
-        [IgnoreDataMember]
-        private static readonly MethodInfo generateStageRNGMethod = typeof(Run).GetMethod("GenerateStageRNG", BindingFlags.NonPublic | BindingFlags.Instance);
-        [IgnoreDataMember]
-        private static readonly MethodInfo buildUnlockAvailabilityMethod = typeof(Run).GetMethod("BuildUnlockAvailability", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField(nameof(Run.onRunStartGlobal), BindingFlags.NonPublic | BindingFlags.Static);
         
-        public RunData()
+        internal RunData()
         {
             var run = Run.instance;
             seed = run.seed;
             difficulty = (int)run.selectedDifficulty;
 
-            var stopWatch = run.GetFieldValue<Run.RunStopwatch>("runStopwatch");
+            var stopWatch = run.runStopwatch;
             isPaused = stopWatch.isPaused;
             offsetFromFixedTime = stopWatch.offsetFromFixedTime;
             fixedTime = run.fixedTime;
@@ -73,18 +64,18 @@ namespace ProperSave.Data
             itemMask = new ItemMaskData(run.availableItems);
             equipmentMask = new EquipmentMaskData(run.availableEquipment);
 
-            runRng = ProperSave.PreStageRng;
+            runRng = Saving.PreStageRng;
 
-            eventFlags = run.GetFieldValue<HashSet<string>>("eventFlags").ToArray();
+            eventFlags = run.eventFlags.ToArray();
 
             var artifactController = UnityEngine.Object.FindObjectOfType<ArtifactTrialMissionController>();
-            trialArtifact = artifactController?.GetFieldValue<int>("currentArtifactIndex") ?? -1;
+            trialArtifact = artifactController?.currentArtifactIndex ?? -1;
         }
 
         //Upgraded copy of Run.Start
-        public void LoadData()
+        internal void LoadData()
         {
-            if (ProperSave.IsSSDefined)
+            if (ModSupport.IsSSLoaded)
             {
                 ShareSuiteMapTransion();
             }
@@ -95,7 +86,7 @@ namespace ProperSave.Data
 
             var instance = Run.instance;
 
-            onRuleBookUpdateMethod.Invoke(instance, new object[] { instance.GetFieldValue<NetworkRuleBook>("networkRuleBookComponent") });
+            instance.OnRuleBookUpdated(instance.networkRuleBookComponent);
 
             if (NetworkServer.active)
             {
@@ -104,17 +95,17 @@ namespace ProperSave.Data
                 instance.fixedTime = fixedTime;
                 instance.shopPortalCount = shopPortalCount;
 
-                var stopwatch = instance.GetFieldValue<Run.RunStopwatch>("runStopwatch");
-                stopwatch.offsetFromFixedTime = offsetFromFixedTime;
-                stopwatch.isPaused = isPaused;
-
-                instance.SetFieldValue("runStopwatch", stopwatch);
+                instance.runStopwatch = new Run.RunStopwatch
+                {
+                    offsetFromFixedTime = offsetFromFixedTime,
+                    isPaused = isPaused
+                };
 
                 runRng.LoadData(instance);
-                generateStageRNGMethod.Invoke(instance, null);
+                instance.GenerateStageRNG();
             }
 
-            instance.SetFieldValue("allowNewParticipants", true);
+            instance.allowNewParticipants = true;
             UnityEngine.Object.DontDestroyOnLoad(instance.gameObject);
 
             var onlyInstancesList = NetworkUser.readOnlyInstancesList;
@@ -122,7 +113,7 @@ namespace ProperSave.Data
             {
                 instance.OnUserAdded(onlyInstancesList[index]);
             }
-            instance.SetFieldValue("allowNewParticipants", false);
+            instance.allowNewParticipants = false;
 
             instance.stageClearCount = stageClearCount;
             if (NetworkServer.active)
@@ -131,10 +122,10 @@ namespace ProperSave.Data
                 NetworkManager.singleton.ServerChangeScene(sceneName);
             }
 
-            itemMask.LoadData(out instance.availableItems);
-            equipmentMask.LoadData(out instance.availableEquipment);
+            itemMask.LoadDataOut(out instance.availableItems);
+            equipmentMask.LoadDataOut(out instance.availableEquipment);
 
-            buildUnlockAvailabilityMethod.Invoke(instance, null);
+            instance.BuildUnlockAvailability();
             instance.BuildDropTable();
 
             foreach (var flag in eventFlags)

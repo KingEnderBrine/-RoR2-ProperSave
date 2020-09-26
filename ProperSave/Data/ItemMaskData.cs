@@ -1,9 +1,5 @@
-﻿using R2API.Utils;
-using RoR2;
-using System;
-using System.Collections.Generic;
+﻿using RoR2;
 using System.Linq;
-using System.Text;
 
 namespace ProperSave.Data
 {
@@ -16,7 +12,7 @@ namespace ProperSave.Data
             array = mask.array.ToArray();
         }
 
-        public void LoadData(out ItemMask mask)
+        public void LoadDataOut(out ItemMask mask)
         {
             mask = new ItemMask() { array = array.ToArray() };
         }

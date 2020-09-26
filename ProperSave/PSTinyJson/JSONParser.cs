@@ -1,11 +1,12 @@
-﻿using System;
+﻿using ProperSave.TinyJson;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace TinyJson {
+namespace PSTinyJson {
     // Really simple JSON parser in ~300 lines
     // - Attempts to parse JSON files with minimal GC allocation
     // - Nice and simple "[1,2,3]".FromJson<List<int>>() API
@@ -30,6 +31,10 @@ namespace TinyJson {
         [ThreadStatic] static Dictionary<Type, Dictionary<string, PropertyInfo>> propertyInfoCache;
 
         public static T FromJson<T>(this string json) {
+            return (T)json.FromJson(typeof(T));
+        }
+
+        public static object FromJson(this string json, Type type) {
             // Initialize, if needed, the ThreadStatic variables
             if (propertyInfoCache == null) propertyInfoCache = new Dictionary<Type, Dictionary<string, PropertyInfo>>();
             if (fieldInfoCache == null) fieldInfoCache = new Dictionary<Type, Dictionary<string, FieldInfo>>();
@@ -38,9 +43,11 @@ namespace TinyJson {
 
             //Remove all whitespace not within strings to make parsing simpler
             stringBuilder.Length = 0;
-            for (int i = 0; i < json.Length; i++) {
+            for (int i = 0; i < json.Length; i++)
+            {
                 char c = json[i];
-                if (c == '"') {
+                if (c == '"')
+                {
                     i = AppendUntilStringEnd(true, i, json);
                     continue;
                 }
@@ -51,7 +58,7 @@ namespace TinyJson {
             }
 
             //Parse the thing!
-            return (T)ParseValue(typeof(T), stringBuilder.ToString());
+            return ParseValue(type, stringBuilder.ToString());
         }
 
         static int AppendUntilStringEnd(bool appendEscapeCharacter, int startIdx, string json) {
@@ -310,9 +317,15 @@ namespace TinyJson {
                 FieldInfo fieldInfo;
                 PropertyInfo propertyInfo;
                 if (nameToField.TryGetValue(key, out fieldInfo))
-                    fieldInfo.SetValue(instance, ParseValue(fieldInfo.FieldType, value));
+                {
+                    var objectTypeAttribute = fieldInfo.GetCustomAttribute<ObjectTypeFromPropertyAttribute>();
+                    fieldInfo.SetValue(instance, ParseValue(objectTypeAttribute?.GetObjectType(instance) ?? fieldInfo.FieldType, value));
+                }
                 else if (nameToProperty.TryGetValue(key, out propertyInfo))
-                    propertyInfo.SetValue(instance, ParseValue(propertyInfo.PropertyType, value), null);
+                {
+                    var objectTypeAttribute = propertyInfo.GetCustomAttribute<ObjectTypeFromPropertyAttribute>();
+                    propertyInfo.SetValue(instance, ParseValue(objectTypeAttribute?.GetObjectType(instance) ?? propertyInfo.PropertyType, value), null);
+                }
             }
 
             return instance;

@@ -1,6 +1,6 @@
 ﻿namespace ProperSave
 {
-    public class LanguageConsts
+    internal class LanguageConsts
     {
         public const string PS_TITLE_CONTINUE_DESC = nameof(PS_TITLE_CONTINUE_DESC);
         public const string PS_TITLE_CONTINUE = nameof(PS_TITLE_CONTINUE);

@@ -8,12 +8,5 @@ namespace ProperSave.Data
         public int itemIndex;
         [DataMember(Name = "c")]
         public int count;
-
-        public ItemData() { }
-        public ItemData(int itemIndex, int count)
-        {
-            this.itemIndex = itemIndex;
-            this.count = count;
-        }
     }
 }

@@ -1,15 +1,13 @@
-﻿using R2API.Utils;
+﻿using ProperSave.Data;
 using RoR2;
 using RoR2.Stats;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using System.Xml.Linq;
 using UnityEngine;
 
-namespace ProperSave.Data
+namespace ProperSave.SaveData
 {
     public class PlayerData {
         [DataMember(Name = "si")]
@@ -41,15 +39,16 @@ namespace ProperSave.Data
         [DataMember(Name = "lc")]
         public uint lunarCoins;
 
-        public PlayerData(NetworkUser player) {
+        internal PlayerData(NetworkUser player) {
+            var master = player.master;
             steamId = player.Network_id.steamId.value;
 
             money = player.master.money;
-            inventory = new InventoryData(player.master);
-            loadout = new LoadoutData(player.master);
+            inventory = new InventoryData(master.inventory);
+            loadout = new LoadoutData(master.loadout);
             
             characterBodyName = player.master.bodyPrefab.name;
-            lunarCoinChanceMultiplier = player.masterController.GetFieldValue<float>("lunarCoinChanceMultiplier");
+            lunarCoinChanceMultiplier = player.masterController.lunarCoinChanceMultiplier;
             lunarCoins = player.lunarCoins;
 
             var tmpMinions = new List<MinionData>();
@@ -82,27 +81,28 @@ namespace ProperSave.Data
             }
         }
 
-        public void LoadPlayer(NetworkUser player) {
+        internal void LoadPlayer(NetworkUser player) {
+            var master = player.master;
             foreach(var minion in minions)
             {
-                minion.LoadMinion(player.master);
+                minion.LoadMinion(master);
             }
 
             var bodyPrefab = BodyCatalog.FindBodyPrefab(characterBodyName);
 
-            player.master.bodyPrefab = bodyPrefab;
+            master.bodyPrefab = bodyPrefab;
 
-            loadout.LoadData(player.master);
+            loadout.LoadData(master.loadout);
 
-            inventory.LoadInventory(player.master);
+            inventory.LoadInventory(master.inventory);
 
-            if (ProperSave.IsSSDefined)
+            if (ModSupport.IsSSLoaded)
             {
-                ProperSave.Instance.StartCoroutine(LoadShareSuiteMoney(money));
+                ProperSavePlugin.Instance.StartCoroutine(LoadShareSuiteMoney(money));
             }
             player.master.money = money;
 
-            player.masterController.SetFieldValue("lunarCoinChanceMultiplier", lunarCoinChanceMultiplier);
+            player.masterController.lunarCoinChanceMultiplier = lunarCoinChanceMultiplier;
             var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
             for (var i = 0; i < statsFields.Length; i++)
             {
@@ -115,7 +115,7 @@ namespace ProperSave.Data
                 stats.AddUnlockable(new UnlockableIndex(unlockableIndex));
             }
 
-            if (ProperSave.IsTLCDefined)
+            if (ModSupport.IsTLCLoaded || ModSupport.IsBDTLCLoaded)
             {
                 Stage.onStageStartGlobal += ResetLunarCoins;
                 void ResetLunarCoins(Stage stage)

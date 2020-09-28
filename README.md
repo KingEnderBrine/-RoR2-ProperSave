@@ -38,6 +38,10 @@ I tried to save all necessary data so that when you load the game would continue
 
 # Changelog
 
+**2.5.1**
+
+* Fixed an issue where after loading Monsoon run you sometimes didn't get mastery skin.
+
 **2.5.0**
 
 * Added mods support. Now any other dev can add data they want to be saved from their mods. 

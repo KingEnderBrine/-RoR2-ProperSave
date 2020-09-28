@@ -41,6 +41,8 @@ namespace ProperSave.SaveData
         public RunRngData runRng;
         [DataMember(Name = "ta")]
         public int trialArtifact;
+        [DataMember(Name = "rb")]
+        public RuleBookData ruleBook;
 
         private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField(nameof(Run.onRunStartGlobal), BindingFlags.NonPublic | BindingFlags.Static);
         
@@ -70,6 +72,8 @@ namespace ProperSave.SaveData
 
             var artifactController = UnityEngine.Object.FindObjectOfType<ArtifactTrialMissionController>();
             trialArtifact = artifactController?.currentArtifactIndex ?? -1;
+
+            ruleBook = new RuleBookData(run.ruleBook);
         }
 
         //Upgraded copy of Run.Start
@@ -86,7 +90,7 @@ namespace ProperSave.SaveData
 
             var instance = Run.instance;
 
-            instance.OnRuleBookUpdated(instance.networkRuleBookComponent);
+            instance.SetRuleBook(ruleBook.Load());
 
             if (NetworkServer.active)
             {

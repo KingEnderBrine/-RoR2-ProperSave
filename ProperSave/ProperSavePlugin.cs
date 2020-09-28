@@ -29,7 +29,7 @@ namespace ProperSave
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.5.0")]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.5.1")]
     [DisallowMultipleComponent]
     public class ProperSavePlugin : BaseUnityPlugin
     {

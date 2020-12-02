@@ -3,6 +3,7 @@ using RoR2;
 using System;
 using System.IO;
 using PSTinyJson;
+using UnityEngine.Networking;
 
 namespace ProperSave
 {
@@ -56,6 +57,10 @@ namespace ProperSave
 
         private static void StageOnStageStartGlobal(Stage stage)
         {
+            if (!NetworkServer.active)
+            {
+                return;
+            }
             if (Loading.FirstRunStage)
             {
                 Loading.FirstRunStage = false;

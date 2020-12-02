@@ -18,6 +18,9 @@
     <Reference Include="BiggerBazaar">
       <HintPath>..\..\CommonLibs\BiggerBazaar.dll</HintPath>
     </Reference>
+    <Reference Include="HGCSharpUtils">
+      <HintPath>D:\RoR2 Modding\CommonLibs\HGCSharpUtils.dll</HintPath>
+    </Reference>
     <Reference Include="MMHOOK_Assembly-CSharp">
       <HintPath>..\..\CommonLibs\MMHOOK_Assembly-CSharp.dll</HintPath>
     </Reference>

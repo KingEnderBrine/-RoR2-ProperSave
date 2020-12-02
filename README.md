@@ -37,6 +37,9 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.5.2**
+
+* Fixed an issue where the mod was trying to save while being a client in a multiplayer game.
 
 **2.5.1**
 

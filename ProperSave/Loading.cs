@@ -77,6 +77,10 @@ namespace ProperSave
                     CurrentSave.LoadArtifacts();
                     CurrentSave.LoadPlayers();
                 }
+                else
+                {
+                    ProperSavePlugin.CurrentSave = null;
+                }
 
                 return IsLoading;
             });

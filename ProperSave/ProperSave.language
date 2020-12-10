@@ -1,14 +1,20 @@
 ﻿{
-	"en": {
-    "PS_TITLE_CONTINUE_DESC": "Continue saved game",
-    "PS_TITLE_CONTINUE": "Continue",
-    "PS_TITLE_LOAD": "Load",
-    "PS_CHAT_SAVE": "<b>[ProperSave]</b> Game saved"
+  "en": {
+    "PROPER_SAVE_TITLE_CONTINUE_DESC": "Continue saved game",
+    "PROPER_SAVE_TITLE_CONTINUE": "Continue",
+    "PROPER_SAVE_TITLE_LOAD": "Load",
+    "PROPER_SAVE_CHAT_SAVE": "<b>[ProperSave]</b> The game saved (Stage: {0})",
+    "PROPER_SAVE_QUIT_DIALOG_SAVED": "\n\n<b>[ProperSave]</b> The game was saved at the start of the current stage",
+    "PROPER_SAVE_QUIT_DIALOG_SAVED_BEFORE": "\n\n<b>[ProperSave]</b> The game was saved {0} stage(s) ago",
+    "PROPER_SAVE_QUIT_DIALOG_NOT_SAVED": "\n\n<b>[ProperSave]</b> The game was not saved yet"
   },
   "RU": {
-    "PS_TITLE_CONTINUE_DESC": "Продолжить сохранённую игру",
-    "PS_TITLE_CONTINUE": "Продолжить",
-    "PS_TITLE_LOAD": "Загрузить",
-    "PS_CHAT_SAVE": "<b>[ProperSave]</b> Игра сохранена"
+    "PROPER_SAVE_TITLE_CONTINUE_DESC": "Продолжить сохранённую игру",
+    "PROPER_SAVE_TITLE_CONTINUE": "Продолжить",
+    "PROPER_SAVE_TITLE_LOAD": "Загрузить",
+    "PROPER_SAVE_CHAT_SAVE": "<b>[ProperSave]</b> Игра сохранена (Этап: {0})",
+    "PROPER_SAVE_QUIT_DIALOG_SAVED": "\n\n<b>[ProperSave]</b> Игра была сохранена в начале текущего этапа",
+    "PROPER_SAVE_QUIT_DIALOG_SAVED_BEFORE": "\n\n<b>[ProperSave]</b> Игра была сохранена {0} этапов назад",
+    "PROPER_SAVE_QUIT_DIALOG_NOT_SAVED": "\n\n<b>[ProperSave]</b> Игра пока не была сохранена"
   }
 }

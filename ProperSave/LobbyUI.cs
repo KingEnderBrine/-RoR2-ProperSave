@@ -64,10 +64,10 @@ namespace ProperSave
                 rectTransform.anchorMax = new Vector2(1F, 1.5F);
 
                 var buttonComponent = lobbyButton.GetComponent<HGButton>();
-                buttonComponent.hoverToken = LanguageConsts.PS_TITLE_CONTINUE_DESC;
+                buttonComponent.hoverToken = LanguageConsts.PROPER_SAVE_TITLE_CONTINUE_DESC;
 
                 var languageComponent = lobbyButton.GetComponent<LanguageTextMeshController>();
-                languageComponent.token = LanguageConsts.PS_TITLE_LOAD;
+                languageComponent.token = LanguageConsts.PROPER_SAVE_TITLE_LOAD;
 
                 buttonComponent.onClick = new Button.ButtonClickedEvent();
                 buttonComponent.onClick.AddListener(LoadOnInputEvent);
@@ -106,7 +106,7 @@ namespace ProperSave
                 glyph.actionName = "UISubmenuUp";
 
                 var description = lobbyGlyphAndDescription.transform.GetChild(1).GetComponent<LanguageTextMeshController>();
-                description.token = LanguageConsts.PS_TITLE_LOAD;
+                description.token = LanguageConsts.PROPER_SAVE_TITLE_LOAD;
 
                 for (var i = 1; i < lobbySubmenuLegend.transform.childCount; i++)
                 {

@@ -1,8 +1,12 @@
-﻿using ProperSave.SaveData;
+﻿using ProperSave.Components;
+using ProperSave.SaveData;
+using PSTinyJson;
 using RoR2;
 using RoR2.UI;
 using System;
 using System.IO;
+using System.Linq;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,6 +17,8 @@ namespace ProperSave
         private static GameObject lobbyButton;
         private static GameObject lobbySubmenuLegend;
         private static GameObject lobbyGlyphAndDescription;
+        private static TooltipProvider tooltipProvider;
+        private static GamepadTooltipProvider gamepadTooltipProvider;
 
         #region Buttons
         public static void RegisterHooks()
@@ -58,6 +64,8 @@ namespace ProperSave
                 }
 
                 lobbyButton.name = "[ProperSave] Load";
+
+                tooltipProvider = lobbyButton.AddComponent<TooltipProvider>();
 
                 var rectTransform = lobbyButton.GetComponent<RectTransform>();
                 rectTransform.anchorMin = new Vector2(1F, 1.5F);
@@ -116,12 +124,15 @@ namespace ProperSave
 
                 UpdateLobbyControls();
 
-                var gamepadInputEvent = self.gameObject.AddComponent<HGGamepadInputEvent>();
+                var gamepadInputEvent = self.gameObject.AddComponent<HoldGamepadInputEvent>();
                 gamepadInputEvent.actionName = "UISubmenuUp";
                 gamepadInputEvent.enabledObjectsIfActive = Array.Empty<GameObject>();
 
                 gamepadInputEvent.actionEvent = new UnityEngine.Events.UnityEvent();
                 gamepadInputEvent.actionEvent.AddListener(LoadOnInputEvent);
+
+                gamepadTooltipProvider = glyph.gameObject.AddComponent<GamepadTooltipProvider>();
+                gamepadTooltipProvider.inputEvent = gamepadInputEvent;
             }
             catch (Exception e)
             {
@@ -138,18 +149,31 @@ namespace ProperSave
 
         private static void UpdateLobbyControls(NetworkUser exceptUser = null)
         {
+            var metadata = SaveFileMetadata.GetCurrentLobbySaveMetadata(exceptUser);
             var interactable =
                 SteamworksLobbyManager.isInLobby == SteamworksLobbyManager.ownsLobby &&
-                File.Exists(SaveFileMetadata.GetCurrentLobbySaveMetadata(exceptUser)?.FilePath);
+                File.Exists(metadata?.FilePath);
+            var tooltipContent = metadata == null ? default : new TooltipContent
+            {
+                titleToken = LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_TITLE,
+                overrideBodyText = GetSaveDescription(metadata),
+                titleColor = Color.black,
+                disableBodyRichText = false
+            };
+
             try
             {
                 if (lobbyButton)
                 {
-                    var component = lobbyButton?.GetComponent<HGButton>();
+                    var component = lobbyButton.GetComponent<HGButton>();
                     if (component)
                     {
                         component.interactable = interactable;
                     }
+                }
+                if (tooltipProvider)
+                {
+                    tooltipProvider.SetContent(tooltipContent);
                 }
             }
             catch { }
@@ -165,8 +189,38 @@ namespace ProperSave
                     var descriptionText = lobbyGlyphAndDescription.transform.GetChild(1).GetComponent<HGTextMeshProUGUI>();
                     descriptionText.color = color;
                 }
+                if (gamepadTooltipProvider)
+                {
+                    gamepadTooltipProvider.SetContent(tooltipContent);
+                }
             }
             catch { }
+        }
+
+        private static string GetSaveDescription(SaveFileMetadata saveMetadata)
+        {
+            var saveJSON = File.ReadAllText(saveMetadata.FilePath);
+            var save = JSONParser.FromJson<SaveFile>(saveJSON);
+
+            var builder = new StringBuilder();
+            foreach (var playerData in save.PlayersData)
+            {
+                var networkUser = NetworkUser.readOnlyInstancesList.FirstOrDefault(user => user.Network_id.steamId.value == playerData.steamId);
+                var body = BodyCatalog.FindBodyPrefab(playerData.characterBodyName);
+                var survivor = SurvivorCatalog.FindSurvivorDefFromBody(body);
+                builder.Append(Language.GetStringFormatted(LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_DESCRIPTION_CHARACTER, networkUser?.userName, survivor != null ? Language.GetString(survivor.displayNameToken) : ""));
+            }
+
+            var stage = SceneCatalog.GetSceneDefFromSceneName(save.RunData.sceneName);
+            var difficulty = DifficultyCatalog.GetDifficultyDef((DifficultyIndex)save.RunData.difficulty);
+
+            return Language.GetStringFormatted(
+                LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_DESCRIPTION_BODY,
+                builder.ToString(),
+                stage ? Language.GetString(stage.nameToken) : "",
+                (save.RunData.stageClearCount + 1).ToString(),
+                $"{((int)save.RunData.offsetFromFixedTime / 60):00}:{(save.RunData.offsetFromFixedTime % 60):00}",
+                difficulty != null ? Language.GetString(difficulty.nameToken) : "");
         }
         #endregion
     }

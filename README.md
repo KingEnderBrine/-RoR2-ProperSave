@@ -37,6 +37,10 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.6.1**
+
+* Fixed time display in lobby save info.
+
 **2.6.0**
 
 * Added tooltip with short save info when hower over `Load` button or hold load button on a gamepad.

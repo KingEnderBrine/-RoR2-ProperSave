@@ -213,13 +213,14 @@ namespace ProperSave
 
             var stage = SceneCatalog.GetSceneDefFromSceneName(save.RunData.sceneName);
             var difficulty = DifficultyCatalog.GetDifficultyDef((DifficultyIndex)save.RunData.difficulty);
+            var time = save.RunData.isPaused ? (int)save.RunData.offsetFromFixedTime : (int)(save.RunData.fixedTime + save.RunData.offsetFromFixedTime);
 
             return Language.GetStringFormatted(
                 LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_DESCRIPTION_BODY,
                 builder.ToString(),
                 stage ? Language.GetString(stage.nameToken) : "",
                 (save.RunData.stageClearCount + 1).ToString(),
-                $"{((int)save.RunData.offsetFromFixedTime / 60):00}:{(save.RunData.offsetFromFixedTime % 60):00}",
+                $"{(time / 60):00}:{(time % 60):00}",
                 difficulty != null ? Language.GetString(difficulty.nameToken) : "");
         }
         #endregion

@@ -144,7 +144,17 @@ namespace ProperSave
 
         private static void LoadOnInputEvent()
         {
-            RoR2.Console.instance?.SubmitCmd(null, "ps_load_lobby");
+            if (Run.instance != null)
+            {
+                ProperSavePlugin.InstanceLogger.LogInfo("Can't load while run is active");
+                return;
+            }
+            if (Loading.IsLoading)
+            {
+                ProperSavePlugin.InstanceLogger.LogInfo("Already loading");
+                return;
+            }
+            ProperSavePlugin.Instance.StartCoroutine(Loading.LoadLobby());
         }
 
         private static void UpdateLobbyControls(NetworkUser exceptUser = null)

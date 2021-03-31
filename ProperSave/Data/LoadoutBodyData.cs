@@ -16,7 +16,7 @@ namespace ProperSave.Data
 
             public LoadoutBodyData(Loadout.BodyLoadoutManager.BodyLoadout bodyLoadout)
             {
-                bodyIndex = bodyLoadout.bodyIndex;
+                bodyIndex = (int)bodyLoadout.bodyIndex;
                 skinPreference = bodyLoadout.skinPreference;
                 skillPreferences = bodyLoadout.skillPreferences;
             }
@@ -25,7 +25,7 @@ namespace ProperSave.Data
             {
                 return new Loadout.BodyLoadoutManager.BodyLoadout
                 {
-                    bodyIndex = bodyIndex,
+                    bodyIndex = (BodyIndex)bodyIndex,
                     skinPreference = skinPreference,
                     skillPreferences = skillPreferences
                 };

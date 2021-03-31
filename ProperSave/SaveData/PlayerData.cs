@@ -77,7 +77,7 @@ namespace ProperSave.SaveData
             for (var i = 0; i < stats.GetUnlockableCount(); i++)
             {
                 var unlockable = stats.GetUnlockableIndex(i);
-                statsUnlockables[i] = unlockable.value;
+                statsUnlockables[i] = (int)unlockable;
             }
         }
 
@@ -112,7 +112,7 @@ namespace ProperSave.SaveData
             for (var i = 0; i < statsUnlockables.Length; i++)
             {
                 var unlockableIndex = statsUnlockables[i];
-                stats.AddUnlockable(new UnlockableIndex(unlockableIndex));
+                stats.AddUnlockable((UnlockableIndex)unlockableIndex);
             }
 
             if (ModSupport.IsTLCLoaded || ModSupport.IsBDTLCLoaded)

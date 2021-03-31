@@ -1,7 +1,5 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
-using R2API;
-using R2API.Utils;
 using System.Collections.Generic;
 using System.Security;
 using System.Security.Permissions;
@@ -9,10 +7,10 @@ using UnityEngine;
 
 [module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
+[assembly: R2API.Utils.ManualNetworkRegistration]
+[assembly: EnigmaticThunder.Util.ManualNetworkRegistration]
 namespace ProperSave
 {
-    [R2APISubmoduleDependency(nameof(LanguageAPI), nameof(CommandHelper))]
-
     //Support for BlazingDrummer's TemporaryLunarCoins
     [BepInDependency(ModSupport.BDTemporaryLunarCoinsGUID, BepInDependency.DependencyFlags.SoftDependency)]
     //Support for TemporaryLunarCoins
@@ -27,10 +25,7 @@ namespace ProperSave
     //Support for ShareSuit 
     [BepInDependency(ModSupport.ShareSuiteGUID, BepInDependency.DependencyFlags.SoftDependency)]
 
-    [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
-    [BepInDependency("com.bepis.r2api", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.6.1")]
-    [DisallowMultipleComponent]
+    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.7.0")]
     public class ProperSavePlugin : BaseUnityPlugin
     {
         internal static ProperSavePlugin Instance { get; private set; }
@@ -53,14 +48,12 @@ namespace ProperSave
 
             LobbyUI.RegisterHooks();
 
-            Commands.RegisterCommands();
+            On.RoR2.Language.LoadStrings += LanguageConsts.OnLoadStrings;
         }
 
         private void Destroy()
         {
             Instance = null;
-
-            Commands.UnregisterCommands();
 
             ModSupport.UnregisterHooks();
 
@@ -68,6 +61,8 @@ namespace ProperSave
             Loading.UnregisterHooks();
 
             LobbyUI.UnregisterHooks();
+
+            On.RoR2.Language.LoadStrings -= LanguageConsts.OnLoadStrings;
         }
     }
 }

@@ -2,68 +2,65 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="set &quot;pluginsDir=C:\Users\Admin\Desktop\F\RoR2 Modding\RoR2\Risk of Rain 2\BepInEx\plugins&quot;&#xD;&#xA;if not exist &quot;%25pluginsDir%25&quot; exit&#xD;&#xA;&#xD;&#xA;set &quot;dir=%25pluginsDir%25\$(TargetName)&quot;&#xD;&#xA;if not exist &quot;%25dir%25&quot; mkdir &quot;%25dir%25&quot;&#xD;&#xA;xcopy /Y /D &quot;$(TargetPath)&quot; &quot;%25dir%25&quot;&#xD;&#xA;xcopy /Y /D &quot;$(ProjectDir)*.language&quot; &quot;%25dir%25&quot;" />
-  </Target>
-  
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\CommonLibs\Assembly-CSharp.refstub.dll</HintPath>
-    </Reference>
-    <Reference Include="BepInEx">
-      <HintPath>..\..\CommonLibs\BepInEx.dll</HintPath>
-    </Reference>
+    <PackageReference Include="BepInEx.Analyzers" Version="1.0.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="BepInEx.Core" Version="5.4.19" />
+    <PackageReference Include="RiskOfRain2.GameLibs" Version="1.2.2-r.0" />
+    <PackageReference Include="UnityEngine.Modules" Version="2019.4.26" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="BiggerBazaar">
-      <HintPath>..\..\CommonLibs\BiggerBazaar.dll</HintPath>
+      <HintPath>..\Libs\BiggerBazaar.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="HGCSharpUtils">
-      <HintPath>..\..\CommonLibs\HGCSharpUtils.refstub.dll</HintPath>
+    <Reference Include="MMHOOK_RoR2">
+      <HintPath>..\Libs\MMHOOK_RoR2.dll</HintPath>
+      <Private>false</Private>
     </Reference>
-    <Reference Include="MMHOOK_Assembly-CSharp">
-      <HintPath>..\..\CommonLibs\MMHOOK_Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil">
-      <HintPath>..\..\CommonLibs\Mono.Cecil.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>..\..\CommonLibs\MonoMod.RuntimeDetour.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.Utils">
-      <HintPath>..\..\CommonLibs\MonoMod.Utils.dll</HintPath>
-    </Reference>
-    <Reference Include="Rewired_Core">
-      <HintPath>..\..\CommonLibs\Rewired_Core.dll</HintPath>
+    <Reference Include="EOS">
+      <HintPath>..\Libs\EOS.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="ShareSuite">
-      <HintPath>..\..\CommonLibs\ShareSuite.dll</HintPath>
-    </Reference>
-    <Reference Include="StartingItemsGUI">
-      <HintPath>..\..\CommonLibs\StartingItemsGUI.dll</HintPath>
-    </Reference>
-    <Reference Include="TemporaryLunarCoins">
-      <HintPath>..\..\CommonLibs\TemporaryLunarCoins.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.TextMeshPro">
-      <HintPath>..\..\CommonLibs\Unity.TextMeshPro.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\CommonLibs\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\CommonLibs\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.Networking">
-      <HintPath>..\..\CommonLibs\UnityEngine.Networking.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\CommonLibs\UnityEngine.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="Zio">
-      <HintPath>..\..\CommonLibs\Zio.dll</HintPath>
+      <HintPath>..\Libs\ShareSuite.dll</HintPath>
+      <Private>false</Private>
     </Reference>
   </ItemGroup>
-  
-  <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
+
+  <ItemGroup>
+    <None Update="LanguageConsts.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>LanguageConsts.cs</LastGenOutput>
+    </None>
+    <None Update="Language\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="LanguageConsts.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>LanguageConsts.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <Target Name="UpdateVerison" AfterTargets="AfterBuild">
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="AssemblyInfo" />
+    </GetAssemblyIdentity>
+    <Exec Condition="'$(OS)' == 'Windows_NT'" Command="powershell -Command &quot;(gc ../thunderstore.toml) -replace '(versionNumber\s*=\s*)\&quot;.*?\&quot;', '$1\&quot;$([System.Version]::Parse(%(AssemblyInfo.Version)).ToString(3))\&quot;' | Out-File ../thunderstore.toml&quot;" />
+    <Exec Condition="'$(OS)' == 'Unix'" Command="sed -i -E &quot;s/(versionNumber\s*=\s*)\&quot;.*?\&quot;/\1\&quot;$([System.Version]::Parse(%(AssemblyInfo.Version)).ToString(3))\&quot;/&quot; ../thunderstore.toml" />
+  </Target>
 </Project>

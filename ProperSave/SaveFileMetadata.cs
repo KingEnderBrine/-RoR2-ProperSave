@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using PSTinyJson;
+using ProperSave.Data;
 
 namespace ProperSave
 {
@@ -15,7 +16,7 @@ namespace ProperSave
         [DataMember(Name = "upi")]
         public string UserProfileId { get; set; }
         [DataMember(Name = "si")]
-        public ulong[] SteamIds { get; set; }
+        public UserIDData[] UserIds { get; set; }
         [DataMember(Name = "gm")]
         public GameModeIndex GameMode { get; set; } = 0;
 
@@ -34,7 +35,7 @@ namespace ProperSave
         {
             return new SaveFileMetadata
             {
-                SteamIds = NetworkUser.readOnlyInstancesList.ToArray().Select(el => el.Network_id.steamId.value).ToArray(),
+                UserIds = NetworkUser.readOnlyInstancesList.ToArray().Select(el => new UserIDData(el.Network_id.steamId)).ToArray(),
                 UserProfileId = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName,
                 GameMode = Run.instance.gameModeIndex
             };
@@ -60,9 +61,9 @@ namespace ProperSave
             if (usersCount == 1)
             {
                 var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
-                return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.SteamIds.Length == 1 && el.GameMode == gameMode);
+                return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.UserIds.Length == 1 && el.GameMode == gameMode);
             }
-            return SavesMetadata.FirstOrDefault(el => el.SteamIds.DifferenceCount(users) == 0 && el.GameMode == gameMode);
+            return SavesMetadata.FirstOrDefault(el => el.UserIds.DifferenceCount(users) == 0 && el.GameMode == gameMode);
         }
 
         internal static void PopulateSavesMetadata()

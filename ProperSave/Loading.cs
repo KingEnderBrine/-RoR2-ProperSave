@@ -95,18 +95,19 @@ namespace ProperSave
                 ProperSavePlugin.InstanceLogger.LogInfo("PreGameController instance not found");
                 yield break;
             }
-            if (GameNetworkManager.singleton?.desiredHost.hostingParameters.listen == true && !SteamworksLobbyManager.ownsLobby)
+            if (NetworkManagerSystem.singleton?.desiredHost.hostingParameters.listen == true && !PlatformSystems.lobbyManager.ownsLobby)
             {
                 ProperSavePlugin.InstanceLogger.LogInfo("You must be a lobby leader to load the game");
                 yield break;
             }
-            var metadata = SaveFileMetadata.GetCurrentLobbySaveMetadata();
 
+            var metadata = SaveFileMetadata.GetCurrentLobbySaveMetadata();
             if (metadata == null)
             {
                 ProperSavePlugin.InstanceLogger.LogInfo("Save file for current users is not found");
                 yield break;
             }
+
             var filePath = metadata.FilePath;
             if (!File.Exists(filePath))
             {
@@ -119,7 +120,7 @@ namespace ProperSave
             ProperSavePlugin.CurrentSave.SaveFileMeta = metadata;
             IsLoading = true;
 
-            PreGameController.instance.StartLaunch();
+            PreGameController.instance.StartRun();
         }
     }
 }

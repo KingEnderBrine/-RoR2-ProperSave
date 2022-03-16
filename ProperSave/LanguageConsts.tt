@@ -1,0 +1,39 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Text.Json" #>
+<#@ assembly name="System.Memory" #>
+<#@ assembly name="netstandard" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Text.Json" #>
+<#@ output extension=".cs" #>
+<#
+    var projectDirectory = Path.GetDirectoryName(Host.TemplateFile);
+    var projectName = Path.GetFileName(projectDirectory);
+#>
+namespace <#= projectName #>
+{
+    public static class LanguageConsts
+    {
+<# 
+    var uniqueTokens = new HashSet<string>();
+    foreach (var file in Directory.GetFiles(Path.Combine(projectDirectory, "Language"), "tokens.json", SearchOption.AllDirectories))
+    {
+        var json = JsonDocument.Parse(File.ReadAllText(file));
+        foreach (var property in json.RootElement.GetProperty("strings").EnumerateObject())
+        {
+            uniqueTokens.Add(property.Name);
+        }
+    }
+
+    foreach (var token in uniqueTokens)
+    {
+#>
+        public static readonly string <#= token #> = nameof(<#= token #>);
+<#
+    }
+#>
+    }
+}

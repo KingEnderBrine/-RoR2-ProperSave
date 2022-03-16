@@ -1,4 +1,6 @@
 ﻿using ProperSave.Data;
+using ProperSave.SaveData.Runs;
+using ProperSave.TinyJson;
 using RoR2;
 using System;
 using System.Linq;
@@ -43,6 +45,11 @@ namespace ProperSave.SaveData
         public int trialArtifact;
         [DataMember(Name = "rb")]
         public RuleBookData ruleBook;
+        [DataMember(Name = "trdt")]
+        public string typeRunDataType;
+        [DataMember(Name = "trd")]
+        [DiscoverObjectType(nameof(typeRunDataType))]
+        public ITypedRunData typedRunData;
 
         private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField(nameof(Run.onRunStartGlobal), BindingFlags.NonPublic | BindingFlags.Static);
         
@@ -59,7 +66,7 @@ namespace ProperSave.SaveData
 
             stageClearCount = run.stageClearCount;
             sceneName = SceneManager.GetActiveScene().name;
-            nextSceneName = run.nextStageScene.ChooseSceneName();
+            nextSceneName = run.nextStageScene.cachedName;
 
             shopPortalCount = run.shopPortalCount;
 
@@ -74,15 +81,19 @@ namespace ProperSave.SaveData
             trialArtifact = artifactController?.currentArtifactIndex ?? -1;
 
             ruleBook = new RuleBookData(run.ruleBook);
+
+            if (run is InfiniteTowerRun)
+            {
+                typedRunData = new InfiniteTowerTypedRunData();
+                typeRunDataType = typeof(InfiniteTowerTypedRunData).AssemblyQualifiedName;
+            }
         }
 
         //Upgraded copy of Run.Start
         internal void LoadData()
         {
-            if (ModSupport.IsSSLoaded)
-            {
-                ShareSuiteMapTransion();
-            }
+            ModSupport.ShareSuiteMapTransition();
+
             if (trialArtifact != -1)
             {
                 ArtifactTrialMissionController.trialArtifact = ArtifactCatalog.GetArtifactDef((ArtifactIndex)trialArtifact);
@@ -107,6 +118,7 @@ namespace ProperSave.SaveData
 
                 runRng.LoadData(instance);
                 instance.GenerateStageRNG();
+                typedRunData?.Load();
             }
 
             instance.allowNewParticipants = true;
@@ -144,12 +156,6 @@ namespace ProperSave.SaveData
                     handler.Method.Invoke(handler.Target, new object[] { instance });
                 }
             }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        private void ShareSuiteMapTransion()
-        {
-            ShareSuite.MoneySharingHooks.MapTransitionActive = true;
         }
     }
 }

@@ -11,7 +11,7 @@ namespace ProperSave.SaveData
 {
     public class PlayerData {
         [DataMember(Name = "si")]
-        public ulong steamId;
+        public UserIDData userId;
 
         [DataMember(Name = "m")]
         public uint money;
@@ -41,7 +41,7 @@ namespace ProperSave.SaveData
 
         internal PlayerData(NetworkUser player) {
             var master = player.master;
-            steamId = player.Network_id.steamId.value;
+            userId = new UserIDData(player.Network_id.steamId);
 
             money = player.master.money;
             inventory = new InventoryData(master.inventory);
@@ -96,10 +96,8 @@ namespace ProperSave.SaveData
 
             inventory.LoadInventory(master.inventory);
 
-            if (ModSupport.IsSSLoaded)
-            {
-                ProperSavePlugin.Instance.StartCoroutine(LoadShareSuiteMoney(money));
-            }
+            ModSupport.LoadShareSuiteMoney(money);
+
             player.master.money = money;
 
             player.masterController.lunarCoinChanceMultiplier = lunarCoinChanceMultiplier;
@@ -114,24 +112,6 @@ namespace ProperSave.SaveData
                 var unlockableIndex = statsUnlockables[i];
                 stats.AddUnlockable((UnlockableIndex)unlockableIndex);
             }
-
-            if (ModSupport.IsTLCLoaded || ModSupport.IsBDTLCLoaded)
-            {
-                Stage.onStageStartGlobal += ResetLunarCoins;
-                void ResetLunarCoins(Stage stage)
-                {
-                    Stage.onStageStartGlobal -= ResetLunarCoins;
-                    player.DeductLunarCoins(player.lunarCoins);
-                    player.AwardLunarCoins(lunarCoins);
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-        private IEnumerator LoadShareSuiteMoney(uint money)
-        {
-            yield return new WaitUntil(() => !ShareSuite.MoneySharingHooks.MapTransitionActive);
-            ShareSuite.MoneySharingHooks.SharedMoneyValue = (int)money;
         }
     }
 }

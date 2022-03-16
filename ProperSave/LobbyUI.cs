@@ -161,7 +161,7 @@ namespace ProperSave
         {
             var metadata = SaveFileMetadata.GetCurrentLobbySaveMetadata(exceptUser);
             var interactable =
-                SteamworksLobbyManager.isInLobby == SteamworksLobbyManager.ownsLobby &&
+                PlatformSystems.lobbyManager.isInLobby == PlatformSystems.lobbyManager.ownsLobby &&
                 File.Exists(metadata?.FilePath);
             var tooltipContent = metadata == null ? default : new TooltipContent
             {
@@ -215,7 +215,7 @@ namespace ProperSave
             var builder = new StringBuilder();
             foreach (var playerData in save.PlayersData)
             {
-                var networkUser = NetworkUser.readOnlyInstancesList.FirstOrDefault(user => user.Network_id.steamId.value == playerData.steamId);
+                var networkUser = NetworkUser.readOnlyInstancesList.FirstOrDefault(user => user.Network_id.steamId == playerData.userId.Load());
                 var body = BodyCatalog.FindBodyPrefab(playerData.characterBodyName);
                 var survivor = SurvivorCatalog.FindSurvivorDefFromBody(body);
                 builder.Append(Language.GetStringFormatted(LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_DESCRIPTION_CHARACTER, networkUser?.userName, survivor != null ? Language.GetString(survivor.displayNameToken) : ""));

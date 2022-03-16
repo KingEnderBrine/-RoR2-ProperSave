@@ -1,40 +1,37 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
+using RoR2;
 using System.Collections.Generic;
-using System.Security;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Security.Permissions;
 using UnityEngine;
 
-[module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
-[assembly: R2API.Utils.ManualNetworkRegistration]
-[assembly: EnigmaticThunder.Util.ManualNetworkRegistration]
+[assembly: AssemblyVersion(ProperSave.ProperSavePlugin.Version)]
 namespace ProperSave
 {
-    //Support for BlazingDrummer's TemporaryLunarCoins
-    [BepInDependency(ModSupport.BDTemporaryLunarCoinsGUID, BepInDependency.DependencyFlags.SoftDependency)]
-    //Support for TemporaryLunarCoins
-    [BepInDependency(ModSupport.TemporaryLunarCoinsGUID, BepInDependency.DependencyFlags.SoftDependency)]
-
-    //Support for StartingItemsGUI
-    [BepInDependency(ModSupport.StartingItemsGUIGUID, BepInDependency.DependencyFlags.SoftDependency)]
-
     //Support for BiggerBazaar
     [BepInDependency(ModSupport.BiggerBazaarGUID, BepInDependency.DependencyFlags.SoftDependency)]
 
     //Support for ShareSuit 
     [BepInDependency(ModSupport.ShareSuiteGUID, BepInDependency.DependencyFlags.SoftDependency)]
 
-    [BepInPlugin("com.KingEnderBrine.ProperSave", "Proper Save", "2.7.0")]
+    [BepInPlugin(GUID, Name, Version)]
     public class ProperSavePlugin : BaseUnityPlugin
     {
+        public const string GUID = "com.KingEnderBrine.ProperSave";
+        public const string Name = "Proper Save";
+        public const string Version = "2.8.0";
+
         internal static ProperSavePlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger => Instance?.Logger;
 
         internal static string SavesDirectory { get; } = System.IO.Path.Combine(Application.persistentDataPath, "ProperSave", "Saves");
         internal static SaveFile CurrentSave { get; set; }
 
-        private void Awake()
+        private void Start()
         {
             Instance = this;
 
@@ -48,7 +45,15 @@ namespace ProperSave
 
             LobbyUI.RegisterHooks();
 
-            On.RoR2.Language.LoadStrings += LanguageConsts.OnLoadStrings;
+#warning Fix for language, remove when next update is out
+            if (RoR2Application.GetBuildId() == "1.2.2.0")
+            {
+                On.RoR2.Language.SetFolders += LanguageSetFolders;
+            }
+            else
+            {
+                Language.collectLanguageRootFolders += CollectLanguageRootFolders;
+            }
         }
 
         private void Destroy()
@@ -62,7 +67,27 @@ namespace ProperSave
 
             LobbyUI.UnregisterHooks();
 
-            On.RoR2.Language.LoadStrings -= LanguageConsts.OnLoadStrings;
+#warning Fix for language, remove when next update is out
+            if (RoR2Application.GetBuildId() == "1.2.2.0")
+            {
+                On.RoR2.Language.SetFolders -= LanguageSetFolders;
+            }
+            else
+            {
+                Language.collectLanguageRootFolders -= CollectLanguageRootFolders;
+            }
+        }
+
+#warning Fix for language, remove when next update is out
+        private void LanguageSetFolders(On.RoR2.Language.orig_SetFolders orig, Language self, IEnumerable<string> newFolders)
+        {
+            var dirs = Directory.EnumerateDirectories(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Info.Location), "Language"), self.name);
+            orig(self, newFolders.Union(dirs));
+        }
+
+        public void CollectLanguageRootFolders(List<string> folders)
+        {
+            folders.Add(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Info.Location), "Language"));
         }
     }
 }

@@ -7,12 +7,14 @@ using UnityEngine.Networking;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using RoR2.UI;
+using ProperSave.Data;
 
 namespace ProperSave
 {
     internal static class Saving
     {
         internal static RunRngData PreStageRng { get; private set; }
+        internal static RngData PreStageInfiniteTowerSafeWardRng { get; private set; }
 
         internal static void RegisterHooks()
         {
@@ -40,6 +42,10 @@ namespace ProperSave
         private static void RunGenerateStageRNG(On.RoR2.Run.orig_GenerateStageRNG orig, Run self)
         {
             PreStageRng = new RunRngData(Run.instance);
+            if (self is InfiniteTowerRun infiniteTowerRun)
+            {
+                PreStageInfiniteTowerSafeWardRng = new RngData(infiniteTowerRun.safeWardRng);
+            }
             orig(self);
         }
 
@@ -72,7 +78,7 @@ namespace ProperSave
                 Loading.FirstRunStage = false;
                 return;
             }
-            if (stage.sceneDef.baseSceneName == "outro")
+            if (stage.sceneDef.sceneType == SceneType.Menu || stage.sceneDef.sceneType == SceneType.Cutscene)
             {
                 return;
             }

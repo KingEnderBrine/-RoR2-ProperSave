@@ -7,7 +7,7 @@ Only the host must have this mod for it to work.
 A `Load` button will be active if you are host and was found suitable save file (if save file has the same set of players as in the current lobby).
 
 # Game modes support
-Each game mode (for now `Classic` and `Eclipse`) has it's own save files, so that you can switch between game modes and not losing your progress.
+Each game mode (`Classic`, `Eclipse`, `Simulacrum`) has it's own save files, so that you can switch between game modes and not losing your progress.
 
 # For mod developers
 #### Saving
@@ -37,6 +37,11 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.8.0**
+
+* Fixes for `Survivors of the Void` update.
+* `Simulacrum` support
+
 **2.7.0**
 
 * Remove r2api dependency

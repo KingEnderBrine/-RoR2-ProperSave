@@ -9,7 +9,7 @@ namespace ProperSave.Data
         public string ObjectType { get; set; }
 
         [DataMember(Name = "v")]
-        [ObjectTypeFromProperty(nameof(ObjectType))]
+        [DiscoverObjectType(nameof(ObjectType))]
         public object Value { get; set; }
     }
 }

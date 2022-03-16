@@ -318,12 +318,12 @@ namespace PSTinyJson {
                 PropertyInfo propertyInfo;
                 if (nameToField.TryGetValue(key, out fieldInfo))
                 {
-                    var objectTypeAttribute = fieldInfo.GetCustomAttribute<ObjectTypeFromPropertyAttribute>();
+                    var objectTypeAttribute = fieldInfo.GetCustomAttribute<DiscoverObjectTypeAttribute>();
                     fieldInfo.SetValue(instance, ParseValue(objectTypeAttribute?.GetObjectType(instance) ?? fieldInfo.FieldType, value));
                 }
                 else if (nameToProperty.TryGetValue(key, out propertyInfo))
                 {
-                    var objectTypeAttribute = propertyInfo.GetCustomAttribute<ObjectTypeFromPropertyAttribute>();
+                    var objectTypeAttribute = propertyInfo.GetCustomAttribute<DiscoverObjectTypeAttribute>();
                     propertyInfo.SetValue(instance, ParseValue(objectTypeAttribute?.GetObjectType(instance) ?? propertyInfo.PropertyType, value), null);
                 }
             }

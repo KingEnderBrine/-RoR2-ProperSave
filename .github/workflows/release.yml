@@ -1,0 +1,26 @@
+name: Thunderstore Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  
+    steps:
+          
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - uses: actions/setup-dotnet@v1.7.2
+    - name: Build
+      run: dotnet build . --configuration Release --output ./ReleaseOutput
+
+    - name: Install TCLI
+      run: dotnet tool install --global tcli --version 0.1.4
+
+    - name: Publish to thunderstore.io
+      run: tcli publish --token ${{ secrets.TCLI_AUTH_TOKEN }} --config-path ./thunderstore.toml

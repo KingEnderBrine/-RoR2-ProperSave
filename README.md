@@ -37,6 +37,11 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.8.1**
+
+* Fixed an issue where loading a run right after launching the game would result in incorrect prices for chest, terminals, etc.
+* Fixed an issue where info about disconnected players wouldn't be saved resulting in, essentially, lost runs for multiplayer with friends 
+
 **2.8.0**
 
 * Fixes for `Survivors of the Void` update.

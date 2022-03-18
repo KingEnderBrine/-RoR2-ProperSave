@@ -35,8 +35,13 @@ namespace ProperSave
             ArtifactsData = new ArtifactsData();
             PlayersData = new List<PlayerData>();
 
-            foreach (var item in NetworkUser.readOnlyInstancesList) {
-                PlayersData.Add(new PlayerData(item));
+            foreach (var item in PlayerCharacterMasterController.instances) {
+                LostNetworkUser lostUser = null;
+                if (!item.networkUser && !LostNetworkUser.TryGetUser(item.master, out lostUser))
+                {
+                    continue;
+                }
+                PlayersData.Add(new PlayerData(item, lostUser));
             }
 
             var gatheredData = new Dictionary<string, object>();

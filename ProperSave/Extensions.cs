@@ -8,12 +8,12 @@ namespace ProperSave
         public static int DifferenceCount<T>(this IEnumerable<T> collection, IEnumerable<T> second)
         {
             var secondCopy = second.ToList();
-            var count = collection.Count();
+            var count = 0;
             foreach (var element in collection)
             {
-                if (secondCopy.Remove(element))
+                if (!secondCopy.Remove(element))
                 {
-                    count--;
+                    count++;
                 }
             }
             count += secondCopy.Count;

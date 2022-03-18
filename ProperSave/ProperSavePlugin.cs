@@ -23,7 +23,7 @@ namespace ProperSave
     {
         public const string GUID = "com.KingEnderBrine.ProperSave";
         public const string Name = "Proper Save";
-        public const string Version = "2.8.0";
+        public const string Version = "2.8.1";
 
         internal static ProperSavePlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger => Instance?.Logger;
@@ -44,6 +44,8 @@ namespace ProperSave
             Loading.RegisterHooks();
 
             LobbyUI.RegisterHooks();
+
+            LostNetworkUser.Subscribe();
 
 #warning Fix for language, remove when next update is out
             if (RoR2Application.GetBuildId() == "1.2.2.0")
@@ -66,6 +68,8 @@ namespace ProperSave
             Loading.UnregisterHooks();
 
             LobbyUI.UnregisterHooks();
+
+            LostNetworkUser.Unsubscribe();
 
 #warning Fix for language, remove when next update is out
             if (RoR2Application.GetBuildId() == "1.2.2.0")

@@ -1,11 +1,8 @@
 ﻿using ProperSave.Data;
 using RoR2;
 using RoR2.Stats;
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
-using UnityEngine;
 
 namespace ProperSave.SaveData
 {
@@ -39,17 +36,27 @@ namespace ProperSave.SaveData
         [DataMember(Name = "lc")]
         public uint lunarCoins;
 
-        internal PlayerData(NetworkUser player) {
+        internal PlayerData(PlayerCharacterMasterController player, LostNetworkUser lostNetworkUser = null) {
             var master = player.master;
-            userId = new UserIDData(player.Network_id.steamId);
+            var networkUser = player.networkUser;
+
+            if (lostNetworkUser != null)
+            {
+                userId = new UserIDData(lostNetworkUser.userID);
+                lunarCoins = lostNetworkUser.lunarCoins;
+            }
+            else
+            {
+                userId = new UserIDData(networkUser.Network_id.steamId);
+                lunarCoins = networkUser.lunarCoins;
+            }
 
             money = player.master.money;
             inventory = new InventoryData(master.inventory);
             loadout = new LoadoutData(master.loadout);
             
             characterBodyName = player.master.bodyPrefab.name;
-            lunarCoinChanceMultiplier = player.masterController.lunarCoinChanceMultiplier;
-            lunarCoins = player.lunarCoins;
+            lunarCoinChanceMultiplier = player.lunarCoinChanceMultiplier;
 
             var tmpMinions = new List<MinionData>();
             foreach (var instance in CharacterMaster.readOnlyInstancesList)
@@ -66,7 +73,7 @@ namespace ProperSave.SaveData
                 minions[i] = tmpMinions[i];
             }
 
-            var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
+            var stats = player.GetComponent<PlayerStatsComponent>().currentStats;
             statsFields = new string[stats.fields.Length];
             for (var i = 0; i < stats.fields.Length; i++)
             {

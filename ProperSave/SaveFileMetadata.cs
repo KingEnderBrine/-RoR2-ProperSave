@@ -35,7 +35,15 @@ namespace ProperSave
         {
             return new SaveFileMetadata
             {
-                UserIds = NetworkUser.readOnlyInstancesList.ToArray().Select(el => new UserIDData(el.Network_id.steamId)).ToArray(),
+                UserIds = PlayerCharacterMasterController.instances
+                    .Select(el => 
+                        el.networkUser ? 
+                            new UserIDData(el.networkUser.Network_id.steamId) :
+                            LostNetworkUser.TryGetUser(el.master, out var lostNetworkUser) ?
+                                new UserIDData(lostNetworkUser.userID) :
+                                null)
+                    .Where(el => el != null)
+                    .ToArray(),
                 UserProfileId = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName,
                 GameMode = Run.instance.gameModeIndex
             };
@@ -43,10 +51,10 @@ namespace ProperSave
 
         internal static SaveFileMetadata GetCurrentLobbySaveMetadata(NetworkUser exceptUser = null)
         {
-            var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId.value).ToList();
+            var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId).ToList();
             if (exceptUser != null)
             {
-                users.Remove(exceptUser.Network_id.steamId.value);
+                users.Remove(exceptUser.Network_id.steamId);
             }
             var usersCount = users.Count();
             if (usersCount == 0)
@@ -63,7 +71,14 @@ namespace ProperSave
                 var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
                 return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.UserIds.Length == 1 && el.GameMode == gameMode);
             }
-            return SavesMetadata.FirstOrDefault(el => el.UserIds.DifferenceCount(users) == 0 && el.GameMode == gameMode);
+            return SavesMetadata.FirstOrDefault(el =>
+            {
+                if (el.UserIds.Length != users.Count || el.GameMode != gameMode)
+                {
+                    return false;
+                }
+                return users.DifferenceCount(el.UserIds.Select(e => e.Load())) == 0;
+            });
         }
 
         internal static void PopulateSavesMetadata()

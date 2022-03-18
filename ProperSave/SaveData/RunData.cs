@@ -5,7 +5,6 @@ using RoR2;
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -103,23 +102,20 @@ namespace ProperSave.SaveData
 
             instance.SetRuleBook(ruleBook.Load());
 
-            if (NetworkServer.active)
+            instance.seed = seed;
+            instance.selectedDifficulty = (DifficultyIndex)difficulty;
+            instance.fixedTime = fixedTime;
+            instance.shopPortalCount = shopPortalCount;
+
+            instance.runStopwatch = new Run.RunStopwatch
             {
-                instance.seed = seed;
-                instance.selectedDifficulty = (DifficultyIndex)difficulty;
-                instance.fixedTime = fixedTime;
-                instance.shopPortalCount = shopPortalCount;
+                offsetFromFixedTime = offsetFromFixedTime,
+                isPaused = isPaused
+            };
 
-                instance.runStopwatch = new Run.RunStopwatch
-                {
-                    offsetFromFixedTime = offsetFromFixedTime,
-                    isPaused = isPaused
-                };
-
-                runRng.LoadData(instance);
-                instance.GenerateStageRNG();
-                typedRunData?.Load();
-            }
+            runRng.LoadData(instance);
+            instance.GenerateStageRNG();
+            typedRunData?.Load();
 
             instance.allowNewParticipants = true;
             UnityEngine.Object.DontDestroyOnLoad(instance.gameObject);
@@ -132,11 +128,10 @@ namespace ProperSave.SaveData
             instance.allowNewParticipants = false;
 
             instance.stageClearCount = stageClearCount;
-            if (NetworkServer.active)
-            {
-                instance.nextStageScene = SceneCatalog.GetSceneDefFromSceneName(nextSceneName);
-                NetworkManager.singleton.ServerChangeScene(sceneName);
-            }
+            instance.RecalculateDifficultyCoefficent();
+
+            instance.nextStageScene = SceneCatalog.GetSceneDefFromSceneName(nextSceneName);
+            NetworkManager.singleton.ServerChangeScene(sceneName);
 
             itemMask.LoadDataOut(out instance.availableItems);
             equipmentMask.LoadDataOut(out instance.availableEquipment);

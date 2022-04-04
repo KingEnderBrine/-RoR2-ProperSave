@@ -24,14 +24,14 @@ namespace ProperSave
         public static void RegisterHooks()
         {
             On.RoR2.UI.CharacterSelectController.Awake += CharacterSelectControllerAwake;
-            NetworkUser.OnPostNetworkUserStart += NetworkUserOnPostNetworkUserStart;
+            NetworkUser.onPostNetworkUserStart += NetworkUserOnPostNetworkUserStart;
             NetworkUser.onNetworkUserLost += NetworkUserOnNetworkUserLost;
         }
 
         public static void UnregisterHooks()
         {
             On.RoR2.UI.CharacterSelectController.Awake -= CharacterSelectControllerAwake;
-            NetworkUser.OnPostNetworkUserStart -= NetworkUserOnPostNetworkUserStart;
+            NetworkUser.onPostNetworkUserStart -= NetworkUserOnPostNetworkUserStart;
             NetworkUser.onNetworkUserLost -= NetworkUserOnNetworkUserLost;
         }
 

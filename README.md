@@ -11,7 +11,7 @@ Each game mode (`Classic`, `Eclipse`, `Simulacrum`) has it's own save files, so 
 
 # For mod developers
 #### Saving
-To save data you need to subscribe to `ProperSave.SaveFile.OnGatgherSaveData`. It will be called every time the game is saved (this happens on `RoR2.Stage.onStageStartGlobal`) to gather info from mods that needs to be saved. You can add any value with any key, but remember that other mods can do the same thing, so keep keys unique (maybe add a mod name in front or something). 
+To save data you need to subscribe to `ProperSave.SaveFile.OnGatherSaveData`. It will be called every time the game is saved (this happens on `RoR2.Stage.onStageStartGlobal`) to gather info from mods that needs to be saved. You can add any value with any key, but remember that other mods can do the same thing, so keep keys unique (maybe add a mod name in front or something). 
 I would suggest adding only one object per mod because the type of the object is also stored to be able to deserialize objects, and it can take a lot of space in comparison with stored value. 
 An object that you add in the dictionary will be serialized to JSON. Here is some info about serialization:
 
@@ -37,6 +37,14 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.8.2**
+
+* Fixed an issue where `Benthic Bloom` would be activated twice when you load the game.
+* Storing `Benthic Bloom` rng, so that the same items would be converted when you load a save.
+* Fixed a type in `ProperSave.SaveFile.OnGatherSaveData` event name.
+* Added more checks so the old broken saves wouldn't cause issues in lobby.
+
+
 **2.8.1**
 
 * Fixed an issue where loading a run right after launching the game would result in incorrect prices for chest, terminals, etc.

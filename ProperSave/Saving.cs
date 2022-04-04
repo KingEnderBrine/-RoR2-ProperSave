@@ -19,7 +19,7 @@ namespace ProperSave
         internal static void RegisterHooks()
         {
             //Save game after stage is loaded
-            Stage.onStageStartGlobal += StageOnStageStartGlobal;
+            On.RoR2.Run.BeginStage += StageOnStageStartGlobal;
 
             //Delete save file when run is over
             Run.onServerGameOver += RunOnServerGameOver;
@@ -33,7 +33,7 @@ namespace ProperSave
 
         internal static void UnregisterHooks()
         {
-            Stage.onStageStartGlobal -= StageOnStageStartGlobal;
+            On.RoR2.Run.BeginStage -= StageOnStageStartGlobal;
             Run.onServerGameOver -= RunOnServerGameOver;
             On.RoR2.Run.GenerateStageRNG -= RunGenerateStageRNG;
             IL.RoR2.QuitConfirmationHelper.IssueQuitCommand_Action -= IssueQuitCommandIL;
@@ -67,23 +67,32 @@ namespace ProperSave
             }
         }
 
-        private static void StageOnStageStartGlobal(Stage stage)
+        private static void StageOnStageStartGlobal(On.RoR2.Run.orig_BeginStage orig, Run self)
         {
-            if (!NetworkServer.active)
+            try
             {
-                return;
-            }
-            if (Loading.FirstRunStage)
-            {
-                Loading.FirstRunStage = false;
-                return;
-            }
-            if (stage.sceneDef.sceneType == SceneType.Menu || stage.sceneDef.sceneType == SceneType.Cutscene)
-            {
-                return;
-            }
+                if (!NetworkServer.active)
+                {
+                    return;
+                }
+                if (Loading.FirstRunStage)
+                {
+                    Loading.FirstRunStage = false;
+                    return;
+                }
 
-            SaveGame();
+                var sceneDef = SceneCatalog.GetSceneDefForCurrentScene();
+                if (sceneDef.sceneType == SceneType.Menu || sceneDef.sceneType == SceneType.Cutscene)
+                {
+                    return;
+                }
+
+                SaveGame();
+            }
+            finally
+            {
+                orig(self);
+            }
         }
 
         private static void SaveGame()

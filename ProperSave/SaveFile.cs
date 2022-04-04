@@ -3,6 +3,7 @@ using ProperSave.SaveData;
 using RoR2;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
 
@@ -25,7 +26,14 @@ namespace ProperSave
         [IgnoreDataMember]
         public SaveFileMetadata SaveFileMeta { get; set; }
 
-        public static event Action<Dictionary<string, object>> OnGatgherSaveData;
+        public static event Action<Dictionary<string, object>> OnGatherSaveData;
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Use OnGatherSaveData without a typo", true)]
+        public static event Action<Dictionary<string, object>> OnGatgherSaveData
+        {
+            add => OnGatherSaveData += value;
+            remove => OnGatherSaveData -= value;
+        }
 
         internal SaveFile() 
         {
@@ -45,7 +53,7 @@ namespace ProperSave
             }
 
             var gatheredData = new Dictionary<string, object>();
-            OnGatgherSaveData?.Invoke(gatheredData);
+            OnGatherSaveData?.Invoke(gatheredData);
 
             ModdedData = gatheredData.ToDictionary(
                 el => el.Key, 

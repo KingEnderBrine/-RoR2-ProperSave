@@ -36,6 +36,12 @@ namespace ProperSave.SaveData
         [DataMember(Name = "lc")]
         public uint lunarCoins;
 
+        [DataMember(Name = "vc")]
+        public uint voidCoins;
+
+        [DataMember(Name = "cvrng")]
+        public RngData cloverVoidRng;
+
         internal PlayerData(PlayerCharacterMasterController player, LostNetworkUser lostNetworkUser = null) {
             var master = player.master;
             var networkUser = player.networkUser;
@@ -51,7 +57,8 @@ namespace ProperSave.SaveData
                 lunarCoins = networkUser.lunarCoins;
             }
 
-            money = player.master.money;
+            money = master.money;
+            voidCoins = master.voidCoins;
             inventory = new InventoryData(master.inventory);
             loadout = new LoadoutData(master.loadout);
             
@@ -86,6 +93,11 @@ namespace ProperSave.SaveData
                 var unlockable = stats.GetUnlockableIndex(i);
                 statsUnlockables[i] = (int)unlockable;
             }
+
+            if (master.cloverVoidRng != null)
+            {
+                cloverVoidRng = new RngData(master.cloverVoidRng);
+            }
         }
 
         internal void LoadPlayer(NetworkUser player) {
@@ -105,7 +117,8 @@ namespace ProperSave.SaveData
 
             ModSupport.LoadShareSuiteMoney(money);
 
-            player.master.money = money;
+            master.money = money;
+            master.voidCoins = voidCoins;
 
             player.masterController.lunarCoinChanceMultiplier = lunarCoinChanceMultiplier;
             var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
@@ -119,6 +132,8 @@ namespace ProperSave.SaveData
                 var unlockableIndex = statsUnlockables[i];
                 stats.AddUnlockable((UnlockableIndex)unlockableIndex);
             }
+
+            cloverVoidRng?.LoadDataOut(out master.cloverVoidRng);
         }
     }
 }

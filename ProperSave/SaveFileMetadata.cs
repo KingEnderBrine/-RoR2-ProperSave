@@ -51,34 +51,42 @@ namespace ProperSave
 
         internal static SaveFileMetadata GetCurrentLobbySaveMetadata(NetworkUser exceptUser = null)
         {
-            var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId).ToList();
-            if (exceptUser != null)
+            try
             {
-                users.Remove(exceptUser.Network_id.steamId);
-            }
-            var usersCount = users.Count();
-            if (usersCount == 0)
-            {
-                return null;
-            }
-            var gameMode = PreGameController.instance ? PreGameController.instance.gameModeIndex : Run.instance ? Run.instance.gameModeIndex : GameModeIndex.Invalid;
-            if (gameMode == GameModeIndex.Invalid)
-            {
-                return null;
-            }
-            if (usersCount == 1)
-            {
-                var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
-                return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.UserIds.Length == 1 && el.GameMode == gameMode);
-            }
-            return SavesMetadata.FirstOrDefault(el =>
-            {
-                if (el.UserIds.Length != users.Count || el.GameMode != gameMode)
+                var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId).ToList();
+                if (exceptUser != null)
                 {
-                    return false;
+                    users.Remove(exceptUser.Network_id.steamId);
                 }
-                return users.DifferenceCount(el.UserIds.Select(e => e.Load())) == 0;
-            });
+                if (users.Count == 0)
+                {
+                    return null;
+                }
+                var gameMode = PreGameController.instance ? PreGameController.instance.gameModeIndex : Run.instance ? Run.instance.gameModeIndex : GameModeIndex.Invalid;
+                if (gameMode == GameModeIndex.Invalid)
+                {
+                    return null;
+                }
+                if (users.Count == 1)
+                {
+                    var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
+                    return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.UserIds.Length == 1 && el.UserIds[0]?.Load() == users[0] && el.GameMode == gameMode);
+                }
+                return SavesMetadata.FirstOrDefault(el =>
+                {
+                    if (el.UserIds.Length != users.Count || el.GameMode != gameMode)
+                    {
+                        return false;
+                    }
+                    return users.DifferenceCount(el.UserIds.Select(e => e?.Load() ?? default)) == 0;
+                });
+            }
+            catch (Exception ex)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning("Couldn't get save metadata for current lobby");
+                ProperSavePlugin.InstanceLogger.LogError(ex.ToString());
+                return null;
+            }
         }
 
         internal static void PopulateSavesMetadata()

@@ -37,13 +37,16 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.8.3**
+
+* Added French localization, thanks `ClEeVEeRYT` for providing translation.
+
 **2.8.2**
 
 * Fixed an issue where `Benthic Bloom` would be activated twice when you load the game.
 * Storing `Benthic Bloom` rng, so that the same items would be converted when you load a save.
 * Fixed a type in `ProperSave.SaveFile.OnGatherSaveData` event name.
 * Added more checks so the old broken saves wouldn't cause issues in lobby.
-
 
 **2.8.1**
 

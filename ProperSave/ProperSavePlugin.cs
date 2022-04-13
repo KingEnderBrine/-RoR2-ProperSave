@@ -23,7 +23,7 @@ namespace ProperSave
     {
         public const string GUID = "com.KingEnderBrine.ProperSave";
         public const string Name = "Proper Save";
-        public const string Version = "2.8.2";
+        public const string Version = "2.8.3";
 
         internal static ProperSavePlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger => Instance?.Logger;

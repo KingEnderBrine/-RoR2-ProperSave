@@ -9,7 +9,7 @@ namespace ProperSave.Data
     public class InventoryData
     {
         [DataMember(Name = "ib")]
-        public int infusionBonus;
+        public uint infusionBonus;
         [DataMember(Name = "i")]
         public List<ItemData> items;
 
@@ -18,11 +18,9 @@ namespace ProperSave.Data
         [DataMember(Name = "aes")]
         public byte activeEquipmentSlot;
 
-        private static FieldInfo onInventoryChangedDelagate = typeof(Inventory).GetField("onInventoryChanged", BindingFlags.NonPublic | BindingFlags.Instance);
-
         public InventoryData(Inventory inventory)
         {
-            infusionBonus = (int)inventory.infusionBonus;
+            infusionBonus = inventory.infusionBonus;
 
             items = new List<ItemData>();
             foreach (var item in inventory.itemAcquisitionOrder)
@@ -40,22 +38,14 @@ namespace ProperSave.Data
 
         public void LoadInventory(Inventory inventory)
         {
-            var itemStacks = inventory.itemStacks;
-            var itemAcquisitionOrder = inventory.itemAcquisitionOrder;
-
+            inventory.itemAcquisitionOrder.Clear();
             foreach (var item in items)
             {
-                itemStacks[item.itemIndex] = item.count;
-                itemAcquisitionOrder.Add((ItemIndex)item.itemIndex);
+                inventory.itemStacks[item.itemIndex] = item.count;
+                inventory.itemAcquisitionOrder.Add((ItemIndex)item.itemIndex);
             }
 
-            if (onInventoryChangedDelagate.GetValue(inventory) is MulticastDelegate onInventoryChanged)
-            {
-                foreach (var handler in onInventoryChanged.GetInvocationList())
-                {
-                    handler.Method.Invoke(handler.Target, Array.Empty<object>());
-                }
-            }
+            inventory.HandleInventoryChanged();
 
             for (byte i = 0; i < equipments.Length; i++)
             {
@@ -63,7 +53,7 @@ namespace ProperSave.Data
             }
             inventory.SetActiveEquipmentSlot(activeEquipmentSlot);
 
-            inventory.AddInfusionBonus((uint)infusionBonus);
+            inventory.AddInfusionBonus(infusionBonus);
         }
     }
 }

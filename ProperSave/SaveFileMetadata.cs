@@ -18,7 +18,7 @@ namespace ProperSave
         [DataMember(Name = "si")]
         public UserIDData[] UserIds { get; set; }
         [DataMember(Name = "gm")]
-        public GameModeIndex GameMode { get; set; } = 0;
+        public GameModeIndex GameMode { get; set; }
 
         [IgnoreDataMember]
         public string FilePath
@@ -36,8 +36,8 @@ namespace ProperSave
             return new SaveFileMetadata
             {
                 UserIds = PlayerCharacterMasterController.instances
-                    .Select(el => 
-                        el.networkUser ? 
+                    .Select(el =>
+                        el.networkUser ?
                             new UserIDData(el.networkUser.Network_id.steamId) :
                             LostNetworkUser.TryGetUser(el.master, out var lostNetworkUser) ?
                                 new UserIDData(lostNetworkUser.userID) :
@@ -45,7 +45,7 @@ namespace ProperSave
                     .Where(el => el != null)
                     .ToArray(),
                 UserProfileId = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName,
-                GameMode = Run.instance.gameModeIndex
+                GameMode = Run.instance.gameModeIndex,
             };
         }
 

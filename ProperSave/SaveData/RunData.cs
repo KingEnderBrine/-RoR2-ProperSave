@@ -100,7 +100,18 @@ namespace ProperSave.SaveData
 
             var instance = Run.instance;
 
-            instance.SetRuleBook(ruleBook.Load());
+            //If ruleBook length doesn't match RuleCatalog, this means something changed in the game since the save, for example content mods added/removed
+            //Logging error and keeping ruleBook from starting run, which will result in loaded game being not the same as saved
+            //At least this will not block user from loading runs and potentially not being able to start a run at all
+            if (ruleBook.ruleValues.Length != RuleCatalog.ruleCount)
+            {
+                ProperSavePlugin.InstanceLogger.LogError("RuleCatalog mismatch with saved ruleBook data, fallback to starting Run ruleBook");
+            }
+            else
+            {
+                instance.SetRuleBook(ruleBook.Load());
+            }
+            instance.OnRuleBookUpdated(instance.networkRuleBookComponent);
 
             instance.seed = seed;
             instance.selectedDifficulty = (DifficultyIndex)difficulty;

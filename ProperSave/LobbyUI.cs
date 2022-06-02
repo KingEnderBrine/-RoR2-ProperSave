@@ -231,7 +231,8 @@ namespace ProperSave
                 stage ? Language.GetString(stage.nameToken) : "",
                 (save.RunData.stageClearCount + 1).ToString(),
                 $"{(time / 60):00}:{(time % 60):00}",
-                difficulty != null ? Language.GetString(difficulty.nameToken) : "");
+                difficulty != null ? Language.GetString(difficulty.nameToken) : "",
+                save.ContentHash != null && save.ContentHash != ProperSavePlugin.ContentHash ? Language.GetString(LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_CONTENT_MISMATCH) : "");
         }
         #endregion
     }

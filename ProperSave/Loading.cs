@@ -120,6 +120,11 @@ namespace ProperSave
             ProperSavePlugin.CurrentSave.SaveFileMeta = metadata;
             IsLoading = true;
 
+            if (ProperSavePlugin.CurrentSave.ContentHash != null && ProperSavePlugin.CurrentSave.ContentHash != ProperSavePlugin.ContentHash)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning("Loading run but content mismatch detected which may result in errors");
+            }
+
             PreGameController.instance.StartRun();
         }
     }

@@ -23,6 +23,9 @@ namespace ProperSave
         [DataMember(Name = "md")]
         public Dictionary<string, ModdedData> ModdedData { get; set; }
 
+        [DataMember(Name = "ch")]
+        public string ContentHash { get; set; }
+
         [IgnoreDataMember]
         public SaveFileMetadata SaveFileMeta { get; set; }
 
@@ -62,6 +65,7 @@ namespace ProperSave
                     ObjectType = el.Value.GetType().AssemblyQualifiedName, 
                     Value = el.Value 
                 });
+            ContentHash = ProperSavePlugin.ContentHash;
         }
 
         internal void LoadRun()

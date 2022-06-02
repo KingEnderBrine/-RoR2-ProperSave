@@ -37,6 +37,11 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.8.4**
+
+* Added check for loaded content. Now you will see a message in save description if the game content is different from what it has been during save. You can still load that save, it's more like a warning that something might go wrong but not necessarily will.
+* Fixed an issue where `Benthic Bloom` would transform items differently when you load a run vs when you got to the stage if you were playing on any difficulty other than `Rainstorm`.
+
 **2.8.3**
 
 * Added French localization, thanks `ClEeVEeRYT` for providing translation.

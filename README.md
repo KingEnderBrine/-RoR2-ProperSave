@@ -37,6 +37,10 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.8.5**
+
+* Added Simplified Chinese localization, thanks `mchobbylong` for providing translation.
+
 **2.8.4**
 
 * Added check for loaded content. Now you will see a message in save description if the game content is different from what it has been during save. You can still load that save, it's more like a warning that something might go wrong but not necessarily will.

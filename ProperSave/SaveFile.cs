@@ -88,7 +88,7 @@ namespace ProperSave
         {
             var players = PlayersData.ToList();
             foreach (var user in NetworkUser.readOnlyInstancesList) {
-                var player = players.FirstOrDefault(el => el.userId.Load() == user.Network_id.steamId);
+                var player = players.FirstOrDefault(el => el.userId.Load().Equals(user.id));
 
                 if (player == null)
                 {

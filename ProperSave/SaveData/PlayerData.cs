@@ -53,7 +53,7 @@ namespace ProperSave.SaveData
             }
             else
             {
-                userId = new UserIDData(networkUser.Network_id.steamId);
+                userId = new UserIDData(networkUser.id);
                 lunarCoins = networkUser.lunarCoins;
             }
 

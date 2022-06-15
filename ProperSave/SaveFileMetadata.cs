@@ -38,7 +38,7 @@ namespace ProperSave
                 UserIds = PlayerCharacterMasterController.instances
                     .Select(el =>
                         el.networkUser ?
-                            new UserIDData(el.networkUser.Network_id.steamId) :
+                            new UserIDData(el.networkUser.id) :
                             LostNetworkUser.TryGetUser(el.master, out var lostNetworkUser) ?
                                 new UserIDData(lostNetworkUser.userID) :
                                 null)
@@ -53,10 +53,10 @@ namespace ProperSave
         {
             try
             {
-                var users = NetworkUser.readOnlyInstancesList.Select(el => el.Network_id.steamId).ToList();
+                var users = NetworkUser.readOnlyInstancesList.Select(el => el.id).ToList();
                 if (exceptUser != null)
                 {
-                    users.Remove(exceptUser.Network_id.steamId);
+                    users.Remove(exceptUser.id);
                 }
                 if (users.Count == 0)
                 {
@@ -70,7 +70,7 @@ namespace ProperSave
                 if (users.Count == 1)
                 {
                     var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
-                    return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.UserIds.Length == 1 && el.UserIds[0]?.Load() == users[0] && el.GameMode == gameMode);
+                    return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.UserIds.Length == 1 && (el.UserIds[0]?.Load().Equals(users[0]) ?? false) && el.GameMode == gameMode);
                 }
                 return SavesMetadata.FirstOrDefault(el =>
                 {

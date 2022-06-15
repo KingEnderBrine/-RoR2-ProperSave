@@ -11,7 +11,7 @@ namespace ProperSave
         private static readonly ConditionalWeakTable<CharacterMaster, LostNetworkUser> lostUsers = new ConditionalWeakTable<CharacterMaster, LostNetworkUser>();
 
         public uint lunarCoins;
-        public CSteamID userID;
+        public NetworkUserId userID;
 
         public static bool TryGetUser(CharacterMaster master, out LostNetworkUser lostUser)
         {
@@ -41,7 +41,7 @@ namespace ProperSave
                 lostUsers.Add(networkUser.master, new LostNetworkUser
                 {
                     lunarCoins = networkUser.lunarCoins,
-                    userID = networkUser.Network_id.steamId
+                    userID = networkUser.id
                 });
             }
         }

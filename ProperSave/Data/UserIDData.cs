@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RoR2;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
@@ -11,25 +12,28 @@ namespace ProperSave.Data
         public ulong steam;
         [DataMember(Name = "e")]
         public string egs;
+        [DataMember(Name = "si")]
+        public byte subId;
 
-        public UserIDData(CSteamID userID)
+        public UserIDData(NetworkUserId userID)
         {
-            egs = userID.stringValue;
-            steam = userID.steamValue;
+            egs = userID.strValue;
+            steam = userID.value;
+            subId = userID.subId;
         }
 
-        public CSteamID Load()
+        public NetworkUserId Load()
         {
             if (steam != 0L)
             {
-                return new CSteamID(steam);
+                return new NetworkUserId(steam, subId);
             }
             if (!string.IsNullOrWhiteSpace(egs))
             {
-                return new CSteamID(egs);
+                return new NetworkUserId(egs, subId);
             }
 
-            return CSteamID.nil;
+            return default;
         }
     }
 }

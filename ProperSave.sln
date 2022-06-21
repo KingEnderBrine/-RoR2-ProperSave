@@ -1,9 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29926.136
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProperSave", "ProperSave\ProperSave.csproj", "{8EEA40DA-1620-4CEF-9245-971B3B31F595}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D6F81E6C-FDA1-4CA2-8FB9-CE8075B5D5C5}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		thunderstore.toml = thunderstore.toml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

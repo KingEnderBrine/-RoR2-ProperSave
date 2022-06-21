@@ -16,18 +16,12 @@ using UnityEngine;
 [assembly: AssemblyVersion(ProperSave.ProperSavePlugin.Version)]
 namespace ProperSave
 {
-    //Support for BiggerBazaar
-    [BepInDependency(ModSupport.BiggerBazaarGUID, BepInDependency.DependencyFlags.SoftDependency)]
-
-    //Support for ShareSuit 
-    [BepInDependency(ModSupport.ShareSuiteGUID, BepInDependency.DependencyFlags.SoftDependency)]
-
     [BepInPlugin(GUID, Name, Version)]
     public class ProperSavePlugin : BaseUnityPlugin
     {
         public const string GUID = "com.KingEnderBrine.ProperSave";
         public const string Name = "Proper Save";
-        public const string Version = "2.8.6";
+        public const string Version = "2.8.7";
 
         internal static ProperSavePlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger => Instance?.Logger;

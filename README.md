@@ -37,6 +37,10 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.8.8**
+
+* Fixed an issue where loading a save would load minions inventory too early resulting in adding extra hidden items (e.g. `EquipmentDrone` was given `BoostEquipmentRecharge`)
+
 **2.8.7**
 
 * Fixed an issue where having `ProperSave`, `EphemeralCoins`, `BiggerBazaar`, `Risky_Artifacts` and `Enforcer` would result in a cyclic dependency, which meant that no mods were loaded at all.

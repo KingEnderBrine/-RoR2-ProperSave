@@ -1,6 +1,7 @@
 ﻿using ProperSave.Data;
 using RoR2;
 using RoR2.CharacterAI;
+using System.Collections;
 using System.Runtime.Serialization;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -51,8 +52,20 @@ namespace ProperSave.SaveData
 
                 NetworkServer.Spawn(minionGameObject);
 
-                inventory.LoadInventory(minionMaster.inventory);
+                minionMaster.inventory.onInventoryChanged += () =>
+                {
+                    ProperSavePlugin.InstanceLogger.LogWarning(new System.Diagnostics.StackTrace());
+                };
+                minionMaster.StartCoroutine(LoadInventoryCoroutine(minionMaster, inventory));
             }
+        }
+
+        private static IEnumerator LoadInventoryCoroutine(CharacterMaster minionMaster, InventoryData inventory)
+        {
+            //Waiting 2 frames for game to give items in some components Start to override them
+            yield return new WaitForEndOfFrame();
+            yield return new WaitForEndOfFrame();
+            inventory.LoadInventory(minionMaster.inventory);
         }
     }
 }

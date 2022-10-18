@@ -163,13 +163,27 @@ namespace ProperSave
             var interactable =
                 PlatformSystems.lobbyManager.isInLobby == PlatformSystems.lobbyManager.ownsLobby &&
                 File.Exists(metadata?.FilePath);
-            var tooltipContent = metadata == null ? default : new TooltipContent
+
+            var tooltipContent = new TooltipContent();
+            try
             {
-                titleToken = LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_TITLE,
-                overrideBodyText = GetSaveDescription(metadata),
-                titleColor = Color.black,
-                disableBodyRichText = false
-            };
+                if (metadata != null)
+                {
+                    tooltipContent = new TooltipContent
+                    {
+                        titleToken = LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_TITLE,
+                        overrideBodyText = GetSaveDescription(metadata),
+                        titleColor = Color.black,
+                        disableBodyRichText = false
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning("Failed to get information about save file");
+                ProperSavePlugin.InstanceLogger.LogError(ex);
+                interactable = false;
+            }
 
             try
             {
@@ -205,7 +219,7 @@ namespace ProperSave
                 }
             }
             catch { }
-        }
+            }
 
         private static string GetSaveDescription(SaveFileMetadata saveMetadata)
         {

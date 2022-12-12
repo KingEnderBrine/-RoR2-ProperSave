@@ -37,6 +37,9 @@ I tried to save all necessary data so that when you load the game would continue
 - I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
 
 # Changelog
+**2.8.10**
+* Added Ukrainian localization, thanks `Damglador` for providing the translation. (If you have https://thunderstore.io/package/RoR2_UA/Risk_of_Rain_2_Ukrainian/)
+
 **2.8.9**
 
 * Fixed an issue where broken save would prevent you from starting `Simulacrum` run (maybe `Eclipse` too?)
@@ -55,7 +58,7 @@ I tried to save all necessary data so that when you load the game would continue
 
 **2.8.5**
 
-* Added Simplified Chinese localization, thanks `mchobbylong` for providing translation.
+* Added Simplified Chinese localization, thanks `mchobbylong` for providing the translation.
 
 **2.8.4**
 
@@ -64,7 +67,7 @@ I tried to save all necessary data so that when you load the game would continue
 
 **2.8.3**
 
-* Added French localization, thanks `ClEeVEeRYT` for providing translation.
+* Added French localization, thanks `ClEeVEeRYT` for providing the translation.
 
 **2.8.2**
 

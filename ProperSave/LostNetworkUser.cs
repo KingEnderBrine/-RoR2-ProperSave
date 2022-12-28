@@ -1,17 +1,28 @@
 ﻿using RoR2;
-using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
+using UnityEngine;
 
 namespace ProperSave
 {
-    internal class LostNetworkUser
+    internal class LostNetworkUser : MonoBehaviour
     {
-        private static readonly ConditionalWeakTable<CharacterMaster, LostNetworkUser> lostUsers = new ConditionalWeakTable<CharacterMaster, LostNetworkUser>();
+        private static readonly Dictionary<CharacterMaster, LostNetworkUser> lostUsers = new Dictionary<CharacterMaster, LostNetworkUser>();
+
+        private CharacterMaster master;
 
         public uint lunarCoins;
         public NetworkUserId userID;
+
+        private void Awake()
+        {
+            master = GetComponent<CharacterMaster>();
+            lostUsers[master] = this;
+        }
+
+        private void OnDestroy()
+        {
+            lostUsers.Remove(master);
+        }
 
         public static bool TryGetUser(CharacterMaster master, out LostNetworkUser lostUser)
         {
@@ -38,11 +49,9 @@ namespace ProperSave
         {
             if (networkUser.master)
             {
-                lostUsers.Add(networkUser.master, new LostNetworkUser
-                {
-                    lunarCoins = networkUser.lunarCoins,
-                    userID = networkUser.id
-                });
+                var lostUser = networkUser.master.gameObject.AddComponent<LostNetworkUser>();
+                lostUser.lunarCoins = networkUser.lunarCoins;
+                lostUser.userID = networkUser.id;
             }
         }
     }

@@ -52,10 +52,6 @@ namespace ProperSave.SaveData
 
                 NetworkServer.Spawn(minionGameObject);
 
-                minionMaster.inventory.onInventoryChanged += () =>
-                {
-                    ProperSavePlugin.InstanceLogger.LogWarning(new System.Diagnostics.StackTrace());
-                };
                 minionMaster.StartCoroutine(LoadInventoryCoroutine(minionMaster, inventory));
             }
         }

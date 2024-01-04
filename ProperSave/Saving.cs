@@ -1,13 +1,13 @@
 ﻿using ProperSave.SaveData;
 using RoR2;
 using System;
-using System.IO;
 using PSTinyJson;
 using UnityEngine.Networking;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using RoR2.UI;
 using ProperSave.Data;
+using Zio;
 
 namespace ProperSave
 {
@@ -54,9 +54,9 @@ namespace ProperSave
             try
             {
                 var metadata = ProperSavePlugin.CurrentSave?.SaveFileMeta;
-                if (metadata != null)
+                if (metadata != null && metadata.FilePath.HasValue)
                 {
-                    File.Delete(metadata.FilePath);
+                    ProperSavePlugin.SavesFileSystem.DeleteFile(metadata.FilePath.Value);
                     SaveFileMetadata.Remove(metadata);
                 }
             }
@@ -108,13 +108,13 @@ namespace ProperSave
                 {
                     save.SaveFileMeta.FileName = Guid.NewGuid().ToString();
                 }
-                while (File.Exists(save.SaveFileMeta.FilePath));
+                while (ProperSavePlugin.SavesFileSystem.FileExists(save.SaveFileMeta.FilePath.Value));
             }
 
             try
             {
                 var json = JSONWriter.ToJson(save);
-                File.WriteAllText(save.SaveFileMeta.FilePath, json);
+                ProperSavePlugin.SavesFileSystem.WriteAllText(save.SaveFileMeta.FilePath.Value, json);
 
                 ProperSavePlugin.CurrentSave = save;
                 SaveFileMetadata.AddIfNotExists(save.SaveFileMeta);

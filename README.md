@@ -9,6 +9,12 @@ A `Load` button will be active if you are host and was found suitable save file 
 # Game modes support
 Each game mode (`Classic`, `Eclipse`, `Simulacrum`) has it's own save files, so that you can switch between game modes and not losing your progress.
 
+# Config options
+
+* `UseCloudStorage` - Store files in Steam/EpicGames cloud. Enabling this feature would not preserve current saves and disabling it wouldn't clear the cloud.
+* `CloudStorageSubDirectory` - Sub directory name for cloud storage. Changing it allows to use different save files for different mod profiles.
+* `SavesDirectory` - Directory where save files will be stored. "ProperSave" directory will be created in the directory you have specified. If the directory doesn't exist the default one will be used.
+
 # For mod developers
 #### Saving
 To save data you need to subscribe to `ProperSave.SaveFile.OnGatherSaveData`. It will be called every time the game is saved (this happens on `RoR2.Stage.onStageStartGlobal`) to gather info from mods that needs to be saved. You can add any value with any key, but remember that other mods can do the same thing, so keep keys unique (maybe add a mod name in front or something). 

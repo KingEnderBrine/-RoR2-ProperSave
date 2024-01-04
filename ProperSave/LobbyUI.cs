@@ -1,14 +1,13 @@
 ﻿using ProperSave.Components;
-using ProperSave.SaveData;
 using PSTinyJson;
 using RoR2;
 using RoR2.UI;
 using System;
-using System.IO;
 using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
+using Zio;
 
 namespace ProperSave
 {
@@ -162,7 +161,9 @@ namespace ProperSave
             var metadata = SaveFileMetadata.GetCurrentLobbySaveMetadata(exceptUser);
             var interactable =
                 PlatformSystems.lobbyManager.isInLobby == PlatformSystems.lobbyManager.ownsLobby &&
-                File.Exists(metadata?.FilePath);
+                metadata != null &&
+                metadata.FilePath.HasValue &&
+                ProperSavePlugin.SavesFileSystem.FileExists(metadata.FilePath.Value);
 
             var tooltipContent = new TooltipContent();
             try
@@ -223,7 +224,7 @@ namespace ProperSave
 
         private static string GetSaveDescription(SaveFileMetadata saveMetadata)
         {
-            var saveJSON = File.ReadAllText(saveMetadata.FilePath);
+            var saveJSON = ProperSavePlugin.SavesFileSystem.ReadAllText(saveMetadata.FilePath.Value);
             var save = JSONParser.FromJson<SaveFile>(saveJSON);
 
             var builder = new StringBuilder();

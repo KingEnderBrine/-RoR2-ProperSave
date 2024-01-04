@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using RoR2;
 using RoR2.ContentManagement;
@@ -11,6 +12,8 @@ using System.Security.Cryptography;
 using System.Security.Permissions;
 using System.Text;
 using UnityEngine;
+using Zio;
+using Zio.FileSystems;
 
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 [assembly: AssemblyVersion(ProperSave.ProperSavePlugin.Version)]
@@ -21,20 +24,57 @@ namespace ProperSave
     {
         public const string GUID = "com.KingEnderBrine.ProperSave";
         public const string Name = "Proper Save";
-        public const string Version = "2.8.11";
+        public const string Version = "2.9.0";
+
+        private static readonly char[] invalidSubDirectoryCharacters = new[] { '\\', '/', '.' };
 
         internal static ProperSavePlugin Instance { get; private set; }
         internal static ManualLogSource InstanceLogger => Instance?.Logger;
 
-        internal static string SavesDirectory { get; } = System.IO.Path.Combine(Application.persistentDataPath, "ProperSave", "Saves");
+        internal static FileSystem SavesFileSystem { get; private set; }
+        internal static UPath SavesPath { get; private set; } = (UPath)"/ProperSave" / "Saves";
+        private static string SavesDirectory { get; set; }
         internal static SaveFile CurrentSave { get; set; }
         internal static string ContentHash { get; private set; }
+
+        internal static ConfigEntry<bool> UseCloudStorage { get; private set; }
+        internal static ConfigEntry<string> CloudStorageSubDirectory { get; private set; }
+        internal static ConfigEntry<string> UserSavesDirectory { get; private set; }
 
         private void Start()
         {
             Instance = this;
 
-            SaveFileMetadata.PopulateSavesMetadata();
+            UseCloudStorage = Config.Bind("Main", "UseCloudStorage", false, "Store files in Steam/EpicGames cloud. Enabling this feature would not preserve current saves and disabling it wouldn't clear the cloud.");
+            CloudStorageSubDirectory = Config.Bind("Main", "CloudStorageSubDirectory", "", "Sub directory name for cloud storage. Changing it allows to use different save files for different mod profiles.");
+            UserSavesDirectory = Config.Bind("Main", "SavesDirectory", "", "Directory where save files will be stored. \"ProperSave\" directory will be created in the directory you have specified. If the directory doesn't exist the default one will be used.");
+
+            RoR2Application.onLoad += () =>
+            {
+                SavesDirectory = string.IsNullOrEmpty(UserSavesDirectory.Value) || !Directory.Exists(UserSavesDirectory.Value) ? Application.persistentDataPath : UserSavesDirectory.Value;
+                if (UseCloudStorage.Value)
+                {
+                    SavesFileSystem = RoR2Application.cloudStorage;
+                    if (!string.IsNullOrEmpty(CloudStorageSubDirectory.Value))
+                    {
+                        if (CloudStorageSubDirectory.Value.IndexOfAny(invalidSubDirectoryCharacters) != -1)
+                        {
+                            Logger.LogError($"Config entry \"CloudStorageSubDirectory\" contains invalid characters. Falling back to default location.");
+                        }
+                        else
+                        {
+                            SavesPath /= CloudStorageSubDirectory.Value;
+                        }
+                    }
+                }
+                else
+                {
+                    var physicalFileSystem = new PhysicalFileSystem();
+                    SavesFileSystem = new SubFileSystem(physicalFileSystem, physicalFileSystem.ConvertPathFromInternal(SavesDirectory));
+                }
+
+                SaveFileMetadata.PopulateSavesMetadata();
+            };
 
             ModSupport.GatherLoadedPlugins();
             ModSupport.RegisterHooks();

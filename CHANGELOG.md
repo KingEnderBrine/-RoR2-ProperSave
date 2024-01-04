@@ -1,3 +1,7 @@
+**2.9.0**
+* Added config option to enable Steam/Epic games cloud storage support, allowing you to synchronize saves between devices.
+* Added config option to change saves directory.
+
 **2.8.11**
 * Removed unnecessary logging from minion inventory change after loading, which caused lag with a big enough mod list.
 

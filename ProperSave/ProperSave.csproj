@@ -32,6 +32,10 @@
       <HintPath>..\Libs\ShareSuite.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Zio">
+      <HintPath>..\Libs\Zio.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

@@ -4,8 +4,8 @@ using RoR2;
 using RoR2.Networking;
 using System;
 using System.Collections;
-using System.IO;
 using PSTinyJson;
+using Zio;
 
 namespace ProperSave
 {
@@ -109,13 +109,18 @@ namespace ProperSave
             }
 
             var filePath = metadata.FilePath;
-            if (!File.Exists(filePath))
+            if (!filePath.HasValue)
+            {
+                ProperSavePlugin.InstanceLogger.LogInfo("Metadata doesn't contain file name for the save file");
+                yield break;
+            }
+            if (!ProperSavePlugin.SavesFileSystem.FileExists(filePath.Value))
             {
                 ProperSavePlugin.InstanceLogger.LogInfo($"File \"{filePath}\" is not found");
                 yield break;
             }
 
-            var saveJSON = File.ReadAllText(filePath);
+            var saveJSON = ProperSavePlugin.SavesFileSystem.ReadAllText(filePath.Value);
             ProperSavePlugin.CurrentSave = JSONParser.FromJson<SaveFile>(saveJSON);
             ProperSavePlugin.CurrentSave.SaveFileMeta = metadata;
             IsLoading = true;

@@ -1,11 +1,11 @@
 ﻿using RoR2;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using PSTinyJson;
 using ProperSave.Data;
+using Zio;
 
 namespace ProperSave
 {
@@ -21,11 +21,11 @@ namespace ProperSave
         public GameModeIndex GameMode { get; set; }
 
         [IgnoreDataMember]
-        public string FilePath
+        public UPath? FilePath
         {
             get
             {
-                return string.IsNullOrEmpty(FileName) ? null : $"{ProperSavePlugin.SavesDirectory}\\{FileName}.json";
+                return string.IsNullOrEmpty(FileName) ? null : ProperSavePlugin.SavesPath / $"{FileName}.json";
             }
         }
 
@@ -91,20 +91,21 @@ namespace ProperSave
 
         internal static void PopulateSavesMetadata()
         {
-            if (!Directory.Exists(ProperSavePlugin.SavesDirectory))
+            if (!ProperSavePlugin.SavesFileSystem.DirectoryExists(ProperSavePlugin.SavesPath))
             {
-                Directory.CreateDirectory(ProperSavePlugin.SavesDirectory);
+                ProperSavePlugin.SavesFileSystem.CreateDirectory(ProperSavePlugin.SavesPath);
                 return;
             }
-            var path = $"{ProperSavePlugin.SavesDirectory}\\SavesMetadata.json";
-            if (!File.Exists(path))
+
+            var path = ProperSavePlugin.SavesPath / "SavesMetadata.json";
+            if (!ProperSavePlugin.SavesFileSystem.FileExists(path))
             {
                 return;
             }
 
             try
             {
-                var json = File.ReadAllText(path);
+                var json = ProperSavePlugin.SavesFileSystem.ReadAllText(path);
                 var metadata = JSONParser.FromJson<SaveFileMetadata[]>(json);
                 
                 SavesMetadata.Clear();
@@ -138,15 +139,16 @@ namespace ProperSave
 
         private static void UpdateSaveMetadata()
         {
-            var path = $"{ProperSavePlugin.SavesDirectory}\\SavesMetadata.json";
-            if (!Directory.Exists(ProperSavePlugin.SavesDirectory))
+            if (!ProperSavePlugin.SavesFileSystem.DirectoryExists(ProperSavePlugin.SavesPath))
             {
-                Directory.CreateDirectory(ProperSavePlugin.SavesDirectory);
+                ProperSavePlugin.SavesFileSystem.CreateDirectory(ProperSavePlugin.SavesPath);
+                return;
             }
 
+            var path = ProperSavePlugin.SavesPath / "SavesMetadata.json";
             try
             {
-                File.WriteAllText(path, JSONWriter.ToJson(SavesMetadata));
+                ProperSavePlugin.SavesFileSystem.WriteAllText(path, JSONWriter.ToJson(SavesMetadata));
             }
             catch (Exception e)
             {

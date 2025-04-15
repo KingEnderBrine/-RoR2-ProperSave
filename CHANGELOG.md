@@ -1,3 +1,6 @@
+**2.12.1**
+* Added Japanese translation, thanks `WakefulSpect`.
+
 **2.12.0**
 * Fixes for 1.3.6 update.
 

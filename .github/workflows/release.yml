@@ -11,16 +11,18 @@ jobs:
     steps:
           
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
-    - uses: actions/setup-dotnet@v1.7.2
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
     - name: Build
       run: dotnet build . --configuration Release /p:PackageOutputPath=../ReleaseOutput /p:OutputPath=../ReleaseOutput
 
     - name: Install TCLI
-      run: dotnet tool install --global tcli --version 0.1.4
+      run: dotnet tool install --global tcli
 
     - name: Publish to thunderstore.io
       run: tcli publish --token ${{ secrets.TCLI_AUTH_TOKEN }} --config-path ./thunderstore.toml

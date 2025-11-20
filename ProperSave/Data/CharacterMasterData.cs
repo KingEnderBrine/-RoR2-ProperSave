@@ -75,7 +75,7 @@ namespace ProperSave.Data
             beadXPNeededForCurrentLevel = master.beadXPNeededForCurrentLevel;
             trackedFreeUnlocks = master.trackedFreeUnlocks;
             trackedMissileCount = master.trackedMissileCount;
-            costOfSmallChest = master.costOfSmallChest;
+            costOfSmallChest = CharacterMaster.costOfSmallChest;
             extraBossMissileMoneyRemainder = master.ExtraBossMissileMoneyRemainder;
 
             inventory = new InventoryData(master.inventory);
@@ -144,7 +144,7 @@ namespace ProperSave.Data
             master.beadXPNeededForCurrentLevel = beadXPNeededForCurrentLevel;
             master.trackedFreeUnlocks = trackedFreeUnlocks;
             master.trackedMissileCount = trackedMissileCount;
-            master.costOfSmallChest = costOfSmallChest;
+            CharacterMaster.costOfSmallChest = costOfSmallChest;
             master.ExtraBossMissileMoneyRemainder = extraBossMissileMoneyRemainder;
 
             loadout.LoadData(master.loadout);

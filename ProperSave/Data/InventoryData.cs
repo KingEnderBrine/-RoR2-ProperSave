@@ -22,9 +22,11 @@ namespace ProperSave.Data
         public List<ItemData> items;
 
         [DataMember(Name = "e")]
-        public EquipmentData[] equipments;
+        public EquipmentData[][] equipments;
         [DataMember(Name = "aes")]
-        public byte activeEquipmentSlot;
+        public byte activeEquipmentSlot; //for multi retool
+        [DataMember(Name = "aese")]
+        public byte activeEquipmentSet; //for Functional Coupler item
 
         public InventoryData(Inventory inventory)
         {
@@ -38,15 +40,23 @@ namespace ProperSave.Data
             items = new List<ItemData>();
             foreach (var item in inventory.itemAcquisitionOrder)
             {
-                items.Add(new ItemData { itemIndex = (int)item, count = inventory.GetItemCount(item) });
+                items.Add(new ItemData { itemIndex = (int)item, countPerm = inventory.GetItemCountPermanent(item) , countTemp = inventory.GetTempItemRawValue(item) });
             }
 
-            equipments = new EquipmentData[inventory.GetEquipmentSlotCount()];
-            for (var i = 0; i < equipments.Length; i++)
+            equipments = new EquipmentData[inventory.GetEquipmentSlotCount()][];
+            // equipment list isnt square so have to set both lengths individually
+            for (var slot = 0; slot < inventory.GetEquipmentSlotCount(); slot++)
             {
-                equipments[i] = new EquipmentData(inventory.GetEquipment((uint)i));
+                equipments[slot] = new EquipmentData[inventory.GetEquipmentSlotCount()];
+                for(var set = 0; set < inventory.GetEquipmentSetCount((uint)slot); set++) {
+                    equipments[slot][set] = new EquipmentData(inventory.GetEquipment((uint)slot, (uint)set));
+                    // slot is for multi retool
+                    // set is for Functional Coupler item
+                }
             }
+
             activeEquipmentSlot = inventory.activeEquipmentSlot;
+            activeEquipmentSet = inventory.activeEquipmentSet[activeEquipmentSlot];
         }
 
         public void LoadInventory(Inventory inventory)
@@ -60,17 +70,20 @@ namespace ProperSave.Data
             inventory.itemAcquisitionOrder.Clear();
             foreach (var item in items)
             {
-                inventory.itemStacks[item.itemIndex] = item.count;
-                inventory.itemAcquisitionOrder.Add((ItemIndex)item.itemIndex);
+                //Seems to preserve pickup order without explicitly setting it.
+                inventory.GiveItemPermanent((ItemIndex)item.itemIndex, item.countPerm);
+                inventory.GiveItemTemp((ItemIndex)item.itemIndex, item.countTemp);
             }
 
             inventory.HandleInventoryChanged();
 
-            for (byte i = 0; i < equipments.Length; i++)
+            for (byte slot = 0; slot < equipments.Length; slot++)
             {
-                equipments[i].LoadEquipment(inventory, i);
+                for (byte set = 0; set < equipments[slot].Length; set++)
+                    equipments[slot][set].LoadEquipment(inventory, slot, set);
             }
             inventory.SetActiveEquipmentSlot(activeEquipmentSlot);
+            inventory.SetActiveEquipmentSet(activeEquipmentSet);
 
             inventory.AddInfusionBonus(infusionBonus);
         }

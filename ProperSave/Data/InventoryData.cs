@@ -24,9 +24,7 @@ namespace ProperSave.Data
         [DataMember(Name = "e")]
         public EquipmentData[][] equipments;
         [DataMember(Name = "aes")]
-        public byte activeEquipmentSlot; //for multi retool
-        [DataMember(Name = "aese")]
-        public byte activeEquipmentSet; //for Functional Coupler item
+        public byte activeEquipmentSlot; 
 
         public InventoryData(Inventory inventory)
         {
@@ -40,15 +38,16 @@ namespace ProperSave.Data
             items = new List<ItemData>();
             foreach (var item in inventory.itemAcquisitionOrder)
             {
-                items.Add(new ItemData { itemIndex = (int)item, countPerm = inventory.GetItemCountPermanent(item) , countTemp = inventory.GetTempItemRawValue(item) });
+                items.Add(new ItemData { itemIndex = (int)item, countPerm = inventory.GetItemCountPermanent(item), countTemp = inventory.GetTempItemRawValue(item) });
             }
 
             equipments = new EquipmentData[inventory.GetEquipmentSlotCount()][];
             // equipment list isnt square so have to set both lengths individually
             for (var slot = 0; slot < inventory.GetEquipmentSlotCount(); slot++)
             {
-                equipments[slot] = new EquipmentData[inventory.GetEquipmentSlotCount()];
-                for(var set = 0; set < inventory.GetEquipmentSetCount((uint)slot); set++) {
+                equipments[slot] = new EquipmentData[inventory.GetEquipmentSetCount((uint)slot)];
+                for (var set = 0; set < inventory.GetEquipmentSetCount((uint)slot); set++)
+                {
                     equipments[slot][set] = new EquipmentData(inventory.GetEquipment((uint)slot, (uint)set));
                     // slot is for multi retool
                     // set is for Functional Coupler item
@@ -56,7 +55,7 @@ namespace ProperSave.Data
             }
 
             activeEquipmentSlot = inventory.activeEquipmentSlot;
-            activeEquipmentSet = inventory.activeEquipmentSet[activeEquipmentSlot];
+
         }
 
         public void LoadInventory(Inventory inventory)
@@ -76,16 +75,17 @@ namespace ProperSave.Data
             }
 
             inventory.HandleInventoryChanged();
-
+            inventory.AddInfusionBonus(infusionBonus);
+            
             for (byte slot = 0; slot < equipments.Length; slot++)
             {
                 for (byte set = 0; set < equipments[slot].Length; set++)
                     equipments[slot][set].LoadEquipment(inventory, slot, set);
             }
-            inventory.SetActiveEquipmentSlot(activeEquipmentSlot);
-            inventory.SetActiveEquipmentSet(activeEquipmentSet);
+            inventory.SetActiveEquipmentSlot(activeEquipmentSlot); //yes this causes errors. No I dont want to fix it because using multi-retool causes the same errors so I am going to blame gearbox
 
-            inventory.AddInfusionBonus(infusionBonus);
+            // removes duplicate equipment sets. Without this each time you load with the Functional Coupler in your inventory you get an extra equipment slot
+            inventory.UpdateEquipment();
         }
     }
 }

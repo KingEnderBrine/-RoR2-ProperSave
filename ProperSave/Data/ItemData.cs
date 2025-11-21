@@ -8,7 +8,7 @@ namespace ProperSave.Data
         public int itemIndex;
         [DataMember(Name = "cp")]
         public int countPerm;
-        [DataMember(Name = "tr")]
+        [DataMember(Name = "ct")]
         public float countTemp;
 
     }

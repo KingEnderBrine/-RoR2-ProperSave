@@ -37,6 +37,8 @@ namespace ProperSave.SaveData
         public string nextSceneName;
         [DataMember(Name = "psn")]
         public string previousSceneName;
+        [DataMember(Name = "pamv")]
+        public int prestigeArtifactMountainValue;
 
         [DataMember(Name = "im")]
         public ItemMaskData itemMask;
@@ -82,6 +84,7 @@ namespace ProperSave.SaveData
             previousSceneName = Saving.PreStageSceneName;
 
             shopPortalCount = run.shopPortalCount;
+            prestigeArtifactMountainValue = run.prestiegeArtifactMountainValue;
 
             itemMask = new ItemMaskData(run.availableItems);
             equipmentMask = new EquipmentMaskData(run.availableEquipment);
@@ -131,6 +134,7 @@ namespace ProperSave.SaveData
             instance.seed = seed;
             instance.selectedDifficulty = (DifficultyIndex)difficulty;
             instance.shopPortalCount = shopPortalCount;
+            instance.prestiegeArtifactMountainValue = prestigeArtifactMountainValue;
 
             runRng.LoadData(instance);
             typedRunData?.Load();

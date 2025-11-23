@@ -6,16 +6,20 @@ namespace ProperSave.SaveData
     public class ArtifactsData
     {
         [DataMember(Name = "ed")]
-        public EnigmaData EnigmaData;
+        public EnigmaData enigmaData;
+        [DataMember(Name = "pd")]
+        public PrestigeData prestigeData;
 
         internal ArtifactsData()
         {
-            EnigmaData = new EnigmaData();
+            enigmaData = new EnigmaData();
+            prestigeData = new PrestigeData();
         }
 
         internal void LoadData()
         {
-            EnigmaData.LoadData();
+            enigmaData.LoadData();
+            prestigeData.LoadData();
         }
     }
 }

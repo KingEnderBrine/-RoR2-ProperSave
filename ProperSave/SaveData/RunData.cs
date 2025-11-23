@@ -27,15 +27,23 @@ namespace ProperSave.SaveData
         public float offsetFromFixedTime;
         [DataMember(Name = "scc")]
         public int stageClearCount;
+        [DataMember(Name = "sccls")]
+        public int stageClearCountAtLoopStart;
+        [DataMember(Name = "lcc")]
+        public int loopClearCount;
         [DataMember(Name = "sn")]
         public string sceneName;
         [DataMember(Name = "nsn")]
         public string nextSceneName;
+        [DataMember(Name = "psn")]
+        public string previousSceneName;
 
         [DataMember(Name = "im")]
         public ItemMaskData itemMask;
         [DataMember(Name = "em")]
         public EquipmentMaskData equipmentMask;
+        [DataMember(Name = "dm")]
+        public DroneMaskData droneMask;
         [DataMember(Name = "spc")]
         public int shopPortalCount;
         [DataMember(Name = "ef")]
@@ -67,13 +75,17 @@ namespace ProperSave.SaveData
             time = run.time;
 
             stageClearCount = run.stageClearCount;
+            stageClearCountAtLoopStart = run.stageClearCountAtLoopStart;
+            loopClearCount = run._loopClearCount;
             sceneName = SceneManager.GetActiveScene().name;
             nextSceneName = run.nextStageScene.cachedName;
+            previousSceneName = Saving.PreStageSceneName;
 
             shopPortalCount = run.shopPortalCount;
 
             itemMask = new ItemMaskData(run.availableItems);
             equipmentMask = new EquipmentMaskData(run.availableEquipment);
+            droneMask = new DroneMaskData(run.availableDrones);
 
             runRng = Saving.PreStageRng;
 
@@ -121,7 +133,6 @@ namespace ProperSave.SaveData
             instance.shopPortalCount = shopPortalCount;
 
             runRng.LoadData(instance);
-            instance.GenerateStageRNG();
             typedRunData?.Load();
 
             instance.allowNewParticipants = true;
@@ -135,13 +146,24 @@ namespace ProperSave.SaveData
             instance.allowNewParticipants = false;
 
             instance.stageClearCount = stageClearCount;
+            instance.stageClearCountAtLoopStart = stageClearCountAtLoopStart;
+            instance._loopClearCount = loopClearCount;
             instance.RecalculateDifficultyCoefficent();
 
             instance.nextStageScene = SceneCatalog.GetSceneDefFromSceneName(nextSceneName);
+            if (stageClearCount == stageClearCountAtLoopStart)
+            {
+                instance.OnLoopBeginServer(SceneCatalog.GetSceneDefFromSceneName(previousSceneName));
+            }
+            //Stage rng is normally generated earlier, but when scene is changed GenerateLoopRNG is executed before GenerateStageRNG,
+            //hoping that no one will want to use stage rng in onnLoopBeginServer event
+            instance.GenerateStageRNG();
+
             NetworkManager.singleton.ServerChangeScene(sceneName);
 
             itemMask.LoadDataOut(out instance.availableItems);
             equipmentMask.LoadDataOut(out instance.availableEquipment);
+            droneMask.LoadDataOut(out instance.availableDrones);
 
             instance.BuildUnlockAvailability();
             instance.BuildDropTable();
@@ -168,7 +190,6 @@ namespace ProperSave.SaveData
                 offsetFromFixedTime = offsetFromFixedTime,
                 isPaused = isPaused
             };
-
         }
     }
 }

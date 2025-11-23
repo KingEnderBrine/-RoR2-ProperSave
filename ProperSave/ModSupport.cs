@@ -27,7 +27,7 @@ namespace ProperSave
 
         public static void RegisterHooks()
         {
-            if (IsBBLoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(BiggerBazaarGUID))
+            if (IsBBLoaded)
             {
                 try
                 {
@@ -79,9 +79,16 @@ namespace ProperSave
         #region ShareSuite
         public static void LoadShareSuiteMoney(uint money)
         {
-            if (IsSSLoaded)
+            try
             {
-                ProperSavePlugin.Instance.StartCoroutine(LoadShareSuiteMoneyInternal(money));
+                if (IsSSLoaded)
+                {
+                    ProperSavePlugin.Instance.StartCoroutine(LoadShareSuiteMoneyInternal(money));
+                }
+            }
+            catch (Exception ex)
+            {
+                ProperSavePlugin.InstanceLogger.LogError(ex);
             }
         }
 
@@ -94,9 +101,16 @@ namespace ProperSave
 
         public static void ShareSuiteMapTransition()
         {
-            if (IsSSLoaded)
+            try
             {
-                ShareSuiteMapTransionInternal();
+                if (IsSSLoaded)
+                {
+                    ShareSuiteMapTransionInternal();
+                }
+            }
+            catch (Exception ex)
+            {
+                ProperSavePlugin.InstanceLogger.LogError(ex);
             }
         }
 

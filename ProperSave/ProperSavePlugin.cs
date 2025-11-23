@@ -14,7 +14,9 @@ using System.Text;
 using UnityEngine;
 using Zio;
 using Zio.FileSystems;
+using static HG.Reflection.SearchableAttribute;
 
+[assembly: OptIn]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 [assembly: AssemblyVersion(ProperSave.ProperSavePlugin.Version)]
 namespace ProperSave
@@ -24,7 +26,7 @@ namespace ProperSave
     {
         public const string GUID = "com.KingEnderBrine.ProperSave";
         public const string Name = "Proper Save";
-        public const string Version = "2.12.1";
+        public const string Version = "2.13.0";
 
         private static readonly char[] invalidSubDirectoryCharacters = new[] { '\\', '/', '.' };
 
@@ -94,6 +96,13 @@ namespace ProperSave
                 }
 
                 SaveFileMetadata.PopulateSavesMetadata();
+
+                //RoR2.Console.instance.concommandCatalog["ps_force_load"] = new RoR2.Console.ConCommand
+                //{
+                //    flags = ConVarFlags.SenderMustBeServer,
+                //    helpText = "[ProperSave] Load save from specified file ignoring user identifier. args[0]=(string)path",
+                //    action = (RoR2.Console.ConCommandDelegate)Loading.LoadForce
+                //};
             };
 
             ModSupport.GatherLoadedPlugins();

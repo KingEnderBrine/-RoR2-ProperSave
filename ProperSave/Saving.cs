@@ -8,6 +8,7 @@ using Mono.Cecil.Cil;
 using RoR2.UI;
 using ProperSave.Data;
 using Zio;
+using UnityEngine.SceneManagement;
 
 namespace ProperSave
 {
@@ -15,6 +16,7 @@ namespace ProperSave
     {
         internal static RunRngData PreStageRng { get; private set; }
         internal static RngData PreStageInfiniteTowerSafeWardRng { get; private set; }
+        internal static string PreStageSceneName { get; private set; }
 
         internal static void RegisterHooks()
         {
@@ -25,7 +27,7 @@ namespace ProperSave
             Run.onServerGameOver += RunOnServerGameOver;
 
             //Save stage RNG before it changes
-            On.RoR2.Run.GenerateStageRNG += RunGenerateStageRNG;
+            On.RoR2.Run.AdvanceStage += RunAdvanceStage;
 
             //Adding message to quit confirmation dialog
             IL.RoR2.QuitConfirmationHelper.IssueQuitCommand_Action += IssueQuitCommandIL;
@@ -35,18 +37,19 @@ namespace ProperSave
         {
             On.RoR2.Run.BeginStage -= StageOnStageStartGlobal;
             Run.onServerGameOver -= RunOnServerGameOver;
-            On.RoR2.Run.GenerateStageRNG -= RunGenerateStageRNG;
+            On.RoR2.Run.AdvanceStage -= RunAdvanceStage;
             IL.RoR2.QuitConfirmationHelper.IssueQuitCommand_Action -= IssueQuitCommandIL;
         }
 
-        private static void RunGenerateStageRNG(On.RoR2.Run.orig_GenerateStageRNG orig, Run self)
+        private static void RunAdvanceStage(On.RoR2.Run.orig_AdvanceStage orig, Run self, SceneDef sceneDef)
         {
+            PreStageSceneName = SceneCatalog.GetSceneDefForCurrentScene().cachedName;
             PreStageRng = new RunRngData(Run.instance);
             if (self is InfiniteTowerRun infiniteTowerRun)
             {
                 PreStageInfiniteTowerSafeWardRng = new RngData(infiniteTowerRun.safeWardRng);
             }
-            orig(self);
+            orig(self, sceneDef);
         }
 
         private static void RunOnServerGameOver(Run run, GameEndingDef ending)
@@ -86,6 +89,11 @@ namespace ProperSave
 
                 var sceneDef = SceneCatalog.GetSceneDefForCurrentScene();
                 if (sceneDef.sceneType == SceneType.Menu || sceneDef.sceneType == SceneType.Cutscene)
+                {
+                    return;
+                }
+
+                if (Loading.CurrentSave?.ForceLoad ?? false)
                 {
                     return;
                 }

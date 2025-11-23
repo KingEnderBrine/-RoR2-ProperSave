@@ -21,6 +21,9 @@ namespace ProperSave.SaveData
         [DataMember(Name = "lccm")]
         public float lunarCoinChanceMultiplier;
 
+        [DataMember(Name = "pbi")]
+        public int preferredBodyIndex;
+
         [DataMember(Name = "m")]
         public CharacterMasterData master;
 
@@ -38,6 +41,8 @@ namespace ProperSave.SaveData
                 lunarCoins = networkUser.lunarCoins;
             }
             lunarCoinChanceMultiplier = player.lunarCoinChanceMultiplier;
+
+            preferredBodyIndex = (int)networkUser.bodyIndexPreference;
 
             master = new CharacterMasterData(player.master);
 
@@ -60,6 +65,7 @@ namespace ProperSave.SaveData
         {
             master.LoadMaster(player.master, false);
 
+            player.SetBodyPreference((BodyIndex)preferredBodyIndex);
             player.masterController.lunarCoinChanceMultiplier = lunarCoinChanceMultiplier;
             var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
             for (var i = 0; i < statsFields.Length; i++)

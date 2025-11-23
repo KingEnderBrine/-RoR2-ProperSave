@@ -6,6 +6,9 @@ using System;
 using System.Collections;
 using PSTinyJson;
 using Zio;
+using System.IO;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace ProperSave
 {
@@ -130,6 +133,64 @@ namespace ProperSave
                 ProperSavePlugin.InstanceLogger.LogWarning("Loading run but content mismatch detected which may result in errors");
             }
 
+            PreGameController.instance.StartRun();
+        }
+
+        [ConCommand(commandName = "ps_force_load", flags = ConVarFlags.SenderMustBeServer, helpText = "[ProperSave] Load save from specified file ignoring user identifier.")]
+        internal static void LoadForce(ConCommandArgs args)
+        {
+            var path = args.TryGetArgString(0);
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                Debug.LogError("Incorrect path");
+                return;
+            }
+
+            try
+            {
+                var saveJSON = File.ReadAllText(path);
+                ProperSavePlugin.CurrentSave = JSONParser.FromJson<SaveFile>(saveJSON);
+                IsLoading = true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"Failed to load save file at path \"{path}\"");
+                ProperSavePlugin.InstanceLogger.LogError(e);
+                ResetLoading();
+            }
+
+            if (ProperSavePlugin.CurrentSave.ContentHash != null && ProperSavePlugin.CurrentSave.ContentHash != ProperSavePlugin.ContentHash)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning("Loading run but content mismatch detected which may result in errors");
+            }
+
+            if (PreGameController.instance)
+            {
+                if (NetworkUser.readOnlyInstancesList.Count > 0)
+                {
+                    Debug.LogWarning("Force loading only allowed for 1 player in lobby");
+                    ResetLoading();
+                    return;
+                }
+                PreGameController.instance.StartRun();
+            }
+            else
+            {
+                ProperSavePlugin.Instance.StartCoroutine(LoadForceCoroutine());
+            }
+
+
+            static void ResetLoading()
+            {
+                ProperSavePlugin.CurrentSave = null;
+                IsLoading = false;
+            }
+        }
+
+        private static IEnumerator LoadForceCoroutine()
+        {
+            RoR2.Console.instance.SubmitCmd(null, "host 0");
+            yield return new WaitUntil(() => PreGameController.instance != null);
             PreGameController.instance.StartRun();
         }
     }

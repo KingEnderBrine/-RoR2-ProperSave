@@ -19,7 +19,7 @@ namespace ProperSave.Data
             chargeFinishTime = state.chargeFinishTime.t;
         }
 
-        public void LoadEquipment(Inventory inventory, byte equipmentSlot)
+        public void LoadEquipment(Inventory inventory, uint equipmentSlot, uint equipmentSet)
         {
             var chargeTime = new Run.FixedTimeStamp(chargeFinishTime);
             var state = new EquipmentState(
@@ -27,7 +27,7 @@ namespace ProperSave.Data
                 chargeTime,
                 charges
                 );
-            inventory.SetEquipment(state, equipmentSlot);
+            inventory.SetEquipment(state, equipmentSlot, equipmentSet);
         }
     }
 }

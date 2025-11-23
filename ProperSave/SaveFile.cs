@@ -28,6 +28,8 @@ namespace ProperSave
 
         [IgnoreDataMember]
         public SaveFileMetadata SaveFileMeta { get; set; }
+        [IgnoreDataMember]
+        public bool ForceLoad { get; set; }
 
         public static event Action<Dictionary<string, object>> OnGatherSaveData;
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -86,6 +88,19 @@ namespace ProperSave
 
         internal void LoadPlayers() 
         {
+            if (ForceLoad)
+            {
+                var player = PlayersData.FirstOrDefault();
+                if (player == null)
+                {
+                    return;
+                }
+
+                var user = NetworkUser.readOnlyInstancesList.FirstOrDefault();
+                player.LoadPlayer(user);
+                return;
+            }
+
             var players = PlayersData.ToList();
             foreach (var user in NetworkUser.readOnlyInstancesList) {
                 var player = players.FirstOrDefault(el => el.userId.Load().Equals(user.id));

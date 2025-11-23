@@ -19,6 +19,9 @@ namespace ProperSave.SaveData
         [DataMember(Name = "dld")]
         public DevotedLemurianData devotedLemurianData;
 
+        [DataMember(Name = "drd")]
+        public DroneRepairData droneRepairData;
+
         internal MinionData(CharacterMaster master)
         {
             masterIndex = (int)master.masterIndex;
@@ -26,6 +29,10 @@ namespace ProperSave.SaveData
             if (master.TryGetComponent<DevotedLemurianController>(out var devotedLemurianController))
             {
                 devotedLemurianData = new DevotedLemurianData(devotedLemurianController);
+            }
+            if (master.TryGetComponent<DroneRepairMaster>(out var droneRepairMaster))
+            {
+                droneRepairData = new DroneRepairData(droneRepairMaster);
             }
         }
 
@@ -65,6 +72,12 @@ namespace ProperSave.SaveData
                     devotedLemurianData.LoadData(devotedLemurianController);
                     devotedLemurianController._lemurianMaster = minionMaster;
                     devotedLemurianController._devotionInventoryController = CharacterMasterData.GetDevotionInventoryController(playerMaster);
+                }
+
+                if (droneRepairData != null)
+                {
+                    var droneRepairMaster = minionMaster.GetComponent<DroneRepairMaster>();
+                    droneRepairData.LoadData(droneRepairMaster);
                 }
 
                 NetworkServer.Spawn(minionGameObject);

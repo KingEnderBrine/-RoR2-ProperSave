@@ -1,3 +1,8 @@
+**2.13.0**
+* Fixes for `Alloyed Collective` update.
+* Eclipse win should now count towards the character you started the save with, not the one you had selected before save loading. 
+* Added `ps_force_load` command for debug purposes.
+
 **2.12.1**
 * Added Japanese translation, thanks `WakefulSpect`.
 

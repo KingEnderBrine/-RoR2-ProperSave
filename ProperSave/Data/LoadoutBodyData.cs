@@ -3,33 +3,30 @@ using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {
-    public partial class LoadoutData
+    public class LoadoutBodyData
     {
-        public class LoadoutBodyData
+        [DataMember(Name = "bi")]
+        public int bodyIndex;
+        [DataMember(Name = "sp")]
+        public uint skinPreference;
+        [DataMember(Name = "sps")]
+        public uint[] skillPreferences;
+
+        public LoadoutBodyData(Loadout.BodyLoadoutManager.BodyLoadout bodyLoadout)
         {
-            [DataMember(Name = "bi")]
-            public int bodyIndex;
-            [DataMember(Name = "sp")]
-            public uint skinPreference;
-            [DataMember(Name = "sps")]
-            public uint[] skillPreferences;
+            bodyIndex = (int)bodyLoadout.bodyIndex;
+            skinPreference = bodyLoadout.skinPreference;
+            skillPreferences = bodyLoadout.skillPreferences;
+        }
 
-            public LoadoutBodyData(Loadout.BodyLoadoutManager.BodyLoadout bodyLoadout)
+        public Loadout.BodyLoadoutManager.BodyLoadout Load()
+        {
+            return new Loadout.BodyLoadoutManager.BodyLoadout
             {
-                bodyIndex = (int)bodyLoadout.bodyIndex;
-                skinPreference = bodyLoadout.skinPreference;
-                skillPreferences = bodyLoadout.skillPreferences;
-            }
-
-            public Loadout.BodyLoadoutManager.BodyLoadout Load()
-            {
-                return new Loadout.BodyLoadoutManager.BodyLoadout
-                {
-                    bodyIndex = (BodyIndex)bodyIndex,
-                    skinPreference = skinPreference,
-                    skillPreferences = skillPreferences
-                };
-            }
+                bodyIndex = (BodyIndex)bodyIndex,
+                skinPreference = skinPreference,
+                skillPreferences = skillPreferences
+            };
         }
     }
 }

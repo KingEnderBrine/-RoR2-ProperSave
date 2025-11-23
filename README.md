@@ -36,8 +36,11 @@ Once save file is loaded you can get data you've previously saved and apply it a
 * `CurrentSave.GetModdedData<Type>("")` - use this method to get data that you've saved.
 * `ProperSave.Data` - under this namespace you can find classes used to save some of vanilla data. 
 
+# Console commands
+* `ps_force_load {path}` - loads save from specified file ignoring user identifier. For debug purposes only. The file is not deleted on game over, saving is disabled in a run started with this command.
+
 # Known issues
 I tried to save all necessary data so that when you load the game would continue as it should have been without saving.
 
 - Minions would respawn at different positions each time you load the same save file. It's not big of an issue, and there is nothing I can do about it.
-- I've not tested this mod much with achievements unlocking, but for most, if not all cases, it should be working as intended. 
+- I've not tested this mod much with achievements unlocking, but for most cases, it should be working as intended. 

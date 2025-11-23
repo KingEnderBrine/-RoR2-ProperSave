@@ -55,9 +55,6 @@ namespace ProperSave.Data
         [DataMember(Name = "tmc")]
         public int trackedMissileCount;
 
-        [DataMember(Name = "cosc")]
-        public uint costOfSmallChest;
-
         [DataMember(Name = "ebmmr")]
         public uint extraBossMissileMoneyRemainder;
 
@@ -75,13 +72,12 @@ namespace ProperSave.Data
             beadXPNeededForCurrentLevel = master.beadXPNeededForCurrentLevel;
             trackedFreeUnlocks = master.trackedFreeUnlocks;
             trackedMissileCount = master.trackedMissileCount;
-            costOfSmallChest = master.costOfSmallChest;
             extraBossMissileMoneyRemainder = master.ExtraBossMissileMoneyRemainder;
 
             inventory = new InventoryData(master.inventory);
             loadout = new LoadoutData(master.loadout);
             
-            bodyName = master.bodyPrefab.name;
+            bodyName = (master.originalBodyPrefab ?? master.bodyPrefab).name;
 
             if (master.cloverVoidRng != null)
             {
@@ -127,7 +123,6 @@ namespace ProperSave.Data
             }
 
             var bodyPrefab = BodyCatalog.FindBodyPrefab(bodyName);
-
             if (bodyPrefab)
             {
                 master.bodyPrefab = bodyPrefab;
@@ -144,7 +139,6 @@ namespace ProperSave.Data
             master.beadXPNeededForCurrentLevel = beadXPNeededForCurrentLevel;
             master.trackedFreeUnlocks = trackedFreeUnlocks;
             master.trackedMissileCount = trackedMissileCount;
-            master.costOfSmallChest = costOfSmallChest;
             master.ExtraBossMissileMoneyRemainder = extraBossMissileMoneyRemainder;
 
             loadout.LoadData(master.loadout);

@@ -34,15 +34,16 @@ namespace ProperSave.SaveData
             {
                 userId = new UserIDData(lostNetworkUser.userID);
                 lunarCoins = lostNetworkUser.lunarCoins;
+                preferredBodyIndex = lostNetworkUser.bodyIndexPreference;
             }
             else
             {
                 userId = new UserIDData(networkUser.id);
                 lunarCoins = networkUser.lunarCoins;
+                preferredBodyIndex = (int)networkUser.bodyIndexPreference;
             }
             lunarCoinChanceMultiplier = player.lunarCoinChanceMultiplier;
 
-            preferredBodyIndex = (int)networkUser.bodyIndexPreference;
 
             master = new CharacterMasterData(player.master);
 

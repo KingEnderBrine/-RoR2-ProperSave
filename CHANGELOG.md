@@ -1,3 +1,6 @@
+**2.13.2**
+* Fixed an issue where going to next stage after someone disconnected would cause a black screen and constant error spam.
+
 **2.13.1**
 * Fixed an issue where `Artifact of Prestige` data wouldn't save.
 

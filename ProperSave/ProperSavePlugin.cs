@@ -26,7 +26,7 @@ namespace ProperSave
     {
         public const string GUID = "com.KingEnderBrine.ProperSave";
         public const string Name = "Proper Save";
-        public const string Version = "2.13.1";
+        public const string Version = "2.13.2";
 
         private static readonly char[] invalidSubDirectoryCharacters = new[] { '\\', '/', '.' };
 
@@ -96,13 +96,6 @@ namespace ProperSave
                 }
 
                 SaveFileMetadata.PopulateSavesMetadata();
-
-                //RoR2.Console.instance.concommandCatalog["ps_force_load"] = new RoR2.Console.ConCommand
-                //{
-                //    flags = ConVarFlags.SenderMustBeServer,
-                //    helpText = "[ProperSave] Load save from specified file ignoring user identifier. args[0]=(string)path",
-                //    action = (RoR2.Console.ConCommandDelegate)Loading.LoadForce
-                //};
             };
 
             ModSupport.GatherLoadedPlugins();

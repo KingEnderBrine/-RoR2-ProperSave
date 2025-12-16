@@ -1,3 +1,6 @@
+**2.13.3**
+* Fixed an issue where loading a run in `Conduit Canyon` as the first run after launching the game will cause teleporter to become non-interactable.
+
 **2.13.2**
 * Fixed an issue where going to next stage after someone disconnected would cause a black screen and constant error spam.
 

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.Serialization;
+using UnityEngine;
 
 namespace ProperSave
 {
@@ -72,6 +73,13 @@ namespace ProperSave
 
         internal void LoadRun()
         {
+            try
+            {
+                //Hopefully temporary workaround for Conduit Canyon's preplaced teleporter throwing NRE in Awake if when loaded.
+                LegacyResourcesAPI.Load<GameObject>("Prefabs/PositionIndicators/TeleporterChargingPositionIndicator", true);
+            }
+            catch { }
+
             RunData.LoadData();
         }
 

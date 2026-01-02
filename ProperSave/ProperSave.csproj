@@ -11,16 +11,15 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="BepInEx.Core" Version="5.4.19" />
+    <PackageReference Include="R2API.Difficulty" Version="1.1.2" />
     <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" />
+    <PackageReference Include="MMHOOK.RoR2" Version="2025.12.9" NoWarn="NU1701" />
+    <PackageReference Include="RiskOfRain2.GameLibs" Version="1.4.1-r.0" GeneratePathProperty="true" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="BiggerBazaar">
       <HintPath>..\Libs\BiggerBazaar.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="MMHOOK_RoR2">
-      <HintPath>..\Libs\MMHOOK_RoR2.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="EOS">
@@ -35,10 +34,6 @@
       <HintPath>..\Libs\Zio.dll</HintPath>
       <Private>false</Private>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="RiskOfRain2.GameLibs" Version="1.4.0-r.0" GeneratePathProperty="true" />
   </ItemGroup>
 
   <ItemGroup>

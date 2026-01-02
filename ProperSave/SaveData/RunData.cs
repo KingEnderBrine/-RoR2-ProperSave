@@ -1,6 +1,7 @@
 ﻿using ProperSave.Data;
 using ProperSave.SaveData.Runs;
 using ProperSave.TinyJson;
+using ProperSave.Utils;
 using RoR2;
 using System;
 using System.Linq;
@@ -13,126 +14,101 @@ namespace ProperSave.SaveData
 {
     public class RunData
     {
-        [DataMember(Name = "s")]
         public ulong seed;
-        [DataMember(Name = "d")]
-        public int difficulty;
-        [DataMember(Name = "ft")]
+        public DifficultyIndex difficultyIndex;
         public float fixedTime;
-        [DataMember(Name = "t")]
         public float time;
-        [DataMember(Name = "ip")]
         public bool isPaused;
-        [DataMember(Name = "offt")]
         public float offsetFromFixedTime;
-        [DataMember(Name = "scc")]
         public int stageClearCount;
-        [DataMember(Name = "sccls")]
         public int stageClearCountAtLoopStart;
-        [DataMember(Name = "lcc")]
         public int loopClearCount;
-        [DataMember(Name = "sn")]
         public string sceneName;
-        [DataMember(Name = "nsn")]
         public string nextSceneName;
-        [DataMember(Name = "psn")]
         public string previousSceneName;
-        [DataMember(Name = "pamv")]
         public int prestigeArtifactMountainValue;
 
-        [DataMember(Name = "im")]
         public ItemMaskData itemMask;
-        [DataMember(Name = "em")]
         public EquipmentMaskData equipmentMask;
-        [DataMember(Name = "dm")]
         public DroneMaskData droneMask;
-        [DataMember(Name = "spc")]
         public int shopPortalCount;
-        [DataMember(Name = "ef")]
         public string[] eventFlags;
-        [DataMember(Name = "rr")]
         public RunRngData runRng;
-        [DataMember(Name = "ta")]
-        public int trialArtifact;
-        [DataMember(Name = "rb")]
+        public ArtifactIndex trialArtifactIndex;
         public RuleBookData ruleBook;
-        [DataMember(Name = "trdt")]
-        public string typeRunDataType;
-        [DataMember(Name = "trd")]
-        [DiscoverObjectType(nameof(typeRunDataType))]
         public ITypedRunData typedRunData;
 
         private static readonly FieldInfo onRunStartGlobalDelegate = typeof(Run).GetField(nameof(Run.onRunStartGlobal), BindingFlags.NonPublic | BindingFlags.Static);
         
-        internal RunData()
+        internal static RunData Create()
         {
+            var data = new RunData();
             var run = Run.instance;
-            seed = run.seed;
-            difficulty = (int)run.selectedDifficulty;
+            data.seed = run.seed;
+            data.difficultyIndex = run.selectedDifficulty;
 
             var stopWatch = run.runStopwatch;
-            isPaused = stopWatch.isPaused;
-            offsetFromFixedTime = stopWatch.offsetFromFixedTime;
-            fixedTime = run.fixedTime;
-            time = run.time;
+            data.isPaused = stopWatch.isPaused;
+            data.offsetFromFixedTime = stopWatch.offsetFromFixedTime;
+            data.fixedTime = run.fixedTime;
+            data.time = run.time;
 
-            stageClearCount = run.stageClearCount;
-            stageClearCountAtLoopStart = run.stageClearCountAtLoopStart;
-            loopClearCount = run._loopClearCount;
-            sceneName = SceneManager.GetActiveScene().name;
-            nextSceneName = run.nextStageScene.cachedName;
-            previousSceneName = Saving.PreStageSceneName;
+            data.stageClearCount = run.stageClearCount;
+            data.stageClearCountAtLoopStart = run.stageClearCountAtLoopStart;
+            data.loopClearCount = run._loopClearCount;
+            data.sceneName = SceneManager.GetActiveScene().name;
+            data.nextSceneName = run.nextStageScene.cachedName;
+            data.previousSceneName = Saving.PreStageSceneName;
 
-            shopPortalCount = run.shopPortalCount;
-            prestigeArtifactMountainValue = run.prestiegeArtifactMountainValue;
+            data.shopPortalCount = run.shopPortalCount;
+            data.prestigeArtifactMountainValue = run.prestiegeArtifactMountainValue;
 
-            itemMask = new ItemMaskData(run.availableItems);
-            equipmentMask = new EquipmentMaskData(run.availableEquipment);
-            droneMask = new DroneMaskData(run.availableDrones);
+            data.itemMask = ItemMaskData.Create(run.availableItems);
+            data.equipmentMask = EquipmentMaskData.Create(run.availableEquipment);
+            data.droneMask = DroneMaskData.Create(run.availableDrones);
 
-            runRng = Saving.PreStageRng;
+            data.runRng = Saving.PreStageRng;
 
-            eventFlags = run.eventFlags.ToArray();
+            data.eventFlags = run.eventFlags.ToArray();
 
             var artifactController = UnityEngine.Object.FindObjectOfType<ArtifactTrialMissionController>();
-            trialArtifact = artifactController?.currentArtifactIndex ?? -1;
+            data.trialArtifactIndex = (ArtifactIndex)(artifactController?.currentArtifactIndex ?? -1);
 
-            ruleBook = new RuleBookData(run.ruleBook);
+            data.ruleBook = RuleBookData.Create(run.ruleBook);
 
             if (run is InfiniteTowerRun)
             {
-                typedRunData = new InfiniteTowerTypedRunData();
-                typeRunDataType = typeof(InfiniteTowerTypedRunData).AssemblyQualifiedName;
+                data.typedRunData = InfiniteTowerTypedRunData.Create();
             }
+
+            return data;
         }
 
         //Upgraded copy of Run.Start
         internal void LoadData()
         {
-            ModSupport.ShareSuiteMapTransition();
+            ModCompat.ShareSuiteMapTransition();
 
-            if (trialArtifact != -1)
+            if (trialArtifactIndex != ArtifactIndex.None)
             {
-                ArtifactTrialMissionController.trialArtifact = ArtifactCatalog.GetArtifactDef((ArtifactIndex)trialArtifact);
+                ArtifactTrialMissionController.trialArtifact = ArtifactCatalog.GetArtifactDef(trialArtifactIndex);
             }
 
             var instance = Run.instance;
 
-            //If ruleBook length doesn't match RuleCatalog, this means something changed in the game since the save, for example content mods added/removed
-            //Logging error and keeping ruleBook from starting run, which will result in loaded game being not the same as saved
-            //At least this will not block user from loading runs and potentially not being able to start a run at all
-            if (ruleBook.ruleValues.Length != RuleCatalog.ruleCount)
-            {
-                ProperSavePlugin.InstanceLogger.LogError("RuleCatalog mismatch with saved ruleBook data, fallback to starting Run ruleBook");
-            }
-            else
-            {
-                instance.SetRuleBook(ruleBook.Load());
-            }
+            instance.SetRuleBook(ruleBook.Load());
             instance.OnRuleBookUpdated(instance.networkRuleBookComponent);
 
             instance.seed = seed;
-            instance.selectedDifficulty = (DifficultyIndex)difficulty;
+            if (difficultyIndex == DifficultyIndex.Invalid)
+            {
+                instance.selectedDifficulty = DifficultyIndex.Easy;
+            }
+            else
+            {
+                instance.selectedDifficulty = difficultyIndex;
+            }
+
             instance.shopPortalCount = shopPortalCount;
             instance.prestiegeArtifactMountainValue = prestigeArtifactMountainValue;
 
@@ -160,14 +136,14 @@ namespace ProperSave.SaveData
                 instance.OnLoopBeginServer(SceneCatalog.GetSceneDefFromSceneName(previousSceneName));
             }
             //Stage rng is normally generated earlier, but when scene is changed GenerateLoopRNG is executed before GenerateStageRNG,
-            //hoping that no one will want to use stage rng in onnLoopBeginServer event
+            //hoping that no one will want to use stage rng in onLoopBeginServer event
             instance.GenerateStageRNG();
 
             NetworkManager.singleton.ServerChangeScene(sceneName);
 
-            itemMask.LoadDataOut(out instance.availableItems);
-            equipmentMask.LoadDataOut(out instance.availableEquipment);
-            droneMask.LoadDataOut(out instance.availableDrones);
+            itemMask.LoadData(instance.availableItems);
+            equipmentMask.LoadData(instance.availableEquipment);
+            droneMask.LoadData(instance.availableDrones);
 
             instance.BuildUnlockAvailability();
             instance.BuildDropTable();
@@ -194,6 +170,82 @@ namespace ProperSave.SaveData
                 offsetFromFixedTime = offsetFromFixedTime,
                 isPaused = isPaused
             };
+        }
+
+        internal static RunData Read(ReaderContext context)
+        {
+            var data = new RunData();
+            var reader = context.Reader;
+
+            data.seed = reader.ReadUInt64();
+            data.difficultyIndex = SharedIndexHelpers.ResolveDifficulty(reader.ReadInt32(), context);
+            data.fixedTime = reader.ReadSingle();
+            data.time = reader.ReadSingle();
+            data.isPaused = reader.ReadBoolean();
+            data.offsetFromFixedTime = reader.ReadSingle();
+            data.stageClearCount = reader.ReadInt32();
+            data.stageClearCountAtLoopStart = reader.ReadInt32();
+            data.loopClearCount = reader.ReadInt32();
+            data.sceneName = reader.ReadString();
+            data.nextSceneName = reader.ReadString();
+            data.previousSceneName = reader.ReadString();
+            data.prestigeArtifactMountainValue = reader.ReadInt32();
+            data.itemMask = ItemMaskData.Read(context);
+            data.equipmentMask = EquipmentMaskData.Read(context);
+            data.droneMask = DroneMaskData.Read(context);
+            data.shopPortalCount = reader.ReadInt32();
+            data.eventFlags = new string[reader.ReadInt32()];
+            for (var i = 0; i < data.eventFlags.Length; i++)
+            {
+                data.eventFlags[i] = reader.ReadString();
+            }
+            data.runRng = RunRngData.Read(context);
+            data.trialArtifactIndex = SharedIndexHelpers.ResolveArtifact(reader.ReadInt32(), context);
+            data.ruleBook = RuleBookData.Read(context);
+            var typedRunDataType = reader.ReadString();
+            if (typedRunDataType != "")
+            {
+                var type = Type.GetType(typedRunDataType, false);
+                data.typedRunData = (ITypedRunData)type.GetMethod("Read", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { context });
+            }
+
+            return data;
+        }
+
+        internal void Write(WriterContext context)
+        {
+            var writer = context.Writer;
+
+            writer.Write(seed);
+            writer.Write(SharedIndexHelpers.FromDifficulty(difficultyIndex, context));
+            writer.Write(fixedTime);
+            writer.Write(time);
+            writer.Write(isPaused);
+            writer.Write(offsetFromFixedTime);
+            writer.Write(stageClearCount);
+            writer.Write(stageClearCountAtLoopStart);
+            writer.Write(loopClearCount);
+            writer.Write(sceneName);
+            writer.Write(nextSceneName);
+            writer.Write(previousSceneName);
+            writer.Write(prestigeArtifactMountainValue);
+            itemMask.Write(context);
+            equipmentMask.Write(context);
+            droneMask.Write(context);
+            writer.Write(shopPortalCount);
+            writer.Write(eventFlags.Length);
+            for (var i = 0; i < eventFlags.Length; i++)
+            {
+                writer.Write(eventFlags[i]);
+            }
+            runRng.Write(context);
+            writer.Write(SharedIndexHelpers.FromArtifact(trialArtifactIndex, context));
+            ruleBook.Write(context);
+            writer.Write(typedRunData?.GetType().AssemblyQualifiedName ?? "");
+            if (typedRunData != null)
+            {
+                typedRunData.Write(context);
+            }
         }
     }
 }

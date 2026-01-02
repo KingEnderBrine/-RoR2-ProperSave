@@ -47,9 +47,7 @@ namespace PSTinyJson {
             } else if (type == typeof(bool)) {
                 stringBuilder.Append(((bool)item) ? "true" : "false");
             } else if (type.IsEnum) {
-                stringBuilder.Append('"');
-                stringBuilder.Append(item.ToString());
-                stringBuilder.Append('"');
+                stringBuilder.Append((item as Enum).ToString("D"));
             } else if (item is IList) {
                 stringBuilder.Append('[');
                 bool isFirst = true;

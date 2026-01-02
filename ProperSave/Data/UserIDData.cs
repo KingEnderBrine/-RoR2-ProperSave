@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using ProperSave.Utils;
+using RoR2;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
@@ -6,20 +7,22 @@ using System.Text;
 
 namespace ProperSave.Data
 {
-    public class UserIDData
+    public partial class UserIDData
     {
-        [DataMember(Name = "s")]
         public ulong steam;
-        [DataMember(Name = "e")]
         public string egs;
-        [DataMember(Name = "si")]
         public byte subId;
 
-        public UserIDData(NetworkUserId userID)
+        public static UserIDData Create(NetworkUserId userID)
         {
-            egs = userID.strValue;
-            steam = userID.value;
-            subId = userID.subId;
+            var data = new UserIDData
+            {
+                egs = userID.strValue,
+                steam = userID.value,
+                subId = userID.subId,
+            };
+
+            return data;
         }
 
         public NetworkUserId Load()
@@ -28,12 +31,49 @@ namespace ProperSave.Data
             {
                 return new NetworkUserId(steam, subId);
             }
-            if (!string.IsNullOrWhiteSpace(egs))
+            if (egs != null)
             {
                 return new NetworkUserId(egs, subId);
             }
 
             return default;
+        }
+
+        internal static UserIDData Read(ReaderContext context)
+        {
+            var data = new UserIDData();
+            var reader = context.Reader;
+
+            var isSteam = reader.ReadBoolean();
+            if (isSteam)
+            {
+                data.steam = reader.ReadUInt64();
+            }
+            else
+            {
+                data.egs = reader.ReadString();
+            }
+
+            data.subId = reader.ReadByte();
+            
+            return data;
+        }
+
+        internal void Write(WriterContext context)
+        {
+            var writer = context.Writer;
+            if (egs == null)
+            {
+                writer.Write(true);
+                writer.Write(steam);
+            }
+            else
+            {
+                writer.Write(false);
+                writer.Write(egs);
+            }
+
+            writer.Write(subId);
         }
     }
 }

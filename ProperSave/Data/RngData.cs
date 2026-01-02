@@ -1,18 +1,20 @@
 ﻿using System.Runtime.Serialization;
+using ProperSave.Utils;
 
 namespace ProperSave.Data
 {
     public class RngData
     {
-        [DataMember(Name = "s0")]
         public ulong state0;
-        [DataMember(Name = "s1")]
         public ulong state1;
 
-        public RngData(Xoroshiro128Plus rng)
+        public static RngData Create(Xoroshiro128Plus rng)
         {
-            state0 = rng.state0;
-            state1 = rng.state1;
+            return new RngData
+            {
+                state0 = rng.state0,
+                state1 = rng.state1,
+            };
         }
 
         public void LoadDataOut(out Xoroshiro128Plus rng)
@@ -25,6 +27,21 @@ namespace ProperSave.Data
         {
             rng.state0 = state0;
             rng.state1 = state1;
+        }
+
+        internal static RngData Read(ReaderContext context)
+        {
+            var data = new RngData();
+            data.state0 = context.Reader.ReadUInt64();
+            data.state1 = context.Reader.ReadUInt64();
+
+            return data;
+        }
+
+        internal void Write(WriterContext context)
+        {
+            context.Writer.Write(state0);
+            context.Writer.Write(state1);
         }
     }
 }

@@ -1,14 +1,12 @@
 ﻿using ProperSave.SaveData;
 using RoR2;
 using System;
-using PSTinyJson;
 using UnityEngine.Networking;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using RoR2.UI;
 using ProperSave.Data;
-using Zio;
-using UnityEngine.SceneManagement;
+using System.IO;
 
 namespace ProperSave
 {
@@ -44,10 +42,10 @@ namespace ProperSave
         private static void RunAdvanceStage(On.RoR2.Run.orig_AdvanceStage orig, Run self, SceneDef sceneDef)
         {
             PreStageSceneName = SceneCatalog.GetSceneDefForCurrentScene().cachedName;
-            PreStageRng = new RunRngData(Run.instance);
+            PreStageRng = RunRngData.Create(Run.instance);
             if (self is InfiniteTowerRun infiniteTowerRun)
             {
-                PreStageInfiniteTowerSafeWardRng = new RngData(infiniteTowerRun.safeWardRng);
+                PreStageInfiniteTowerSafeWardRng = RngData.Create(infiniteTowerRun.safeWardRng);
             }
             orig(self, sceneDef);
         }
@@ -56,14 +54,13 @@ namespace ProperSave
         {
             try
             {
-                var metadata = ProperSavePlugin.CurrentSave?.SaveFileMeta;
+                var metadata = ProperSavePlugin.CurrentSave;
                 if (metadata != null && metadata.FilePath.HasValue)
                 {
                     if (ProperSavePlugin.SavesFileSystem.FileExists(metadata.FilePath.Value))
                     {
                         ProperSavePlugin.SavesFileSystem.DeleteFile(metadata.FilePath.Value);
                     }
-                    SaveFileMetadata.Remove(metadata);
                 }
             }
             catch (Exception e)
@@ -93,7 +90,7 @@ namespace ProperSave
                     return;
                 }
 
-                if (Loading.CurrentSave?.ForceLoad ?? false)
+                if (ProperSavePlugin.CurrentSave?.ForceLoad ?? false)
                 {
                     return;
                 }
@@ -108,27 +105,18 @@ namespace ProperSave
 
         private static void SaveGame()
         {
-            var save = new SaveFile
-            {
-                SaveFileMeta = SaveFileMetadata.GetCurrentLobbySaveMetadata() ?? SaveFileMetadata.CreateMetadataForCurrentLobby()
-            };
-
-            if (string.IsNullOrEmpty(save.SaveFileMeta.FileName))
-            {
-                do
-                {
-                    save.SaveFileMeta.FileName = Guid.NewGuid().ToString();
-                }
-                while (ProperSavePlugin.SavesFileSystem.FileExists(save.SaveFileMeta.FilePath.Value));
-            }
+            var metadata = SaveFileMetadata.GetCurrentLobbySaveMetadata() ?? new SaveFileMetadata();
+            metadata.FillMetadataForCurrentLobby();
 
             try
             {
-                var json = JSONWriter.ToJson(save);
-                ProperSavePlugin.SavesFileSystem.WriteAllText(save.SaveFileMeta.FilePath.Value, json);
-
-                ProperSavePlugin.CurrentSave = save;
-                SaveFileMetadata.AddIfNotExists(save.SaveFileMeta);
+                using (var fileStream = ProperSavePlugin.SavesFileSystem.OpenFile(metadata.FilePath.Value, System.IO.FileMode.Create, System.IO.FileAccess.Write))
+                using (var writer = new BinaryWriter(fileStream))
+                {
+                    metadata.Write();
+                }
+                ProperSavePlugin.CurrentSave = metadata;
+                SaveFileMetadata.AddIfNotExists(metadata);
                 Chat.SendBroadcastChat(new Chat.SimpleChatMessage { baseToken = string.Format(Language.GetString(LanguageConsts.PROPER_SAVE_CHAT_SAVE), Language.GetString(SceneCatalog.currentSceneDef.nameToken)) });
             }
             catch (Exception e)
@@ -163,12 +151,12 @@ namespace ProperSave
                 simpleDialogBox.descriptionLabel.text += Language.GetString(LanguageConsts.PROPER_SAVE_QUIT_DIALOG_NOT_SAVED);
                 return;
             }
-            if (ProperSavePlugin.CurrentSave.RunData.stageClearCount == Run.instance.stageClearCount)
+            if (ProperSavePlugin.CurrentSave.Header.StageClearCount == Run.instance.stageClearCount)
             {
                 simpleDialogBox.descriptionLabel.text += Language.GetString(LanguageConsts.PROPER_SAVE_QUIT_DIALOG_SAVED);
                 return;
             }
-            simpleDialogBox.descriptionLabel.text += Language.GetStringFormatted(LanguageConsts.PROPER_SAVE_QUIT_DIALOG_SAVED_BEFORE, new[] { (Run.instance.stageClearCount - ProperSavePlugin.CurrentSave.RunData.stageClearCount).ToString() });
+            simpleDialogBox.descriptionLabel.text += Language.GetStringFormatted(LanguageConsts.PROPER_SAVE_QUIT_DIALOG_SAVED_BEFORE, new[] { (Run.instance.stageClearCount - ProperSavePlugin.CurrentSave.Header.StageClearCount).ToString() });
         }
     }
 }

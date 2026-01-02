@@ -12,7 +12,7 @@ namespace ProperSave
 
         public uint lunarCoins;
         public NetworkUserId userID;
-        public int bodyIndexPreference;
+        public BodyIndex bodyIndexPreference;
 
         private void Awake()
         {
@@ -53,7 +53,7 @@ namespace ProperSave
                 var lostUser = networkUser.master.gameObject.AddComponent<LostNetworkUser>();
                 lostUser.lunarCoins = networkUser.lunarCoins;
                 lostUser.userID = networkUser.id;
-                lostUser.bodyIndexPreference = (int)networkUser.bodyIndexPreference;
+                lostUser.bodyIndexPreference = networkUser.bodyIndexPreference;
             }
         }
     }

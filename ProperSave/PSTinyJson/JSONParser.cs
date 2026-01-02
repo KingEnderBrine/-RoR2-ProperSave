@@ -157,11 +157,17 @@ namespace PSTinyJson {
             }
             if (type.IsEnum) {
                 if (json[0] == '"')
+                {
                     json = json.Substring(1, json.Length - 2);
-                try {
-                    return Enum.Parse(type, json, false);
-                } catch {
-                    return 0;
+                    try {
+                        return Enum.Parse(type, json, false);
+                    } catch {
+                        return 0;
+                    }
+                }
+                else
+                {
+                    return Convert.ChangeType(json, Enum.GetUnderlyingType(type));
                 }
             }
             if (type.IsArray) {

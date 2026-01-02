@@ -1,33 +1,57 @@
-﻿using RoR2;
+﻿using ProperSave.Utils;
+using RoR2;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {
     public class EquipmentData
     {
-        [DataMember(Name = "i")]
-        public int index;
-        [DataMember(Name = "c")]
+        public EquipmentIndex index;
         public byte charges;
-        [DataMember(Name = "cft")]
         public float chargeFinishTime;
 
-        public EquipmentData(EquipmentState state)
+        public static EquipmentData Create(EquipmentState state)
         {
-            index = (int)state.equipmentIndex;
-            charges = state.charges;
-            chargeFinishTime = state.chargeFinishTime.t;
+            var data = new EquipmentData();
+
+            data.index = state.equipmentIndex;
+            data.charges = state.charges;
+            data.chargeFinishTime = state.chargeFinishTime.t;
+
+            return data;
         }
 
         public void LoadEquipment(Inventory inventory, uint equipmentSlot, uint equipmentSet)
         {
-            var chargeTime = new Run.FixedTimeStamp(chargeFinishTime);
+
             var state = new EquipmentState(
-                (EquipmentIndex)index,
-                chargeTime,
+                index,
+                new Run.FixedTimeStamp(chargeFinishTime),
                 charges
                 );
             inventory.SetEquipment(state, equipmentSlot, equipmentSet);
+        }
+
+        internal static EquipmentData Read(ReaderContext context)
+        {
+            var data = new EquipmentData();
+            var reader = context.Reader;
+
+            data.index = SharedIndexHelpers.ResolveEquipment(reader.ReadInt32(), context);
+            data.charges = reader.ReadByte();
+            data.chargeFinishTime = reader.ReadSingle();
+
+            return data;
+        }
+
+        internal void Write(WriterContext context)
+        {
+            var writer = context.Writer;
+
+            writer.Write(SharedIndexHelpers.FromEquipment(index, context));
+            writer.Write(charges);
+            writer.Write(chargeFinishTime);
         }
     }
 }

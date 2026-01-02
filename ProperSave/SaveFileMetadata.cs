@@ -2,51 +2,47 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
-using PSTinyJson;
-using ProperSave.Data;
 using Zio;
+using System.IO;
 
 namespace ProperSave
 {
     public class SaveFileMetadata
     {
-        [DataMember(Name = "fn")]
-        public string FileName { get; set; }
-        [DataMember(Name = "upi")]
-        public string UserProfileId { get; set; }
-        [DataMember(Name = "si")]
-        public UserIDData[] UserIds { get; set; }
-        [DataMember(Name = "gm")]
-        public GameModeIndex GameMode { get; set; }
+        public string FileName { get; private set; }
+        public bool ForceLoad { get; set; }
+        public SaveFileHeader Header { get; private set; }
+        public long BodyOffset { get; private set; }
+        public SaveFile Body { get; private set; }
 
-        [IgnoreDataMember]
         public UPath? FilePath
         {
             get
             {
-                return string.IsNullOrEmpty(FileName) ? null : ProperSavePlugin.SavesPath / $"{FileName}.json";
+                return string.IsNullOrEmpty(FileName) ? null : ProperSavePlugin.SavesPath / $"{FileName}.bin";
             }
         }
 
         private static List<SaveFileMetadata> SavesMetadata { get; } = new List<SaveFileMetadata>();
         
-        internal static SaveFileMetadata CreateMetadataForCurrentLobby()
+        internal void FillMetadataForCurrentLobby()
         {
-            return new SaveFileMetadata
+            ForceLoad = false;
+            Header = new SaveFileHeader();
+            Body = new SaveFile();
+            BodyOffset = 0;
+
+            Header.FillFromCurrentRun();
+            Body.FillFromCurrentRun();
+
+            if (FileName is null)
             {
-                UserIds = PlayerCharacterMasterController.instances
-                    .Select(el =>
-                        el.networkUser ?
-                            new UserIDData(el.networkUser.id) :
-                            LostNetworkUser.TryGetUser(el.master, out var lostNetworkUser) ?
-                                new UserIDData(lostNetworkUser.userID) :
-                                null)
-                    .Where(el => el != null)
-                    .ToArray(),
-                UserProfileId = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName,
-                GameMode = Run.instance.gameModeIndex,
-            };
+                do
+                {
+                    FileName = Guid.NewGuid().ToString();
+                }
+                while (ProperSavePlugin.SavesFileSystem.FileExists(FilePath.Value));
+            }
         }
 
         internal static SaveFileMetadata GetCurrentLobbySaveMetadata(NetworkUser exceptUser = null)
@@ -67,19 +63,21 @@ namespace ProperSave
                 {
                     return null;
                 }
+
                 if (users.Count == 1)
                 {
-                    var profile = LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName.Replace(".xml", "");
-                    return SavesMetadata.FirstOrDefault(el => el.UserProfileId == profile && el.UserIds.Length == 1 && (el.UserIds[0]?.Load().Equals(users[0]) ?? false) && el.GameMode == gameMode);
+                    var profile = System.IO.Path.GetFileNameWithoutExtension(LocalUserManager.readOnlyLocalUsersList[0].userProfile.fileName);
+                    return SavesMetadata.FirstOrDefault(el => el.Header.UserProfileId == profile && el.Header.Users.Length == 1 && el.Header.GameMode == gameMode);
                 }
-                return SavesMetadata.FirstOrDefault(el =>
+
+                return SavesMetadata.FirstOrDefault((Func<SaveFileMetadata, bool>)(el =>
                 {
-                    if (el.UserIds.Length != users.Count || el.GameMode != gameMode)
+                    if (el.Header.Users.Length != users.Count || el.Header.GameMode != gameMode)
                     {
                         return false;
                     }
-                    return users.DifferenceCount(el.UserIds.Select(e => e?.Load() ?? default)) == 0;
-                });
+                    return users.DifferenceCount(el.Header.Users.Select(e => e?.UserId?.Load() ?? default)) == 0;
+                }));
             }
             catch (Exception ex)
             {
@@ -97,24 +95,22 @@ namespace ProperSave
                 return;
             }
 
-            var path = ProperSavePlugin.SavesPath / "SavesMetadata.json";
-            if (!ProperSavePlugin.SavesFileSystem.FileExists(path))
+            SavesMetadata.Clear();
+            foreach (var filePath in ProperSavePlugin.SavesFileSystem.EnumerateFiles(ProperSavePlugin.SavesPath, "*.bin"))
             {
-                return;
-            }
+                try
+                {
+                    var metadata = new SaveFileMetadata();
+                    metadata.FileName = filePath.GetNameWithoutExtension();
+                    metadata.ReadHeader();
 
-            try
-            {
-                var json = ProperSavePlugin.SavesFileSystem.ReadAllText(path);
-                var metadata = JSONParser.FromJson<SaveFileMetadata[]>(json);
-                
-                SavesMetadata.Clear();
-                SavesMetadata.AddRange(metadata);
-            }
-            catch (Exception e)
-            {
-                ProperSavePlugin.InstanceLogger.LogWarning("SavesMetadata file corrupted.");
-                ProperSavePlugin.InstanceLogger.LogError(e);
+                    SavesMetadata.Add(metadata);
+                }
+                catch (Exception e)
+                {
+                    ProperSavePlugin.InstanceLogger.LogWarning($"Failed to load save file \"{filePath.GetName()}\"");
+                    ProperSavePlugin.InstanceLogger.LogError(e);
+                }
             }
         }
 
@@ -126,35 +122,55 @@ namespace ProperSave
                 return;
             }
             SavesMetadata.Add(metadata);
-            UpdateSaveMetadata();
         }
 
-        internal static void Remove(SaveFileMetadata metadata)
+        internal void Write()
         {
-            if (SavesMetadata.Remove(metadata))
-            {
-                UpdateSaveMetadata();
-            }
+            using var fileStream = ProperSavePlugin.SavesFileSystem.OpenFile(FilePath.Value, FileMode.Create, FileAccess.Write);
+            using var writer = new BinaryWriter(fileStream);
+
+            Header.Write(writer);
+            Body.Write(writer);
         }
 
-        private static void UpdateSaveMetadata()
+        internal void ReadBody()
         {
-            if (!ProperSavePlugin.SavesFileSystem.DirectoryExists(ProperSavePlugin.SavesPath))
+            if (Body != null)
             {
-                ProperSavePlugin.SavesFileSystem.CreateDirectory(ProperSavePlugin.SavesPath);
                 return;
             }
 
-            var path = ProperSavePlugin.SavesPath / "SavesMetadata.json";
-            try
+            using var fileStream = ProperSavePlugin.SavesFileSystem.OpenFile(FilePath.Value, FileMode.Open, FileAccess.Read);
+            fileStream.Seek(BodyOffset, SeekOrigin.Begin);
+            using var reader = new BinaryReader(fileStream);
+
+            Body = SaveFile.Read(reader);
+        }
+
+        internal void ReadHeader()
+        {
+            if (Header != null)
             {
-                ProperSavePlugin.SavesFileSystem.WriteAllText(path, JSONWriter.ToJson(SavesMetadata));
+                return;
             }
-            catch (Exception e)
-            {
-                ProperSavePlugin.InstanceLogger.LogWarning("Can't update SavesMetadata file");
-                ProperSavePlugin.InstanceLogger.LogError(e);
-            }
+
+            using var fileStream = ProperSavePlugin.SavesFileSystem.OpenFile(FilePath.Value, FileMode.Open, FileAccess.Read);
+            using var reader = new BinaryReader(fileStream);
+
+            Header = SaveFileHeader.Read(reader);
+            BodyOffset = fileStream.Position;
+            ForceLoad = false;
+        }
+
+        internal void ReadForce(string path)
+        {
+            using var fileStream = File.Open(path, FileMode.Open, FileAccess.Read);
+            using var reader = new BinaryReader(fileStream);
+
+            Header = SaveFileHeader.Read(reader);
+            BodyOffset = fileStream.Position;
+            Body = SaveFile.Read(reader);
+            ForceLoad = true;
         }
     }
 }

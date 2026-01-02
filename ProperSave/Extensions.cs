@@ -20,5 +20,17 @@ namespace ProperSave
 
             return count;
         }
+
+        public static int AddOrIndexOf<T>(this List<T> list, T value)
+        {
+            var index = list.IndexOf(value);
+            if (index < 0)
+            {
+                list.Add(value);
+                return list.Count - 1;
+            }
+
+            return index;
+        }
     }
 }

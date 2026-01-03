@@ -1,37 +1,76 @@
-﻿using RoR2;
-using System.Linq;
+﻿using ProperSave.Utils;
+using RoR2;
+using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace ProperSave.SaveData
 {
     public class RunArtifactsData
     {
-        [DataMember(Name = "a")]
-        public bool[] artifacts;
+        public List<ArtifactIndex> artifacts = new List<ArtifactIndex>();
         
-        internal RunArtifactsData()
+        internal static RunArtifactsData Create()
         {
-            artifacts = new bool[ArtifactCatalog.artifactCount];
-            foreach (var artifact in RunArtifactManager.enabledArtifactsEnumerable)
-            {
-                artifacts[(int)artifact.artifactIndex] = true;
-            }
+            var data = new RunArtifactsData();
 
             var artifactController = UnityEngine.Object.FindObjectOfType<ArtifactTrialMissionController>();
-            var trialArtifact = artifactController?.currentArtifactIndex ?? -1;
+            var trialArtifact = (ArtifactIndex)(artifactController?.currentArtifactIndex ?? -1);
 
-            if (trialArtifact != -1)
+            foreach (var artifact in RunArtifactManager.enabledArtifactsEnumerable)
             {
-                artifacts[trialArtifact] = artifactController.artifactWasEnabled;
+                if (trialArtifact == artifact.artifactIndex && !artifactController.artifactWasEnabled)
+                {
+                    continue;
+                }
+                data.artifacts.Add(artifact.artifactIndex);
             }
+
+            return data;
         }
 
         internal void LoadData()
         {
-            for (int i = 0; i < ArtifactCatalog.artifactCount; i++)
+            for (var i = 0; i < ArtifactCatalog.artifactCount; i++)
             {
                 var artifactDef = ArtifactCatalog.GetArtifactDef((ArtifactIndex)i);
-                RunArtifactManager.instance.SetArtifactEnabled(artifactDef, artifacts.ElementAtOrDefault(i));
+                RunArtifactManager.instance.SetArtifactEnabled(artifactDef, false);
+            }
+
+            foreach (var artifactIndex in artifacts)
+            {
+                if (artifactIndex == ArtifactIndex.None)
+                {
+                    continue;
+                }
+
+                RunArtifactManager.instance.SetArtifactEnabled(ArtifactCatalog.GetArtifactDef(artifactIndex), true);
+            }
+        }
+
+        internal static RunArtifactsData Read(ReaderContext context)
+        {
+            var data = new RunArtifactsData();
+            var reader = context.Reader;
+
+            var artifactsCount = reader.ReadInt32();
+            data.artifacts = new List<ArtifactIndex>(artifactsCount);
+            for (var i = 0; i < artifactsCount; i++)
+            {
+                data.artifacts.Add(SharedIndexHelpers.ResolveArtifact(reader.ReadInt32(), context));
+            }
+
+            return data;
+        }
+
+        internal void Write(WriterContext context)
+        {
+            var writer = context.Writer;
+
+            writer.Write(artifacts.Count);
+            for (var i = 0; i < artifacts.Count; i++)
+            {
+                writer.Write(SharedIndexHelpers.FromArtifact(artifacts[i], context));
             }
         }
     }

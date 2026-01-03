@@ -1,5 +1,6 @@
 ﻿using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using RoR2;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,13 +10,14 @@ using UnityEngine;
 
 namespace ProperSave
 {
-    internal static class ModSupport
+    internal static class ModCompat
     {
         public const string BiggerBazaarGUID = "com.MagnusMagnuson.BiggerBazaar";
         public const string ShareSuiteGUID = "com.funkfrog_sipondo.sharesuite";
 
         public static bool IsBBLoaded { get; private set; }
         public static bool IsSSLoaded { get; private set; }
+        public static bool IsR2APIDifficultyLoaded { get; private set; }
 
         private static Dictionary<MethodInfo, Action<ILContext>> RegisteredILHooks { get; } = new Dictionary<MethodInfo, Action<ILContext>>();
 
@@ -23,6 +25,7 @@ namespace ProperSave
         {
             IsBBLoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(BiggerBazaarGUID);
             IsSSLoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(ShareSuiteGUID);
+            IsR2APIDifficultyLoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(R2API.DifficultyAPI.PluginGUID);
         }
 
         public static void RegisterHooks()
@@ -105,7 +108,7 @@ namespace ProperSave
             {
                 if (IsSSLoaded)
                 {
-                    ShareSuiteMapTransionInternal();
+                    ShareSuiteMapTransitionInternal();
                 }
             }
             catch (Exception ex)
@@ -115,9 +118,23 @@ namespace ProperSave
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ShareSuiteMapTransionInternal()
+        private static void ShareSuiteMapTransitionInternal()
         {
             ShareSuite.MoneySharingHooks.MapTransitionActive = true;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static DifficultyIndex FindR2APIDifficultyIndex(string nameToken)
+        {
+            foreach (var (index, def) in R2API.DifficultyAPI.difficultyDefinitions)
+            {
+                if (def.nameToken == nameToken)
+                {
+                    return index;
+                }
+            }
+
+            return DifficultyIndex.Invalid;
         }
         #endregion
     }

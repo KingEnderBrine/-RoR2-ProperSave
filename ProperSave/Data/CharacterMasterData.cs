@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
 using ProperSave.SaveData;
+using ProperSave.Utils;
 using RoR2;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -13,75 +14,45 @@ namespace ProperSave.Data
 {
     public class CharacterMasterData
     {
-        [DataMember(Name = "bn")]
-        public string bodyName;
-
-        [DataMember(Name = "m")]
+        public BodyIndex bodyIndex;
         public uint money;
-
-        [DataMember(Name = "i")]
         public InventoryData inventory;
-
-        [DataMember(Name = "l")]
         public LoadoutData loadout;
-
-        [DataMember(Name = "vc")]
         public uint voidCoins;
-
-        [DataMember(Name = "cvrng")]
         public RngData cloverVoidRng;
-
-        [DataMember(Name = "di")]
         public InventoryData devotionInventory;
-
-        [DataMember(Name = "be")]
-        public ulong beadExpirience;
-
-        [DataMember(Name = "nobsg")]
+        public ulong beadExperience;
         public int numberOfBeadStatsGained;
-
-        [DataMember(Name = "obl")]
         public uint oldBeadLevel;
-
-        [DataMember(Name = "nbl")]
         public uint newBeadLevel;
-
-        [DataMember(Name = "bxpnfcl")]
         public ulong beadXPNeededForCurrentLevel;
-
-        [DataMember(Name = "tfu")]
         public uint trackedFreeUnlocks;
-
-        [DataMember(Name = "tmc")]
         public int trackedMissileCount;
-
-        [DataMember(Name = "ebmmr")]
         public uint extraBossMissileMoneyRemainder;
+        public List<MinionData> minions = new List<MinionData>();
 
-        [DataMember(Name = "ms")]
-        public MinionData[] minions;
-
-        internal CharacterMasterData(CharacterMaster master)
+        internal static CharacterMasterData Create(CharacterMaster master)
         {
-            money = master.money;
-            voidCoins = master.voidCoins;
-            beadExpirience = master.beadExperience;
-            numberOfBeadStatsGained = master.numberOfBeadStatsGained_XPGainNerf;
-            oldBeadLevel = master.oldBeadLevel;
-            newBeadLevel = master.newBeadLevel;
-            beadXPNeededForCurrentLevel = master.beadXPNeededForCurrentLevel;
-            trackedFreeUnlocks = master.trackedFreeUnlocks;
-            trackedMissileCount = master.trackedMissileCount;
-            extraBossMissileMoneyRemainder = master.ExtraBossMissileMoneyRemainder;
+            var data = new CharacterMasterData();
+            data.money = master.money;
+            data.voidCoins = master.voidCoins;
+            data.beadExperience = master.beadExperience;
+            data.numberOfBeadStatsGained = master.numberOfBeadStatsGained_XPGainNerf;
+            data.oldBeadLevel = master.oldBeadLevel;
+            data.newBeadLevel = master.newBeadLevel;
+            data.beadXPNeededForCurrentLevel = master.beadXPNeededForCurrentLevel;
+            data.trackedFreeUnlocks = master.trackedFreeUnlocks;
+            data.trackedMissileCount = master.trackedMissileCount;
+            data.extraBossMissileMoneyRemainder = master.ExtraBossMissileMoneyRemainder;
 
-            inventory = new InventoryData(master.inventory);
-            loadout = new LoadoutData(master.loadout);
+            data.inventory = InventoryData.Create(master.inventory);
+            data.loadout = LoadoutData.Create(master.loadout);
             
-            bodyName = (master.originalBodyPrefab ?? master.bodyPrefab).name;
+            data.bodyIndex = (master.originalBodyPrefab ?? master.bodyPrefab).GetComponent<CharacterBody>().bodyIndex;
 
             if (master.cloverVoidRng != null)
             {
-                cloverVoidRng = new RngData(master.cloverVoidRng);
+                data.cloverVoidRng = RngData.Create(master.cloverVoidRng);
             }
 
             if (RunArtifactManager.instance.IsArtifactEnabled(CU8Content.Artifacts.Devotion))
@@ -89,24 +60,20 @@ namespace ProperSave.Data
                 var devotionInventoryController = GetDevotionInventoryController(master);
                 if (devotionInventoryController)
                 {
-                    devotionInventory = new InventoryData(devotionInventoryController._devotionMinionInventory);
+                    data.devotionInventory = InventoryData.Create(devotionInventoryController._devotionMinionInventory);
                 }
             }
 
-            var tmpMinions = new List<MinionData>();
             foreach (var instance in CharacterMaster.readOnlyInstancesList)
             {
                 var ownerMaster = instance.minionOwnership.ownerMaster;
                 if (ownerMaster != null && ownerMaster.netId == master.netId)
                 {
-                    tmpMinions.Add(new MinionData(instance));
+                    data.minions.Add(MinionData.Create(instance));
                 }
             }
-            minions = new MinionData[tmpMinions.Count];
-            for (var i = 0; i < tmpMinions.Count; i++)
-            {
-                minions[i] = tmpMinions[i];
-            }
+
+            return data;
         }
         
         internal void LoadMaster(CharacterMaster master, bool delayedInventory)
@@ -122,17 +89,20 @@ namespace ProperSave.Data
                 minion.LoadMinion(master);
             }
 
-            var bodyPrefab = BodyCatalog.FindBodyPrefab(bodyName);
-            if (bodyPrefab)
+            var body = bodyIndex;
+            if (body != BodyIndex.None)
             {
-                master.bodyPrefab = bodyPrefab;
+                var bodyPrefab = BodyCatalog.GetBodyPrefab(body);
+                if (bodyPrefab)
+                {
+                    master.bodyPrefab = bodyPrefab;
+                }
             }
-
-            ModSupport.LoadShareSuiteMoney(money);
+            ModCompat.LoadShareSuiteMoney(money);
 
             master.money = money;
             master.voidCoins = voidCoins;
-            master.beadExperience = beadExpirience;
+            master.beadExperience = beadExperience;
             master.numberOfBeadStatsGained_XPGainNerf = numberOfBeadStatsGained;
             master.oldBeadLevel = oldBeadLevel;
             master.newBeadLevel = newBeadLevel;
@@ -187,6 +157,70 @@ namespace ProperSave.Data
             yield return new WaitForEndOfFrame();
             yield return new WaitForEndOfFrame();
             inventory.LoadInventory(minionMaster.inventory);
+        }
+
+        internal static CharacterMasterData Read(ReaderContext context)
+        {
+            var data = new CharacterMasterData();
+            var reader = context.Reader;
+
+            data.bodyIndex = SharedIndexHelpers.ResolveBody(reader.ReadInt32(), context);
+            data.money = reader.ReadUInt32();
+            data.inventory = InventoryData.Read(context);
+            data.loadout = LoadoutData.Read(context);
+            data.voidCoins = reader.ReadUInt32();
+            if (reader.ReadBoolean())
+            {
+                data.cloverVoidRng = RngData.Read(context);
+            }
+            if (reader.ReadBoolean())
+            {
+                data.devotionInventory = InventoryData.Read(context);
+            }
+            data.beadExperience = reader.ReadUInt64();
+            data.numberOfBeadStatsGained = reader.ReadInt32();
+            data.oldBeadLevel = reader.ReadUInt32();
+            data.newBeadLevel = reader.ReadUInt32();
+            data.beadXPNeededForCurrentLevel = reader.ReadUInt64();
+            data.trackedFreeUnlocks = reader.ReadUInt32();
+            data.trackedMissileCount = reader.ReadInt32();
+            data.extraBossMissileMoneyRemainder = reader.ReadUInt32();
+            var minionCount = reader.ReadInt32();
+            data.minions = new List<MinionData>(minionCount);
+            for (var i = 0; i < minionCount; i++)
+            {
+                data.minions.Add(MinionData.Read(context));
+            }
+
+            return data;
+        }
+
+        internal void Write(WriterContext context)
+        {
+            var writer = context.Writer;
+
+            writer.Write(SharedIndexHelpers.FromBody(bodyIndex, context));
+            writer.Write(money);
+            inventory.Write(context);
+            loadout.Write(context);
+            writer.Write(voidCoins);
+            writer.Write(cloverVoidRng != null);
+            cloverVoidRng?.Write(context);
+            writer.Write(devotionInventory != null);
+            devotionInventory?.Write(context);
+            writer.Write(beadExperience);
+            writer.Write(numberOfBeadStatsGained);
+            writer.Write(oldBeadLevel);
+            writer.Write(newBeadLevel);
+            writer.Write(beadXPNeededForCurrentLevel);
+            writer.Write(trackedFreeUnlocks);
+            writer.Write(trackedMissileCount);
+            writer.Write(extraBossMissileMoneyRemainder);
+            writer.Write(minions.Count);
+            for (var i = 0; i < minions.Count; i++)
+            {
+                minions[i].Write(context);
+            }
         }
     }
 }

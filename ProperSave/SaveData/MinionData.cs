@@ -1,7 +1,9 @@
 ﻿using ProperSave.Data;
+using ProperSave.Utils;
 using RoR2;
 using RoR2.CharacterAI;
 using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -10,78 +12,106 @@ namespace ProperSave.SaveData
 {
     public class MinionData
     {
-        [DataMember(Name = "mi")]
-        public int masterIndex;
+        public MasterCatalog.MasterIndex masterIndex;
 
-        [DataMember(Name = "m")]
         public CharacterMasterData master;
 
-        [DataMember(Name = "dld")]
         public DevotedLemurianData devotedLemurianData;
 
-        [DataMember(Name = "drd")]
         public DroneRepairData droneRepairData;
 
-        internal MinionData(CharacterMaster master)
+        internal static MinionData Create(CharacterMaster master)
         {
-            masterIndex = (int)master.masterIndex;
-            this.master = new CharacterMasterData(master);
+            var data = new MinionData();
+            data.masterIndex = master.masterIndex;
+            data.master = CharacterMasterData.Create(master);
             if (master.TryGetComponent<DevotedLemurianController>(out var devotedLemurianController))
             {
-                devotedLemurianData = new DevotedLemurianData(devotedLemurianController);
+                data.devotedLemurianData = DevotedLemurianData.Create(devotedLemurianController);
             }
             if (master.TryGetComponent<DroneRepairMaster>(out var droneRepairMaster))
             {
-                droneRepairData = new DroneRepairData(droneRepairMaster);
+                data.droneRepairData = DroneRepairData.Create(droneRepairMaster);
+                //Drones can have broken body on transition, storing original
+                data.master.bodyIndex = droneRepairMaster.defaultBodyIndex;
             }
+
+            return data;
         }
 
-        //Loads minion after scene was populated 
-        //so that minion's AI won't throw exceptions because it can't navigate 
         internal void LoadMinion(CharacterMaster playerMaster)
         {
-            SceneDirector.onPostPopulateSceneServer += SpawnMinion;
-
-            void SpawnMinion(SceneDirector obj)
+            if (masterIndex == MasterCatalog.MasterIndex.none)
             {
-                SceneDirector.onPostPopulateSceneServer -= SpawnMinion;
-
-                var masterPrefab = MasterCatalog.GetMasterPrefab((MasterCatalog.MasterIndex)masterIndex);
-
-                var minionGameObject = Object.Instantiate(masterPrefab);
-                CharacterMaster minionMaster = minionGameObject.GetComponent<CharacterMaster>();
-                minionMaster.teamIndex = TeamIndex.Player;
-                master.LoadMaster(minionMaster, true);
-
-                //MinionOwnership
-                var newOwnerMaster = playerMaster;
-                if (newOwnerMaster.minionOwnership.ownerMaster != null)
-                    newOwnerMaster = newOwnerMaster.minionOwnership.ownerMaster;
-                minionMaster.minionOwnership.SetOwner(newOwnerMaster);
-
-                //AIOwnership
-                var aiOwnership = minionGameObject.GetComponent<AIOwnership>();
-                aiOwnership.ownerMaster = playerMaster;
-
-                var baseAI = minionGameObject.GetComponent<BaseAI>();
-                baseAI.leader.gameObject = playerMaster.gameObject;
-
-                if (devotedLemurianData != null)
-                {
-                    var devotedLemurianController = minionMaster.GetComponent<DevotedLemurianController>();
-                    devotedLemurianData.LoadData(devotedLemurianController);
-                    devotedLemurianController._lemurianMaster = minionMaster;
-                    devotedLemurianController._devotionInventoryController = CharacterMasterData.GetDevotionInventoryController(playerMaster);
-                }
-
-                if (droneRepairData != null)
-                {
-                    var droneRepairMaster = minionMaster.GetComponent<DroneRepairMaster>();
-                    droneRepairData.LoadData(droneRepairMaster);
-                }
-
-                NetworkServer.Spawn(minionGameObject);
+                return;
             }
+
+            var masterPrefab = MasterCatalog.GetMasterPrefab(masterIndex);
+
+            var minionGameObject = Object.Instantiate(masterPrefab);
+            CharacterMaster minionMaster = minionGameObject.GetComponent<CharacterMaster>();
+            minionMaster.teamIndex = TeamIndex.Player;
+            master.LoadMaster(minionMaster, true);
+
+            //MinionOwnership
+            var newOwnerMaster = playerMaster;
+            if (newOwnerMaster.minionOwnership.ownerMaster != null)
+                newOwnerMaster = newOwnerMaster.minionOwnership.ownerMaster;
+            minionMaster.minionOwnership.SetOwner(newOwnerMaster);
+
+            //AIOwnership
+            var aiOwnership = minionGameObject.GetComponent<AIOwnership>();
+            aiOwnership.ownerMaster = playerMaster;
+
+            var baseAI = minionGameObject.GetComponent<BaseAI>();
+            baseAI.leader.gameObject = playerMaster.gameObject;
+
+            if (devotedLemurianData != null)
+            {
+                var devotedLemurianController = minionMaster.GetComponent<DevotedLemurianController>();
+                devotedLemurianData.LoadData(devotedLemurianController);
+                devotedLemurianController._lemurianMaster = minionMaster;
+                devotedLemurianController._devotionInventoryController = CharacterMasterData.GetDevotionInventoryController(playerMaster);
+            }
+
+            if (droneRepairData != null)
+            {
+                var droneRepairMaster = minionMaster.GetComponent<DroneRepairMaster>();
+                droneRepairData.LoadData(droneRepairMaster);
+            }
+
+            NetworkServer.Spawn(minionGameObject);
+        }
+
+        internal static MinionData Read(ReaderContext context)
+        {
+            var data = new MinionData();
+            var reader = context.Reader;
+
+            data.masterIndex = SharedIndexHelpers.ResolveMaster(reader.ReadInt32(), context);
+            data.master = CharacterMasterData.Read(context);
+            if (reader.ReadBoolean())
+            {
+                data.devotedLemurianData = DevotedLemurianData.Read(context);
+            }
+            if (reader.ReadBoolean())
+            {
+                data.droneRepairData = DroneRepairData.Read(context);
+            }
+
+            return data;
+        }
+
+        internal void Write(WriterContext context)
+        {
+            var writer = context.Writer;
+
+            writer.Write(SharedIndexHelpers.FromMaster(masterIndex, context));
+            master.Write(context);
+            writer.Write(devotedLemurianData != null);
+            devotedLemurianData?.Write(context);
+            writer.Write(droneRepairData != null);
+            droneRepairData?.Write(context);
         }
     }
 }

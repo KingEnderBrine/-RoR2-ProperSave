@@ -1,5 +1,4 @@
 ﻿using ProperSave.Components;
-using PSTinyJson;
 using RoR2;
 using RoR2.UI;
 using System;
@@ -7,7 +6,6 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
-using Zio;
 
 namespace ProperSave
 {
@@ -18,6 +16,8 @@ namespace ProperSave
         private static GameObject lobbyGlyphAndDescription;
         private static TooltipProvider tooltipProvider;
         private static GamepadTooltipProvider gamepadTooltipProvider;
+        private static SaveFileMetadata lastFileMetadata;
+        private static TooltipContent lastTooltipContent;
 
         #region Buttons
         public static void RegisterHooks()
@@ -169,25 +169,32 @@ namespace ProperSave
                 metadata.FilePath.HasValue &&
                 ProperSavePlugin.SavesFileSystem.FileExists(metadata.FilePath.Value);
 
-            var tooltipContent = new TooltipContent();
-            try
+            if (metadata != lastFileMetadata)
             {
-                if (metadata != null)
+                lastFileMetadata = metadata;
+                try
                 {
-                    tooltipContent = new TooltipContent
+                    if (metadata != null)
                     {
-                        titleToken = LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_TITLE,
-                        overrideBodyText = GetSaveDescription(metadata),
-                        titleColor = Color.black,
-                        disableBodyRichText = false
-                    };
+                        lastTooltipContent = new TooltipContent
+                        {
+                            titleToken = LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_TITLE,
+                            overrideBodyText = GetSaveDescription(metadata),
+                            titleColor = Color.black,
+                            disableBodyRichText = false
+                        };
+                    }
+                    else
+                    {
+                        lastTooltipContent = default;
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                ProperSavePlugin.InstanceLogger.LogWarning("Failed to get information about save file");
-                ProperSavePlugin.InstanceLogger.LogError(ex);
-                interactable = false;
+                catch (Exception ex)
+                {
+                    ProperSavePlugin.InstanceLogger.LogWarning("Failed to get information about save file");
+                    ProperSavePlugin.InstanceLogger.LogError(ex);
+                    interactable = false;
+                }
             }
 
             try
@@ -202,7 +209,7 @@ namespace ProperSave
                 }
                 if (tooltipProvider)
                 {
-                    tooltipProvider.SetContent(tooltipContent);
+                    tooltipProvider.SetContent(lastTooltipContent);
                 }
             }
             catch { }
@@ -220,38 +227,37 @@ namespace ProperSave
                 }
                 if (gamepadTooltipProvider)
                 {
-                    gamepadTooltipProvider.SetContent(tooltipContent);
+                    gamepadTooltipProvider.SetContent(lastTooltipContent);
                 }
             }
             catch { }
-            }
+        }
 
         private static string GetSaveDescription(SaveFileMetadata saveMetadata)
         {
-            var saveJSON = ProperSavePlugin.SavesFileSystem.ReadAllText(saveMetadata.FilePath.Value);
-            var save = JSONParser.FromJson<SaveFile>(saveJSON);
-
+            var header = saveMetadata.Header;
             var builder = new StringBuilder();
-            foreach (var playerData in save.PlayersData)
+            foreach (var userData in header.Users)
             {
-                var networkUser = NetworkUser.readOnlyInstancesList.FirstOrDefault(user => playerData.userId.Load().Equals(user.id));
-                var body = BodyCatalog.FindBodyPrefab(playerData.master.bodyName);
+                var networkUser = NetworkUser.readOnlyInstancesList.FirstOrDefault(user => userData.UserId.Load().Equals(user.id));
+                var body = BodyCatalog.GetBodyPrefab(userData.Body);
                 var survivor = SurvivorCatalog.FindSurvivorDefFromBody(body);
                 builder.Append(Language.GetStringFormatted(LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_DESCRIPTION_CHARACTER, networkUser?.userName, survivor != null ? Language.GetString(survivor.displayNameToken) : ""));
             }
 
-            var stage = SceneCatalog.GetSceneDefFromSceneName(save.RunData.sceneName);
-            var difficulty = DifficultyCatalog.GetDifficultyDef((DifficultyIndex)save.RunData.difficulty);
-            var time = save.RunData.isPaused ? (int)save.RunData.offsetFromFixedTime : (int)(save.RunData.fixedTime + save.RunData.offsetFromFixedTime);
+            var stage = SceneCatalog.GetSceneDefFromSceneName(header.SceneName);
+            var difficulty = DifficultyCatalog.GetDifficultyDef(header.Difficulty);
+            var time = header.Time;
+            var stageClearCount = header.StageClearCount;
 
             return Language.GetStringFormatted(
                 LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_DESCRIPTION_BODY,
                 builder.ToString(),
                 stage ? Language.GetString(stage.nameToken) : "",
-                (save.RunData.stageClearCount + 1).ToString(),
+                (stageClearCount + 1).ToString(),
                 $"{(time / 60):00}:{(time % 60):00}",
                 difficulty != null ? Language.GetString(difficulty.nameToken) : "",
-                save.ContentHash != null && save.ContentHash != ProperSavePlugin.ContentHash ? Language.GetString(LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_CONTENT_MISMATCH) : "");
+                header.ContentHash != ProperSavePlugin.ContentHash ? Language.GetString(LanguageConsts.PROPER_SAVE_TOOLTIP_LOAD_CONTENT_MISMATCH) : "");
         }
         #endregion
     }

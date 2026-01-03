@@ -14,6 +14,7 @@ Each game mode (`Classic`, `Eclipse`, `Simulacrum`) has it's own save files, so 
 * `UseCloudStorage` - Store files in Steam/EpicGames cloud. Enabling this feature would not preserve current saves and disabling it wouldn't clear the cloud.
 * `CloudStorageSubDirectory` - Sub directory name for cloud storage. Changing it allows to use different save files for different mod profiles.
 * `SavesDirectory` - Directory where save files will be stored. "ProperSave" directory will be created in the directory you have specified. If the directory doesn't exist the default one will be used.
+* `Resilient` - Save file type. True - entries from catalogs will be saved by name instead of index, which should have less issue on mod list change, but has bigger save file size. False - the old way, entries from catalogs are saved by index, which works for non-changing mod list, save file size is much lower.
 
 # For mod developers
 #### Saving

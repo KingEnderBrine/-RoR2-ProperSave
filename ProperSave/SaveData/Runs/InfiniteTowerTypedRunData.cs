@@ -1,33 +1,32 @@
 ﻿using ProperSave.Data;
+using ProperSave.Utils;
 using RoR2;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace ProperSave.SaveData.Runs
 {
     public class InfiniteTowerTypedRunData : ITypedRunData
     {
-        [DataMember(Name = "wi")]
         public int waveIndex;
-        [DataMember(Name = "wr")]
         public RngData waveRng;
-        [DataMember(Name = "eir")]
         public RngData enemyItemRng;
-        [DataMember(Name = "swr")]
         public RngData safeWardRng;
-        [DataMember(Name = "eipi")]
         public int enemyItemPatternIndex;
-        [DataMember(Name = "ei")]
         public InventoryData enemyInventory;
 
-        internal InfiniteTowerTypedRunData()
+        internal static InfiniteTowerTypedRunData Create()
         {
             var run = Run.instance as InfiniteTowerRun;
-            waveIndex = run.waveIndex;
-            waveRng = new RngData(run.waveRng);
-            enemyItemRng = new RngData(run.enemyItemRng);
-            safeWardRng = Saving.PreStageInfiniteTowerSafeWardRng;
-            enemyItemPatternIndex = run.enemyItemPatternIndex;
-            enemyInventory = new InventoryData(run.enemyInventory);
+            return new InfiniteTowerTypedRunData
+            {
+                waveIndex = run.waveIndex,
+                waveRng = RngData.Create(run.waveRng),
+                enemyItemRng = RngData.Create(run.enemyItemRng),
+                safeWardRng = Saving.PreStageInfiniteTowerSafeWardRng,
+                enemyItemPatternIndex = run.enemyItemPatternIndex,
+                enemyInventory = InventoryData.Create(run.enemyInventory),
+            };
         }
 
         void ITypedRunData.Load()
@@ -39,6 +38,34 @@ namespace ProperSave.SaveData.Runs
             safeWardRng.LoadDataRef(ref run.safeWardRng);
             run.enemyItemPatternIndex = enemyItemPatternIndex;
             enemyInventory.LoadInventory(run.enemyInventory);
+        }
+
+        internal static InfiniteTowerTypedRunData Read(ReaderContext context)
+        {
+            var data = new InfiniteTowerTypedRunData();
+            var reader = context.Reader;
+            data.waveIndex = reader.ReadInt32();
+            data.waveRng = RngData.Read(context);
+            data.enemyItemRng = RngData.Read(context);
+            data.safeWardRng = RngData.Read(context);
+            data.enemyItemPatternIndex = reader.ReadInt32();
+            data.enemyInventory = InventoryData.Read(context);
+
+            return data;
+        }
+
+        void ITypedRunData.Write(WriterContext context) => Write(context);
+
+        internal void Write(WriterContext context)
+        {
+            var writer = context.Writer;
+
+            writer.Write(waveIndex);
+            waveRng.Write(context);
+            enemyItemRng.Write(context);
+            safeWardRng.Write(context);
+            writer.Write(enemyItemPatternIndex);
+            enemyInventory.Write(context);
         }
     }
 }

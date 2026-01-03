@@ -1,20 +1,74 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using ProperSave.Utils;
 using RoR2;
 
 namespace ProperSave.Data
 {
     public class DroneMaskData
     {
-        public bool[] array;
+        public List<DroneIndex> enabledItems = new List<DroneIndex>();
 
-        public DroneMaskData(DroneMask mask)
+        public static DroneMaskData Create(DroneMask mask)
         {
-            array = mask.array.ToArray();
+            var data = new DroneMaskData();
+
+            for (var i = 0; i < mask.array.Length; i++)
+            {
+                if (!mask.array[i])
+                {
+                    continue;
+                }
+
+                data.enabledItems.Add((DroneIndex)i);
+            }
+
+            return data;
         }
 
-        public void LoadDataOut(out DroneMask mask)
+        public void LoadData(DroneMask mask)
         {
-            mask = new DroneMask() { array = array.ToArray() };
+            for (var i = 0; i < mask.array.Length; i++)
+            {
+                mask.array[i] = false;
+            }
+
+            foreach (var enabledItem in enabledItems)
+            {
+                if (enabledItem == DroneIndex.None)
+                {
+                    continue;
+                }
+
+                mask.array[(int)enabledItem] = true;
+            }
+        }
+
+        internal static DroneMaskData Read(ReaderContext context)
+        {
+            var data = new DroneMaskData();
+            var reader = context.Reader;
+
+            var enabledItemsCount = reader.ReadInt32();
+            data.enabledItems = new List<DroneIndex>(enabledItemsCount);
+            for (var i = 0; i < enabledItemsCount; i++)
+            {
+                data.enabledItems.Add(SharedIndexHelpers.ResolveDrone(reader.ReadInt32(), context));
+            }
+
+            return data;
+        }
+
+        internal void Write(WriterContext context)
+        {
+            var writer = context.Writer;
+
+            writer.Write(enabledItems.Count);
+            for (var i = 0; i < enabledItems.Count; i++)
+            {
+                writer.Write(SharedIndexHelpers.FromDrone(enabledItems[i], context));
+            }
         }
     }
 }

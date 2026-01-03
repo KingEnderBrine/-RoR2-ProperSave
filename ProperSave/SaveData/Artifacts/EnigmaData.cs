@@ -1,4 +1,5 @@
 ﻿using ProperSave.Data;
+using ProperSave.Utils;
 using RoR2.Artifacts;
 using System.Runtime.Serialization;
 
@@ -6,21 +7,37 @@ namespace ProperSave.SaveData.Artifacts
 {
     public class EnigmaData
     {
-        [DataMember(Name = "sier")]
         public RngData serverInitialEquipmentRng;
-        [DataMember(Name = "saer")]
         public RngData serverActivationEquipmentRng;
 
-        internal EnigmaData()
+        internal static EnigmaData Create()
         {
-            serverInitialEquipmentRng = new RngData(EnigmaArtifactManager.serverInitialEquipmentRng);
-            serverActivationEquipmentRng = new RngData(EnigmaArtifactManager.serverActivationEquipmentRng);
+            return new EnigmaData
+            {
+                serverInitialEquipmentRng = RngData.Create(EnigmaArtifactManager.serverInitialEquipmentRng),
+                serverActivationEquipmentRng = RngData.Create(EnigmaArtifactManager.serverActivationEquipmentRng),
+            };
         }
 
         internal void LoadData()
         {
             serverInitialEquipmentRng.LoadDataRef(ref EnigmaArtifactManager.serverInitialEquipmentRng);
             serverActivationEquipmentRng.LoadDataRef(ref EnigmaArtifactManager.serverActivationEquipmentRng);
+        }
+
+        internal static EnigmaData Read(ReaderContext context)
+        {
+            var data = new EnigmaData();
+            data.serverInitialEquipmentRng = RngData.Read(context);
+            data.serverActivationEquipmentRng = RngData.Read(context);
+
+            return data;
+        }
+
+        internal void Write(WriterContext context)
+        {
+            serverInitialEquipmentRng.Write(context);
+            serverActivationEquipmentRng.Write(context);
         }
     }
 }

@@ -26,7 +26,7 @@ namespace ProperSave
     {
         public const string GUID = "com.KingEnderBrine.ProperSave";
         public const string Name = "Proper Save";
-        public const string Version = "2.13.3";
+        public const string Version = "3.0.0";
 
         private static readonly char[] invalidSubDirectoryCharacters = new[] { '\\', '/', '.' };
 
@@ -36,70 +36,34 @@ namespace ProperSave
         internal static FileSystem SavesFileSystem { get; private set; }
         internal static UPath SavesPath { get; private set; } = (UPath)"/ProperSave" / "Saves";
         private static string SavesDirectory { get; set; }
-        internal static SaveFile CurrentSave { get; set; }
+        internal static SaveFileMetadata CurrentSave { get; set; }
         internal static string ContentHash { get; private set; }
 
         internal static ConfigEntry<bool> UseCloudStorage { get; private set; }
         internal static ConfigEntry<string> CloudStorageSubDirectory { get; private set; }
         internal static ConfigEntry<string> UserSavesDirectory { get; private set; }
+        internal static ConfigEntry<bool> Resilient { get; private set; }
 
+#pragma warning disable IDE0051
         private void Start()
+#pragma warning restore IDE0051
         {
             Instance = this;
 
             UseCloudStorage = Config.Bind("Main", "UseCloudStorage", false, "Store files in Steam/EpicGames cloud. Enabling this feature would not preserve current saves and disabling it wouldn't clear the cloud.");
             CloudStorageSubDirectory = Config.Bind("Main", "CloudStorageSubDirectory", "", "Sub directory name for cloud storage. Changing it allows to use different save files for different mod profiles.");
             UserSavesDirectory = Config.Bind("Main", "SavesDirectory", "", "Directory where save files will be stored. \"ProperSave\" directory will be created in the directory you have specified. If the directory doesn't exist the default one will be used.");
+            Resilient = Config.Bind("Main", "Resilient", true, "Save file type. True - entries from catalogs will be saved by name instead of index, which should have less issue on mod list change, but has bigger save file size. False - the old way, entries from catalogs are saved by index, which works for non-changing mod list, save file size is much lower.");
 
             RoR2Application.onLoad += () =>
             {
-                if (UseCloudStorage.Value)
-                {
-                    SavesFileSystem = RoR2Application.cloudStorage;
-                    if (!string.IsNullOrWhiteSpace(CloudStorageSubDirectory.Value))
-                    {
-                        if (CloudStorageSubDirectory.Value.IndexOfAny(invalidSubDirectoryCharacters) != -1)
-                        {
-                            Logger.LogError($"Config entry \"CloudStorageSubDirectory\" contains invalid characters. Falling back to default location.");
-                        }
-                        else
-                        {
-                            SavesPath /= CloudStorageSubDirectory.Value;
-                        }
-                    }
-                }
-                else
-                {
-                    if (!string.IsNullOrWhiteSpace(UserSavesDirectory.Value))
-                    {
-                        if (!Directory.Exists(UserSavesDirectory.Value))
-                        {
-                            Logger.LogError("SavesDirectory from the config doesn't exists, using Application.persistentDataPath");
-                            SavesDirectory = Application.persistentDataPath;
-                        }
-                        else
-                        {
-                            SavesDirectory = UserSavesDirectory.Value;
-                        }
-                    }
-                    else
-                    {
-                        SavesDirectory = Application.persistentDataPath;
-                    }
-                    if (string.IsNullOrWhiteSpace(SavesDirectory))
-                    {
-                        Logger.LogError("Application.persistentDataPath is empty. Use SavesDirectory config option to specify a folder.");
-                    }
-
-                    var physicalFileSystem = new PhysicalFileSystem();
-                    SavesFileSystem = new SubFileSystem(physicalFileSystem, physicalFileSystem.ConvertPathFromInternal(SavesDirectory));
-                }
-
+                InitSaveFileSystem();
+                ProperSave.Old.SaveFileMetadata.MigrateAll();
                 SaveFileMetadata.PopulateSavesMetadata();
             };
 
-            ModSupport.GatherLoadedPlugins();
-            ModSupport.RegisterHooks();
+            ModCompat.GatherLoadedPlugins();
+            ModCompat.RegisterHooks();
 
             Saving.RegisterHooks();
             Loading.RegisterHooks();
@@ -112,11 +76,58 @@ namespace ProperSave
             ContentManager.onContentPacksAssigned += ContentManagerOnContentPacksAssigned;
         }
 
+        private void InitSaveFileSystem()
+        {
+            if (UseCloudStorage.Value)
+            {
+                SavesFileSystem = RoR2Application.cloudStorage;
+                if (!string.IsNullOrWhiteSpace(CloudStorageSubDirectory.Value))
+                {
+                    if (CloudStorageSubDirectory.Value.IndexOfAny(invalidSubDirectoryCharacters) != -1)
+                    {
+                        Logger.LogError($"Config entry \"CloudStorageSubDirectory\" contains invalid characters. Falling back to default location.");
+                    }
+                    else
+                    {
+                        SavesPath /= CloudStorageSubDirectory.Value;
+                    }
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(UserSavesDirectory.Value))
+                {
+                    if (!Directory.Exists(UserSavesDirectory.Value))
+                    {
+                        Logger.LogError("SavesDirectory from the config doesn't exists, using Application.persistentDataPath");
+                        SavesDirectory = Application.persistentDataPath;
+                    }
+                    else
+                    {
+                        SavesDirectory = UserSavesDirectory.Value;
+                    }
+                }
+                else
+                {
+                    SavesDirectory = Application.persistentDataPath;
+                }
+                if (string.IsNullOrWhiteSpace(SavesDirectory))
+                {
+                    Logger.LogError("Application.persistentDataPath is empty. Use SavesDirectory config option to specify a folder.");
+                }
+
+                var physicalFileSystem = new PhysicalFileSystem();
+                SavesFileSystem = new SubFileSystem(physicalFileSystem, physicalFileSystem.ConvertPathFromInternal(SavesDirectory));
+            }
+        }
+
+#pragma warning disable IDE0051
         private void Destroy()
+#pragma warning restore IDE0051
         {
             Instance = null;
 
-            ModSupport.UnregisterHooks();
+            ModCompat.UnregisterHooks();
 
             Saving.UnregisterHooks();
             Loading.UnregisterHooks();
@@ -146,6 +157,7 @@ namespace ProperSave
                     WriteCollection(contentPack.artifactDefs, nameof(contentPack.artifactDefs));
                     WriteCollection(contentPack.bodyPrefabs, nameof(contentPack.bodyPrefabs));
                     WriteCollection(contentPack.equipmentDefs, nameof(contentPack.equipmentDefs));
+                    WriteCollection(contentPack.droneDefs, nameof(contentPack.droneDefs));
                     WriteCollection(contentPack.expansionDefs, nameof(contentPack.expansionDefs));
                     WriteCollection(contentPack.gameModePrefabs, nameof(contentPack.gameModePrefabs));
                     WriteCollection(contentPack.itemDefs, nameof(contentPack.itemDefs));

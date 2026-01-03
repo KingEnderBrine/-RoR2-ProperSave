@@ -50,6 +50,7 @@ namespace PSTinyJson {
                 stringBuilder.Append('"');
                 stringBuilder.Append(item.ToString());
                 stringBuilder.Append('"');
+                //stringBuilder.Append((item as Enum).ToString("D"));
             } else if (item is IList) {
                 stringBuilder.Append('[');
                 bool isFirst = true;

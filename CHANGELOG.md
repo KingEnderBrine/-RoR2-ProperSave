@@ -1,3 +1,8 @@
+**3.0.0**
+* Changed save file format from json to binary, existing saves should automatically migrate to the new format.
+* Added config option to change save type.
+* Fixed an issue where transitioning a scene while having broken operator drones would result in non-reparable drones after loading.
+
 **2.13.3**
 * Fixed an issue where loading a run in `Conduit Canyon` as the first run after launching the game will cause teleporter to become non-interactable.
 

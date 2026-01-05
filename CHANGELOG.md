@@ -1,3 +1,6 @@
+**3.0.1**
+* Fixed an issue where old save file wouldn't be overwritten after starting a new run without loading.
+
 **3.0.0**
 * Changed save file format from json to binary, existing saves should automatically migrate to the new format.
 * Added config option to change save type.
@@ -84,7 +87,7 @@
 
 * Fixed an issue where `Benthic Bloom` would be activated twice when you load the game.
 * Storing `Benthic Bloom` rng, so that the same items would be converted when you load a save.
-* Fixed a type in `ProperSave.SaveFile.OnGatherSaveData` event name.
+* Fixed a typo in `ProperSave.SaveFile.OnGatherSaveData` event name.
 * Added more checks so the old broken saves wouldn't cause issues in lobby.
 
 **2.8.1**

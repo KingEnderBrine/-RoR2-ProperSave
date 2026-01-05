@@ -110,7 +110,7 @@ namespace ProperSave
 
         private static void SaveGame()
         {
-            var oldMetadata = ProperSavePlugin.CurrentSave;
+            var oldMetadata = SaveFileMetadata.GetCurrentLobbySaveMetadata();
             var metadata = new SaveFileMetadata
             {
                 FileName = oldMetadata?.FileName,

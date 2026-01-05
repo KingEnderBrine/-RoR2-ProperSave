@@ -70,14 +70,14 @@ namespace ProperSave
                     return SavesMetadata.FirstOrDefault(el => el.Header.UserProfileId == profile && el.Header.Users.Length == 1 && el.Header.GameMode == gameMode);
                 }
 
-                return SavesMetadata.FirstOrDefault((Func<SaveFileMetadata, bool>)(el =>
+                return SavesMetadata.FirstOrDefault(el =>
                 {
                     if (el.Header.Users.Length != users.Count || el.Header.GameMode != gameMode)
                     {
                         return false;
                     }
                     return users.DifferenceCount(el.Header.Users.Select(e => e?.UserId?.Load() ?? default)) == 0;
-                }));
+                });
             }
             catch (Exception ex)
             {
@@ -96,6 +96,7 @@ namespace ProperSave
             }
 
             SavesMetadata.Clear();
+            var metadatas = new List<SaveFileMetadata>();
             foreach (var filePath in ProperSavePlugin.SavesFileSystem.EnumerateFiles(ProperSavePlugin.SavesPath, "*.bin"))
             {
                 try
@@ -104,7 +105,7 @@ namespace ProperSave
                     metadata.FileName = filePath.GetNameWithoutExtension();
                     metadata.ReadHeader();
 
-                    SavesMetadata.Add(metadata);
+                    metadatas.Add(metadata);
                 }
                 catch (Exception e)
                 {
@@ -112,6 +113,9 @@ namespace ProperSave
                     ProperSavePlugin.InstanceLogger.LogError(e);
                 }
             }
+            SavesMetadata.AddRange(metadatas
+                .OrderByDescending(el => el.Header.ContentHash == ProperSavePlugin.ContentHash)
+                .ThenByDescending(el => el.Header.SaveDate));
         }
 
         internal static void Replace(SaveFileMetadata metadata, SaveFileMetadata oldMetadata)
@@ -121,7 +125,7 @@ namespace ProperSave
                 SavesMetadata.Remove(oldMetadata);
             }
 
-            SavesMetadata.Add(metadata);
+            SavesMetadata.Insert(0, metadata);
         }
 
         internal void Write(bool resilient)

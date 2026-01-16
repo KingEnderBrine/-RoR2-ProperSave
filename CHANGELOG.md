@@ -1,3 +1,6 @@
+**3.0.2**
+* Fixed an issue where loading would break halfway when some mods are present.
+
 **3.0.1**
 * Fixed an issue where old save file wouldn't be overwritten after starting a new run without loading.
 

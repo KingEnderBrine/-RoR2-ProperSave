@@ -26,7 +26,7 @@ namespace ProperSave.Data
             {
                 return null;
             }
-            data.Body = (master.master.originalBodyPrefab ?? master.master.bodyPrefab).GetComponent<CharacterBody>().bodyIndex;
+            data.Body = master.master.bodyPrefab.GetComponent<CharacterBody>().bodyIndex;
 
             return data;
         }

@@ -64,12 +64,13 @@ namespace ProperSave.SaveData
 
         internal void LoadPlayer(NetworkUser player)
         {
-            master.LoadMaster(player.master, false);
-
             if (preferredBodyIndex != BodyIndex.None)
             {
                 player.SetBodyPreference(preferredBodyIndex);
             }
+
+            master.LoadMaster(player.master, false);
+
             player.masterController.lunarCoinChanceMultiplier = lunarCoinChanceMultiplier;
             var stats = player.masterController.GetComponent<PlayerStatsComponent>().currentStats;
             foreach (var statField in statsFields)

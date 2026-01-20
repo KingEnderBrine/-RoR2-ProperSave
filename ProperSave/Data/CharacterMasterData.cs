@@ -48,7 +48,7 @@ namespace ProperSave.Data
             data.inventory = InventoryData.Create(master.inventory);
             data.loadout = LoadoutData.Create(master.loadout);
             
-            data.bodyIndex = (master.originalBodyPrefab ?? master.bodyPrefab).GetComponent<CharacterBody>().bodyIndex;
+            data.bodyIndex = master.bodyPrefab.GetComponent<CharacterBody>().bodyIndex;
 
             if (master.cloverVoidRng != null)
             {

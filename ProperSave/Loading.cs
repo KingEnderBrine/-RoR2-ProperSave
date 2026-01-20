@@ -73,6 +73,7 @@ namespace ProperSave
                 FirstRunStage = true;
                 if (IsLoading)
                 {
+                    ProperSavePlugin.InstanceLogger.LogInfo($"Loading save file {ProperSavePlugin.CurrentSave.FileName}");
                     CurrentSave.LoadRun();
                     CurrentSave.LoadArtifacts();
                     CurrentSave.LoadPlayers();

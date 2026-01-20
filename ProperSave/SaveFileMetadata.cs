@@ -130,11 +130,16 @@ namespace ProperSave
 
         internal void Write(bool resilient)
         {
-            using var fileStream = ProperSavePlugin.SavesFileSystem.OpenFile(FilePath.Value, FileMode.Create, FileAccess.Write);
-            using var writer = new BinaryWriter(fileStream);
+            using var memoryStream = new MemoryStream();
+            using var writer = new BinaryWriter(memoryStream);
 
             Header.Write(writer, resilient);
             Body.Write(writer, resilient);
+
+            //Write to file from MemoryStream so that in case of an exception during saving, the old file will be intact
+            using var fileStream = ProperSavePlugin.SavesFileSystem.OpenFile(FilePath.Value, FileMode.Create, FileAccess.Write);
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            memoryStream.CopyTo(fileStream);
         }
 
         internal void ReadBody()

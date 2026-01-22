@@ -32,5 +32,15 @@ namespace ProperSave
 
             return index;
         }
+
+        public static T GetSafe<T>(this List<T> list, int index)
+        {
+            if (list is null || list.Count < (uint)index)
+            {
+                return default;
+            }
+
+            return list[index];
+        }
     }
 }

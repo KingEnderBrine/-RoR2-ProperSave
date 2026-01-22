@@ -1,3 +1,6 @@
+**3.0.4**
+* Fixed an issue where some issue with unlockables would prevent saving.
+
 **3.0.3**
 * Fixed an issue where loading a save after completing artifact trial for `Artifact of Metamorphosis` you would spawn as the character you started the game with, instead of the character you got during trial.
 * Fixed an issue where an error during saving would leave a broken save file that you can't load.

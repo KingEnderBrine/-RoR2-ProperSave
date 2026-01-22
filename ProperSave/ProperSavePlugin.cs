@@ -26,7 +26,7 @@ namespace ProperSave
     {
         public const string GUID = "com.KingEnderBrine.ProperSave";
         public const string Name = "Proper Save";
-        public const string Version = "3.0.3";
+        public const string Version = "3.0.4";
 
         private static readonly char[] invalidSubDirectoryCharacters = new[] { '\\', '/', '.' };
 

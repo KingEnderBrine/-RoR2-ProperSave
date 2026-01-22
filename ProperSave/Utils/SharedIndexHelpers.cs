@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+using HG;
 using RoR2;
 using RoR2.Stats;
 
@@ -23,6 +24,11 @@ namespace ProperSave.Utils
             }
 
             var def = DifficultyCatalog.GetDifficultyDef(difficultyIndex);
+            if (def == null)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find difficulty with index \"{difficultyIndex}\" in DifficultyCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(def.nameToken);
 
             return index;
@@ -59,6 +65,11 @@ namespace ProperSave.Utils
             }
 
             var ruleDef = RuleCatalog.GetRuleDef(ruleIndex);
+            if (ruleDef == null)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find rule with index \"{ruleIndex}\" in RuleCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(ruleDef.globalName);
 
             return index;
@@ -100,6 +111,11 @@ namespace ProperSave.Utils
             }
 
             var def = ArtifactCatalog.GetArtifactDef(artifactIndex);
+            if (def == null)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find artifact with index \"{artifactIndex}\" in ArtifactCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(def.cachedName);
 
             return index;
@@ -141,6 +157,11 @@ namespace ProperSave.Utils
             }
 
             var name = BodyCatalog.GetBodyName(bodyIndex);
+            if (string.IsNullOrEmpty(name))
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find body with index \"{bodyIndex}\" in BodyCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(name);
 
             return index;
@@ -176,7 +197,12 @@ namespace ProperSave.Utils
                 return statIndex;
             }
 
-            var statField = StatDef.allStatDefs[statIndex];
+            var statField = StatDef.allStatDefs.GetSafe(statIndex);
+            if (statField == null)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find stat with index \"{statIndex}\" in StatDef");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(statField.name);
 
             return index;
@@ -218,6 +244,12 @@ namespace ProperSave.Utils
             }
 
             var def = UnlockableCatalog.GetUnlockableDef(unlockableIndex);
+            if (def == null)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find unlockable with index \"{unlockableIndex}\" in UnlockableCatalog");
+                return -1;
+            }
+
             var index = context.SharedStrings.AddOrIndexOf(def.cachedName);
 
             return index;
@@ -259,6 +291,11 @@ namespace ProperSave.Utils
             }
 
             var name = MasterCatalog.GetMasterName(masterIndex);
+            if (string.IsNullOrEmpty(name))
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find master with index \"{masterIndex}\" in MasterCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(name);
 
             return index;
@@ -300,6 +337,11 @@ namespace ProperSave.Utils
             }
 
             var def = ItemCatalog.GetItemDef(itemIndex);
+            if (def == null)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find item with index \"{itemIndex}\" in ItemCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(def.name);
 
             return index;
@@ -341,6 +383,11 @@ namespace ProperSave.Utils
             }
 
             var def = EquipmentCatalog.GetEquipmentDef(equipmentIndex);
+            if (def == null)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find equipment with index \"{equipmentIndex}\" in EquipmentCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(def.name);
 
             return index;
@@ -382,6 +429,11 @@ namespace ProperSave.Utils
             }
 
             var def = DroneCatalog.GetDroneDef(droneIndex);
+            if (def == null)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find drone with index \"{droneIndex}\" in DroneCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(def.name);
 
             return index;
@@ -423,6 +475,11 @@ namespace ProperSave.Utils
             }
 
             var def = SkinCatalog.GetBodySkinDef(bodyIndex, (int)skinIndex);
+            if (def == null)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find skin with index \"{skinIndex}\" on body index \"{bodyIndex}\" in SkinCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(def.name);
 
             return index;
@@ -468,6 +525,11 @@ namespace ProperSave.Utils
             }
 
             var name = GameModeCatalog.GetGameModeName(gameModeIndex);
+            if (string.IsNullOrEmpty(name))
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find game mode with index \"{gameModeIndex}\" in GameModeCatalog");
+                return -1;
+            }
             var index = context.SharedStrings.AddOrIndexOf(name);
 
             return index;

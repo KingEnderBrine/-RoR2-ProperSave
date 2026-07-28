@@ -1,5 +1,6 @@
 ﻿using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using ProperSave.Utils;
 using RoR2;
 using RoR2.Networking;
 using System;
@@ -121,7 +122,21 @@ namespace ProperSave
                 yield break;
             }
 
-            metadata.ReadBody();
+            try
+            {
+                metadata.ReadBody();
+            }
+            catch (Exception ex)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning("Failed to read save file body");
+                ProperSavePlugin.InstanceLogger.LogError(ex);
+                yield break;
+            }
+            finally
+            {
+                ObjectBuffer.Clear();
+            }
+
             ProperSavePlugin.CurrentSave = metadata;
             IsLoading = true;
 

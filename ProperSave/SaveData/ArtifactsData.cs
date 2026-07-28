@@ -1,7 +1,5 @@
 ﻿using ProperSave.SaveData.Artifacts;
 using ProperSave.Utils;
-using System;
-using System.Runtime.Serialization;
 
 namespace ProperSave.SaveData
 {

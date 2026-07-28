@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
 using ProperSave.Utils;
 using RoR2;
 
@@ -49,12 +47,13 @@ namespace ProperSave.Data
         {
             var data = new DroneMaskData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            var enabledItemsCount = reader.ReadInt32();
+            var enabledItemsCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.enabledItems = new List<DroneIndex>(enabledItemsCount);
             for (var i = 0; i < enabledItemsCount; i++)
             {
-                data.enabledItems.Add(SharedIndexHelpers.ResolveDrone(reader.ReadInt32(), context));
+                data.enabledItems.Add(SharedIndexHelpers.ResolveDrone(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context));
             }
 
             return data;
@@ -64,10 +63,10 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(enabledItems.Count);
+            writer.WritePacked(enabledItems.Count);
             for (var i = 0; i < enabledItems.Count; i++)
             {
-                writer.Write(SharedIndexHelpers.FromDrone(enabledItems[i], context));
+                writer.WritePacked(SharedIndexHelpers.FromDrone(enabledItems[i], context));
             }
         }
     }

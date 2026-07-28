@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Text;
 using ProperSave.SaveData;
 using ProperSave.Utils;
 using RoR2;
@@ -163,12 +160,13 @@ namespace ProperSave.Data
         {
             var data = new CharacterMasterData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            data.bodyIndex = SharedIndexHelpers.ResolveBody(reader.ReadInt32(), context);
-            data.money = reader.ReadUInt32();
+            data.bodyIndex = SharedIndexHelpers.ResolveBody(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
+            data.money = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
             data.inventory = InventoryData.Read(context);
             data.loadout = LoadoutData.Read(context);
-            data.voidCoins = reader.ReadUInt32();
+            data.voidCoins = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
             if (reader.ReadBoolean())
             {
                 data.cloverVoidRng = RngData.Read(context);
@@ -177,15 +175,15 @@ namespace ProperSave.Data
             {
                 data.devotionInventory = InventoryData.Read(context);
             }
-            data.beadExperience = reader.ReadUInt64();
-            data.numberOfBeadStatsGained = reader.ReadInt32();
-            data.oldBeadLevel = reader.ReadUInt32();
-            data.newBeadLevel = reader.ReadUInt32();
-            data.beadXPNeededForCurrentLevel = reader.ReadUInt64();
-            data.trackedFreeUnlocks = reader.ReadUInt32();
-            data.trackedMissileCount = reader.ReadInt32();
-            data.extraBossMissileMoneyRemainder = reader.ReadUInt32();
-            var minionCount = reader.ReadInt32();
+            data.beadExperience = version > 1 ? reader.ReadPackedUInt64() : reader.ReadUInt64();
+            data.numberOfBeadStatsGained = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
+            data.oldBeadLevel = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
+            data.newBeadLevel = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
+            data.beadXPNeededForCurrentLevel = version > 1 ? reader.ReadPackedUInt64() : reader.ReadUInt64();
+            data.trackedFreeUnlocks = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
+            data.trackedMissileCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
+            data.extraBossMissileMoneyRemainder = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
+            var minionCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.minions = new List<MinionData>(minionCount);
             for (var i = 0; i < minionCount; i++)
             {
@@ -199,24 +197,24 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(SharedIndexHelpers.FromBody(bodyIndex, context));
-            writer.Write(money);
+            writer.WritePacked(SharedIndexHelpers.FromBody(bodyIndex, context));
+            writer.WritePacked(money);
             inventory.Write(context);
             loadout.Write(context);
-            writer.Write(voidCoins);
+            writer.WritePacked(voidCoins);
             writer.Write(cloverVoidRng != null);
             cloverVoidRng?.Write(context);
             writer.Write(devotionInventory != null);
             devotionInventory?.Write(context);
-            writer.Write(beadExperience);
-            writer.Write(numberOfBeadStatsGained);
-            writer.Write(oldBeadLevel);
-            writer.Write(newBeadLevel);
-            writer.Write(beadXPNeededForCurrentLevel);
-            writer.Write(trackedFreeUnlocks);
-            writer.Write(trackedMissileCount);
-            writer.Write(extraBossMissileMoneyRemainder);
-            writer.Write(minions.Count);
+            writer.WritePacked(beadExperience);
+            writer.WritePacked(numberOfBeadStatsGained);
+            writer.WritePacked(oldBeadLevel);
+            writer.WritePacked(newBeadLevel);
+            writer.WritePacked(beadXPNeededForCurrentLevel);
+            writer.WritePacked(trackedFreeUnlocks);
+            writer.WritePacked(trackedMissileCount);
+            writer.WritePacked(extraBossMissileMoneyRemainder);
+            writer.WritePacked(minions.Count);
             for (var i = 0; i < minions.Count; i++)
             {
                 minions[i].Write(context);

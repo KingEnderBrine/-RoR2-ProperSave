@@ -1,9 +1,6 @@
 ﻿using ProperSave.Utils;
 using RoR2;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {
@@ -52,8 +49,9 @@ namespace ProperSave.Data
         {
             var data = new RuleBookData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            var ruleValuesCount = reader.ReadInt32();
+            var ruleValuesCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.ruleValues = new List<RuleValueData>(ruleValuesCount);
             for (var i = 0; i < ruleValuesCount; i++)
             {
@@ -67,7 +65,7 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(ruleValues.Count);
+            writer.WritePacked(ruleValues.Count);
             for (var i = 0; i < ruleValues.Count; i++)
             {
                 ruleValues[i].Write(context);

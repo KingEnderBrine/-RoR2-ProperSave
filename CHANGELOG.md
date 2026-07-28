@@ -1,3 +1,7 @@
+**3.0.5**
+* Slightly reduced save file size by using packed ints.
+* Changed `ModdedData` serialization from json to binary format, this should reduce save file size and allow supporing more types for serialization.
+
 **3.0.4**
 * Fixed an issue where some issue with unlockables would prevent saving.
 

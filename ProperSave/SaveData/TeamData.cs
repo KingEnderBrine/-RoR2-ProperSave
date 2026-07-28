@@ -1,7 +1,5 @@
 ﻿using ProperSave.Utils;
 using RoR2;
-using System;
-using System.Runtime.Serialization;
 
 namespace ProperSave.SaveData
 {
@@ -24,15 +22,18 @@ namespace ProperSave.SaveData
 
         internal static TeamData Read(ReaderContext context)
         {
+            var reader = context.Reader;
+            var version = context.Version;
+
             var data = new TeamData();
-            data.experience = context.Reader.ReadInt64();
+            data.experience = version > 1 ? reader.ReadPackedInt64() : reader.ReadInt64();
 
             return data;
         }
 
         internal void Write(WriterContext context)
         {
-            context.Writer.Write(experience);
+            context.Writer.WritePacked(experience);
         }
     }
 }

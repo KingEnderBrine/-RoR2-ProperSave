@@ -19,12 +19,13 @@ Each game mode (`Classic`, `Eclipse`, `Simulacrum`) has it's own save files, so 
 # For mod developers
 #### Saving
 To save data you need to subscribe to `ProperSave.SaveFile.OnGatherSaveData`. It will be called every time the game is saved (this happens on `RoR2.Stage.onStageStartGlobal`) to gather info from mods that needs to be saved. You can add any value with any key, but remember that other mods can do the same thing, so keep keys unique (maybe add a mod name in front or something). 
-I would suggest adding only one object per mod because the type of the object is also stored to be able to deserialize objects, and it can take a lot of space in comparison with stored value. 
-An object that you add in the dictionary will be serialized to JSON. Here is some info about serialization:
+I would suggest adding only one object per mod.
+Here is some info about serialization:
 
-* Only public properties/fields will be serialized.
-* You can add `[DataMember()]` attribute from `System.Runtime.Serialization` to specify custom name for property/field in json file.
+* Only public properties/fields will be serialized. Properties must have both `get` and `set` available.
 * You can add `[IgnoreDataMember]` attribute from `System.Runtime.Serialization` to specify that this public property/field should be ignored on serialization.
+* Any collection type should be supported.
+* Cyclic references are allowed and will be properly handled.
 
 #### Loading
 Once save file is loaded you can get data you've previously saved and apply it anytime you want. Here are some things that will help you with that:

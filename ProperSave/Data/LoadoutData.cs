@@ -1,9 +1,7 @@
 ﻿using ProperSave.Utils;
 using RoR2;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {
@@ -35,8 +33,9 @@ namespace ProperSave.Data
         {
             var data = new LoadoutData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            var modifiedLoadoutsCount = reader.ReadInt32();
+            var modifiedLoadoutsCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.modifiedLoadouts = new List<LoadoutBodyData>(modifiedLoadoutsCount);
             for (var i = 0; i < modifiedLoadoutsCount; i++)
             {
@@ -50,7 +49,7 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(modifiedLoadouts.Count);
+            writer.WritePacked(modifiedLoadouts.Count);
             for (var i = 0; i < modifiedLoadouts.Count; i++)
             {
                 modifiedLoadouts[i].Write(context);

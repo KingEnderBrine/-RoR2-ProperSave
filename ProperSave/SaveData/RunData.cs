@@ -1,12 +1,10 @@
 ﻿using ProperSave.Data;
 using ProperSave.SaveData.Runs;
-using ProperSave.TinyJson;
 using ProperSave.Utils;
 using RoR2;
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
@@ -155,12 +153,9 @@ namespace ProperSave.SaveData
 
             instance.isRunning = true;
 
-            if (onRunStartGlobalDelegate.GetValue(null) is MulticastDelegate onRunStartGlobal && onRunStartGlobal != null)
+            if (onRunStartGlobalDelegate.GetValue(null) is Action<Run> onRunStartGlobal)
             {
-                foreach (var handler in onRunStartGlobal.GetInvocationList())
-                {
-                    handler.Method.Invoke(handler.Target, new object[] { instance });
-                }
+                onRunStartGlobal(instance);
             }
 
             instance.fixedTime = fixedTime;
@@ -176,31 +171,32 @@ namespace ProperSave.SaveData
         {
             var data = new RunData();
             var reader = context.Reader;
+            var version = context.Version;
 
             data.seed = reader.ReadUInt64();
-            data.difficultyIndex = SharedIndexHelpers.ResolveDifficulty(reader.ReadInt32(), context);
+            data.difficultyIndex = SharedIndexHelpers.ResolveDifficulty(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
             data.fixedTime = reader.ReadSingle();
             data.time = reader.ReadSingle();
             data.isPaused = reader.ReadBoolean();
             data.offsetFromFixedTime = reader.ReadSingle();
-            data.stageClearCount = reader.ReadInt32();
-            data.stageClearCountAtLoopStart = reader.ReadInt32();
-            data.loopClearCount = reader.ReadInt32();
+            data.stageClearCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
+            data.stageClearCountAtLoopStart = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
+            data.loopClearCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.sceneName = reader.ReadString();
             data.nextSceneName = reader.ReadString();
             data.previousSceneName = reader.ReadString();
-            data.prestigeArtifactMountainValue = reader.ReadInt32();
+            data.prestigeArtifactMountainValue = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.itemMask = ItemMaskData.Read(context);
             data.equipmentMask = EquipmentMaskData.Read(context);
             data.droneMask = DroneMaskData.Read(context);
-            data.shopPortalCount = reader.ReadInt32();
-            data.eventFlags = new string[reader.ReadInt32()];
+            data.shopPortalCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
+            data.eventFlags = new string[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
             for (var i = 0; i < data.eventFlags.Length; i++)
             {
                 data.eventFlags[i] = reader.ReadString();
             }
             data.runRng = RunRngData.Read(context);
-            data.trialArtifactIndex = SharedIndexHelpers.ResolveArtifact(reader.ReadInt32(), context);
+            data.trialArtifactIndex = SharedIndexHelpers.ResolveArtifact(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
             data.ruleBook = RuleBookData.Read(context);
             var typedRunDataType = reader.ReadString();
             if (typedRunDataType != "")
@@ -217,29 +213,29 @@ namespace ProperSave.SaveData
             var writer = context.Writer;
 
             writer.Write(seed);
-            writer.Write(SharedIndexHelpers.FromDifficulty(difficultyIndex, context));
+            writer.WritePacked(SharedIndexHelpers.FromDifficulty(difficultyIndex, context));
             writer.Write(fixedTime);
             writer.Write(time);
             writer.Write(isPaused);
             writer.Write(offsetFromFixedTime);
-            writer.Write(stageClearCount);
-            writer.Write(stageClearCountAtLoopStart);
-            writer.Write(loopClearCount);
+            writer.WritePacked(stageClearCount);
+            writer.WritePacked(stageClearCountAtLoopStart);
+            writer.WritePacked(loopClearCount);
             writer.Write(sceneName);
             writer.Write(nextSceneName);
             writer.Write(previousSceneName);
-            writer.Write(prestigeArtifactMountainValue);
+            writer.WritePacked(prestigeArtifactMountainValue);
             itemMask.Write(context);
             equipmentMask.Write(context);
             droneMask.Write(context);
-            writer.Write(shopPortalCount);
-            writer.Write(eventFlags.Length);
+            writer.WritePacked(shopPortalCount);
+            writer.WritePacked(eventFlags.Length);
             for (var i = 0; i < eventFlags.Length; i++)
             {
                 writer.Write(eventFlags[i]);
             }
             runRng.Write(context);
-            writer.Write(SharedIndexHelpers.FromArtifact(trialArtifactIndex, context));
+            writer.WritePacked(SharedIndexHelpers.FromArtifact(trialArtifactIndex, context));
             ruleBook.Write(context);
             writer.Write(typedRunData?.GetType().AssemblyQualifiedName ?? "");
             if (typedRunData != null)

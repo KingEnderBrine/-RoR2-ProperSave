@@ -1,7 +1,5 @@
 ﻿using ProperSave.Utils;
 using RoR2;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {
@@ -37,8 +35,9 @@ namespace ProperSave.Data
         {
             var data = new EquipmentData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            data.index = SharedIndexHelpers.ResolveEquipment(reader.ReadInt32(), context);
+            data.index = SharedIndexHelpers.ResolveEquipment(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
             data.charges = reader.ReadByte();
             data.chargeFinishTime = reader.ReadSingle();
 
@@ -49,7 +48,7 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(SharedIndexHelpers.FromEquipment(index, context));
+            writer.WritePacked(SharedIndexHelpers.FromEquipment(index, context));
             writer.Write(charges);
             writer.Write(chargeFinishTime);
         }

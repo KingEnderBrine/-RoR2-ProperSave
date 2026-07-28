@@ -1,7 +1,6 @@
 ﻿using ProperSave.Data;
 using ProperSave.Utils;
 using RoR2.Artifacts;
-using System.Runtime.Serialization;
 
 namespace ProperSave.SaveData.Artifacts
 {

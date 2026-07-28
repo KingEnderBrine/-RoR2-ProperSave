@@ -97,23 +97,24 @@ namespace ProperSave.SaveData
         {
             var data = new PlayerData();
             var reader = context.Reader;
+            var version = context.Version;
 
             data.userId = UserIDData.Read(context);
-            var statsFieldsCount = reader.ReadInt32();
+            var statsFieldsCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.statsFields = new List<StatFieldData>(statsFieldsCount);
             for (var i = 0; i < statsFieldsCount; i++)
             {
                 data.statsFields.Add(StatFieldData.Read(context));
             }
-            var statsUnlockablesCount = reader.ReadInt32();
+            var statsUnlockablesCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.statsUnlockables = new List<UnlockableIndex>(statsUnlockablesCount);
             for (var i = 0; i < statsUnlockablesCount; i++)
             {
-                data.statsUnlockables.Add(SharedIndexHelpers.ResolveUnlockable(reader.ReadInt32(), context));
+                data.statsUnlockables.Add(SharedIndexHelpers.ResolveUnlockable(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context));
             }
-            data.lunarCoins = reader.ReadUInt32();
+            data.lunarCoins = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
             data.lunarCoinChanceMultiplier = reader.ReadSingle();
-            data.preferredBodyIndex = SharedIndexHelpers.ResolveBody(reader.ReadInt32(), context);
+            data.preferredBodyIndex = SharedIndexHelpers.ResolveBody(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
             data.master = CharacterMasterData.Read(context);
 
             return data;
@@ -123,19 +124,19 @@ namespace ProperSave.SaveData
         {
             var writer = context.Writer;
             userId.Write(context);
-            writer.Write(statsFields.Count);
+            writer.WritePacked(statsFields.Count);
             for (var i = 0; i < statsFields.Count; i++)
             {
                 statsFields[i].Write(context);
             }
-            writer.Write(statsUnlockables.Count);
+            writer.WritePacked(statsUnlockables.Count);
             for (var i = 0; i < statsUnlockables.Count; i++)
             {
-                writer.Write(SharedIndexHelpers.FromUnlockable(statsUnlockables[i], context));
+                writer.WritePacked(SharedIndexHelpers.FromUnlockable(statsUnlockables[i], context));
             }
-            writer.Write(lunarCoins);
+            writer.WritePacked(lunarCoins);
             writer.Write(lunarCoinChanceMultiplier);
-            writer.Write(SharedIndexHelpers.FromBody(preferredBodyIndex, context));
+            writer.WritePacked(SharedIndexHelpers.FromBody(preferredBodyIndex, context));
             master.Write(context);
         }
     }

@@ -1,9 +1,7 @@
 ﻿using ProperSave.Utils;
 using RoR2;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {
@@ -123,36 +121,37 @@ namespace ProperSave.Data
         {
             var data = new InventoryData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            data.infusionBonus = reader.ReadUInt32();
+            data.infusionBonus = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
             data.equipmentDisabled = reader.ReadBoolean();
             data.beadAppliedHealth = reader.ReadSingle();
             data.beadAppliedShield = reader.ReadSingle();
             data.beadAppliedRegen = reader.ReadSingle();
             data.beadAppliedDamage = reader.ReadSingle();
-            var itemsCount = reader.ReadInt32();
+            var itemsCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.items = new List<ItemData>(itemsCount);
             for (var i = 0; i < itemsCount; i++) {
                 data.items.Add(ItemData.Read(context));
             }
             data.tempStorageDecayDuration = reader.ReadSingle();
             data.tempStorageInvDecayDuration = reader.ReadSingle();
-            data.equipments = new EquipmentData[reader.ReadInt32()][];
+            data.equipments = new EquipmentData[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()][];
             for (var i = 0; i < data.equipments.Length; i++)
             {
-                var slotEquipment = data.equipments[i] = new EquipmentData[reader.ReadInt32()];
+                var slotEquipment = data.equipments[i] = new EquipmentData[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
                 for (var j = 0; j < slotEquipment.Length; j++)
                 {
                     slotEquipment[j] = EquipmentData.Read(context);
                 }
             }
             data.activeEquipmentSlot = reader.ReadByte();
-            data.activeEquipmentSet = new byte[reader.ReadInt32()];
+            data.activeEquipmentSet = new byte[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
             for (var i = 0; i < data.activeEquipmentSet.Length; i++)
             {
                 data.activeEquipmentSet[i] = reader.ReadByte();
             }
-            data.lastExtraEquipmentCount = reader.ReadInt32();
+            data.lastExtraEquipmentCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
 
             return data;
         }
@@ -161,35 +160,35 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(infusionBonus);
+            writer.WritePacked(infusionBonus);
             writer.Write(equipmentDisabled);
             writer.Write(beadAppliedHealth);
             writer.Write(beadAppliedShield);
             writer.Write(beadAppliedRegen);
             writer.Write(beadAppliedDamage);
-            writer.Write(items.Count);
+            writer.WritePacked(items.Count);
             for (var i = 0; i < items.Count; i++) {
                 items[i].Write(context);
             }
             writer.Write(tempStorageDecayDuration);
             writer.Write(tempStorageInvDecayDuration);
-            writer.Write(equipments.Length);
+            writer.WritePacked(equipments.Length);
             for (var i = 0; i < equipments.Length; i++)
             {
                 var slotEquipment = equipments[i];
-                writer.Write(slotEquipment.Length);
+                writer.WritePacked(slotEquipment.Length);
                 for (var j = 0; j < slotEquipment.Length; j++)
                 {
                     slotEquipment[j].Write(context);
                 }
             }
             writer.Write(activeEquipmentSlot);
-            writer.Write(activeEquipmentSet.Length);
+            writer.WritePacked(activeEquipmentSet.Length);
             for (var i = 0; i < activeEquipmentSet.Length; i++)
             {
                 writer.Write(activeEquipmentSet[i]);
             }
-            writer.Write(lastExtraEquipmentCount);
+            writer.WritePacked(lastExtraEquipmentCount);
         }
     }
 }

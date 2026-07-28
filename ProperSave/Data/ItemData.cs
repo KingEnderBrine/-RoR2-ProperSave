@@ -1,5 +1,4 @@
-﻿using System.Runtime.Serialization;
-using ProperSave.Utils;
+﻿using ProperSave.Utils;
 using RoR2;
 
 namespace ProperSave.Data
@@ -16,11 +15,12 @@ namespace ProperSave.Data
         {
             var data = new ItemData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            data.itemIndex = SharedIndexHelpers.ResolveItem(reader.ReadInt32(), context);
-            data.count = reader.ReadInt32();
-            data.channeledCount = reader.ReadInt32();
-            data.tempCount = reader.ReadInt32();
+            data.itemIndex = SharedIndexHelpers.ResolveItem(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
+            data.count = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
+            data.channeledCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
+            data.tempCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.tempFixedTime = reader.ReadSingle();
 
             return data;
@@ -30,10 +30,10 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(SharedIndexHelpers.FromItem(itemIndex, context));
-            writer.Write(count);
-            writer.Write(channeledCount);
-            writer.Write(tempCount);
+            writer.WritePacked(SharedIndexHelpers.FromItem(itemIndex, context));
+            writer.WritePacked(count);
+            writer.WritePacked(channeledCount);
+            writer.WritePacked(tempCount);
             writer.Write(tempFixedTime);
         }
     }

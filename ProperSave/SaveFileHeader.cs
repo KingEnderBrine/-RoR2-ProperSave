@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using ProperSave.Data;
 using ProperSave.Utils;
 using RoR2;
@@ -89,7 +87,6 @@ namespace ProperSave
             var context = new WriterContext
             {
                 Writer = writer,
-                SharedStrings = new List<string>(),
                 Resilient = resilient,
             };
 

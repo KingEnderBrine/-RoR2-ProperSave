@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Text;
-using ProperSave.Utils;
+﻿using ProperSave.Utils;
 
 namespace ProperSave.Data
 {
@@ -15,8 +11,9 @@ namespace ProperSave.Data
         {
             var data = new RuleValueData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            data.index = SharedIndexHelpers.ResolveRule(reader.ReadInt32(), context);
+            data.index = SharedIndexHelpers.ResolveRule(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
             data.value = reader.ReadByte();
 
             return data;
@@ -26,7 +23,7 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(SharedIndexHelpers.FromRule(index, context));
+            writer.WritePacked(SharedIndexHelpers.FromRule(index, context));
             writer.Write(value);
         }
     }

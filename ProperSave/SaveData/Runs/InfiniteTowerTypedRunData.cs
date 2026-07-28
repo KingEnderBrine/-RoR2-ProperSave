@@ -1,8 +1,6 @@
 ﻿using ProperSave.Data;
 using ProperSave.Utils;
 using RoR2;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace ProperSave.SaveData.Runs
 {
@@ -44,11 +42,13 @@ namespace ProperSave.SaveData.Runs
         {
             var data = new InfiniteTowerTypedRunData();
             var reader = context.Reader;
-            data.waveIndex = reader.ReadInt32();
+            var version = context.Version;
+
+            data.waveIndex = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.waveRng = RngData.Read(context);
             data.enemyItemRng = RngData.Read(context);
             data.safeWardRng = RngData.Read(context);
-            data.enemyItemPatternIndex = reader.ReadInt32();
+            data.enemyItemPatternIndex = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.enemyInventory = InventoryData.Read(context);
 
             return data;
@@ -60,11 +60,11 @@ namespace ProperSave.SaveData.Runs
         {
             var writer = context.Writer;
 
-            writer.Write(waveIndex);
+            writer.WritePacked(waveIndex);
             waveRng.Write(context);
             enemyItemRng.Write(context);
             safeWardRng.Write(context);
-            writer.Write(enemyItemPatternIndex);
+            writer.WritePacked(enemyItemPatternIndex);
             enemyInventory.Write(context);
         }
     }

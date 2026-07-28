@@ -91,8 +91,9 @@ namespace ProperSave.SaveData
         {
             var data = new MinionData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            data.masterIndex = SharedIndexHelpers.ResolveMaster(reader.ReadInt32(), context);
+            data.masterIndex = SharedIndexHelpers.ResolveMaster(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
             data.master = CharacterMasterData.Read(context);
             if (reader.ReadBoolean())
             {
@@ -110,7 +111,7 @@ namespace ProperSave.SaveData
         {
             var writer = context.Writer;
 
-            writer.Write(SharedIndexHelpers.FromMaster(masterIndex, context));
+            writer.WritePacked(SharedIndexHelpers.FromMaster(masterIndex, context));
             master.Write(context);
             writer.Write(devotedLemurianData != null);
             devotedLemurianData?.Write(context);

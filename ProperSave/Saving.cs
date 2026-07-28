@@ -6,6 +6,7 @@ using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using RoR2.UI;
 using ProperSave.Data;
+using ProperSave.Utils;
 
 namespace ProperSave
 {
@@ -129,6 +130,10 @@ namespace ProperSave
                 Chat.SendBroadcastChat(new Chat.SimpleChatMessage { baseToken = string.Format(Language.GetString(LanguageConsts.PROPER_SAVE_CHAT_SAVE_FAILED), Language.GetString(SceneCatalog.currentSceneDef.nameToken)) });
                 ProperSavePlugin.InstanceLogger.LogWarning("Failed to save the game");
                 ProperSavePlugin.InstanceLogger.LogError(e);
+            }
+            finally
+            {
+                ObjectBuffer.Clear();
             }
         }
 

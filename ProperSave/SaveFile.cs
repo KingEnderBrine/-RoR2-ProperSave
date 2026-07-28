@@ -5,24 +5,22 @@ using PSTinyJson;
 using RoR2;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using UnityEngine;
 
 namespace ProperSave
 {
     public class SaveFile
     {
-        internal static readonly int currentVersion = 1;
+        internal static readonly int currentVersion = 2;
 
         public RunData RunData { get; set; }
         public TeamData TeamData { get; set; }
         public RunArtifactsData RunArtifactsData { get; set; }
         public ArtifactsData ArtifactsData { get; set; }
         public List<PlayerData> PlayersData { get; set; } = new List<PlayerData>();
-        public Dictionary<string, ModdedData> ModdedData { get; set; } = new Dictionary<string, ModdedData>();
+        public Dictionary<string, object> ModdedData { get; set; } = new Dictionary<string, object>();
 
         public static event Action<Dictionary<string, object>> OnGatherSaveData;
 
@@ -61,20 +59,14 @@ namespace ProperSave
                 }
             }
 
-            ModdedData = gatheredData.ToDictionary(
-                el => el.Key, 
-                el => new ModdedData 
-                { 
-                    ObjectType = el.Value.GetType().AssemblyQualifiedName, 
-                    Value = el.Value 
-                });
+            ModdedData = gatheredData;
         }
 
         internal void LoadRun()
         {
             try
             {
-                //Hopefully temporary workaround for Conduit Canyon's preplaced teleporter throwing NRE in Awake if when loaded.
+                //Hopefully temporary workaround for Conduit Canyon's preplaced teleporter throwing NRE in Awake when loaded.
                 LegacyResourcesAPI.Load<GameObject>("Prefabs/PositionIndicators/TeleporterChargingPositionIndicator", true);
             }
             catch { }
@@ -123,40 +115,51 @@ namespace ProperSave
 
         public T GetModdedData<T>(string key)
         {
-            return (T)ModdedData[key].Value;
+            return (T)ModdedData[key];
         }
 
         internal static SaveFile Read(BinaryReader reader)
         {
             var saveFile = new SaveFile();
 
-            var version = reader.ReadInt32();
-            var resilient = reader.ReadBoolean();
+            var context = new ReaderContext
+            {
+                Reader = reader,
+            };
+
+            var version = context.Version = reader.ReadInt32();
+            var resilient = context.Resilient = reader.ReadBoolean();
+
+            var typesOffset = 0L;
+            if (version > 1)
+            {
+                typesOffset = reader.ReadInt64();
+            }
 
             var sharedStringsOffset = reader.ReadInt64();
             var currentOffset = reader.BaseStream.Position;
             reader.BaseStream.Seek(sharedStringsOffset, SeekOrigin.Begin);
-            var sharedStrings = new string[reader.ReadInt32()];
+            var sharedStrings = context.SharedStrings = new string[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
             for (var i = 0; i < sharedStrings.Length; i++)
             {
                 sharedStrings[i] = reader.ReadString();
             }
-            var endOffset = reader.BaseStream.Position;
-            reader.BaseStream.Seek(currentOffset, SeekOrigin.Begin);
 
-            var context = new ReaderContext
+            var endOffset = reader.BaseStream.Position;
+
+            if (version > 1)
             {
-                Reader = reader,
-                Resilient = resilient,
-                SharedStrings = sharedStrings,
-                Version = version,
-            };
+                reader.BaseStream.Seek(typesOffset, SeekOrigin.Begin);
+                GenericObjectsHelper.ReadTypesAndObjects(context);
+            }
+
+            reader.BaseStream.Seek(currentOffset, SeekOrigin.Begin);
 
             saveFile.ArtifactsData = ArtifactsData.Read(context);
             saveFile.RunData = RunData.Read(context);
             saveFile.RunArtifactsData = RunArtifactsData.Read(context);
             saveFile.TeamData = TeamData.Read(context);
-            var playersCount = reader.ReadInt32();
+            var playersCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             for (var i = 0; i < playersCount; i++)
             {
                 saveFile.PlayersData.Add(PlayerData.Read(context));
@@ -169,9 +172,18 @@ namespace ProperSave
             return saveFile;
         }
 
-        private static Dictionary<string, ModdedData> ReadModdedData(ReaderContext context)
+        private static Dictionary<string, object> ReadModdedData(ReaderContext context)
         {
-            return JSONParser.FromJson<Dictionary<string, ModdedData>>(context.Reader.ReadString());
+            var reader = context.Reader;
+            if (context.Version > 1)
+            {
+                GenericObjectsHelper.ReadObjectsData(context);
+
+                return context.Objects[0].obj as Dictionary<string, object>;
+            }
+
+            return JSONParser.FromJson<Dictionary<string, ModdedData>>(reader.ReadString())
+                .ToDictionary(e => e.Key, e => e.Value.Value);
         }
 
         internal void Write(BinaryWriter writer, bool resilient)
@@ -179,7 +191,6 @@ namespace ProperSave
             var context = new WriterContext
             {
                 Writer = writer,
-                SharedStrings = new List<string>(),
                 Resilient = resilient,
             };
 
@@ -187,34 +198,35 @@ namespace ProperSave
             writer.Write(resilient);
             var currentOffset = writer.BaseStream.Position;
             writer.Write(0L);
+            writer.Write(0L);
 
             ArtifactsData.Write(context);
             RunData.Write(context);
             RunArtifactsData.Write(context);
             TeamData.Write(context);
-            writer.Write(PlayersData.Count);
+            writer.WritePacked(PlayersData.Count);
             for (var i = 0; i < PlayersData.Count; i++)
             {
                 PlayersData[i].Write(context);
             }
 
-            WriteModdedData(context);
+            _ = GenericObjectsHelper.GetReferenceIndex(ModdedData, context);
+            GenericObjectsHelper.WriteObjectsData(context);
+
+            var typesOffset = writer.BaseStream.Position;
+            GenericObjectsHelper.WriteTypesAndObjects(context);
 
             var sharedStringsOffset = writer.BaseStream.Position;
-            writer.Write(context.SharedStrings.Count);
+            writer.WritePacked(context.SharedStrings.Count);
             for (var i = 0; i < context.SharedStrings.Count; i++)
             {
                 writer.Write(context.SharedStrings[i]);
             }
 
             writer.BaseStream.Seek(currentOffset, SeekOrigin.Begin);
+            writer.Write(typesOffset);
             writer.Write(sharedStringsOffset);
             writer.BaseStream.Seek(writer.BaseStream.Length, SeekOrigin.Begin);
-        }
-
-        private void WriteModdedData(WriterContext context)
-        {
-            context.Writer.Write(ModdedData.ToJson());
         }
     }
 }

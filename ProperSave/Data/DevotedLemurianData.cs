@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Text;
-using ProperSave.Utils;
+﻿using ProperSave.Utils;
 using RoR2;
 
 namespace ProperSave.Data
@@ -31,9 +27,10 @@ namespace ProperSave.Data
         {
             var data = new DevotedLemurianData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            data.itemIndex = SharedIndexHelpers.ResolveItem(reader.ReadInt32(), context);
-            data.devotedEvolutionLevel = reader.ReadInt32();
+            data.itemIndex = SharedIndexHelpers.ResolveItem(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
+            data.devotedEvolutionLevel = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
 
             return data;
         }
@@ -42,8 +39,8 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(SharedIndexHelpers.FromItem(itemIndex, context));
-            writer.Write(devotedEvolutionLevel);
+            writer.WritePacked(SharedIndexHelpers.FromItem(itemIndex, context));
+            writer.WritePacked(devotedEvolutionLevel);
         }
     }
 }

@@ -1,8 +1,5 @@
 ﻿using ProperSave.Utils;
 using RoR2;
-using System;
-using System.Linq;
-using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {
@@ -41,13 +38,14 @@ namespace ProperSave.Data
         {
             var data = new LoadoutBodyData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            data.bodyIndex = SharedIndexHelpers.ResolveBody(reader.ReadInt32(), context);
-            data.skinPreference = reader.ReadUInt32();
-            data.skillPreferences = new uint[reader.ReadInt32()];
+            data.bodyIndex = SharedIndexHelpers.ResolveBody(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context);
+            data.skinPreference = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
+            data.skillPreferences = new uint[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
             for (var i = 0; i < data.skillPreferences.Length; i++)
             {
-                data.skillPreferences[i] = reader.ReadUInt32();
+                data.skillPreferences[i] = version > 1 ? reader.ReadPackedUInt32() : reader.ReadUInt32();
             }
 
             return data;
@@ -57,12 +55,12 @@ namespace ProperSave.Data
         {
             var writer = context.Writer;
 
-            writer.Write(SharedIndexHelpers.FromBody(bodyIndex, context));
-            writer.Write(skinPreference);
-            writer.Write(skillPreferences.Length);
+            writer.WritePacked(SharedIndexHelpers.FromBody(bodyIndex, context));
+            writer.WritePacked(skinPreference);
+            writer.WritePacked(skillPreferences.Length);
             for (var i = 0; i < skillPreferences.Length; i++)
             {
-                writer.Write(skillPreferences[i]);
+                writer.WritePacked(skillPreferences[i]);
             }
         }
     }

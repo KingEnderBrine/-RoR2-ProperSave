@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Text;
-using ProperSave.Utils;
+﻿using ProperSave.Utils;
 using RoR2;
 using RoR2.Artifacts;
 
@@ -36,14 +32,16 @@ namespace ProperSave.SaveData.Artifacts
         internal static PrestigeData Read(ReaderContext context)
         {
             var data = new PrestigeData();
-            data.mountainShrineCount = context.Reader.ReadInt32();
+            var reader = context.Reader;
+            var version = context.Version;
+            data.mountainShrineCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
 
             return data;
         }
 
         internal void Write(WriterContext context)
         {
-            context.Writer.Write(mountainShrineCount);
+            context.Writer.WritePacked(mountainShrineCount);
         }
     }
 }

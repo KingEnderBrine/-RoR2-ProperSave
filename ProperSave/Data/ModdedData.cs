@@ -1,5 +1,4 @@
 ﻿using ProperSave.TinyJson;
-using System.Runtime.Serialization;
 
 namespace ProperSave.Data
 {

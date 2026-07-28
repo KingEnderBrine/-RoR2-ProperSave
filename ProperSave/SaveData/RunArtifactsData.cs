@@ -1,8 +1,6 @@
 ﻿using ProperSave.Utils;
 using RoR2;
-using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 
 namespace ProperSave.SaveData
 {
@@ -52,12 +50,13 @@ namespace ProperSave.SaveData
         {
             var data = new RunArtifactsData();
             var reader = context.Reader;
+            var version = context.Version;
 
-            var artifactsCount = reader.ReadInt32();
+            var artifactsCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.artifacts = new List<ArtifactIndex>(artifactsCount);
             for (var i = 0; i < artifactsCount; i++)
             {
-                data.artifacts.Add(SharedIndexHelpers.ResolveArtifact(reader.ReadInt32(), context));
+                data.artifacts.Add(SharedIndexHelpers.ResolveArtifact(version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32(), context));
             }
 
             return data;
@@ -67,10 +66,10 @@ namespace ProperSave.SaveData
         {
             var writer = context.Writer;
 
-            writer.Write(artifacts.Count);
+            writer.WritePacked(artifacts.Count);
             for (var i = 0; i < artifacts.Count; i++)
             {
-                writer.Write(SharedIndexHelpers.FromArtifact(artifacts[i], context));
+                writer.WritePacked(SharedIndexHelpers.FromArtifact(artifacts[i], context));
             }
         }
     }

@@ -37,7 +37,8 @@ namespace ProperSave.Old
                 ArtifactsData = ArtifactsData.Migrate(),
                 TeamData = TeamData.Migrate(),
                 RunArtifactsData = RunArtifactsData.Migrate(),
-                ModdedData = ModdedData.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Migrate().Value),
+                ModdedData = ModdedData.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Migrate()),
+                ModdedObjectsData = ModdedData.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Migrate().Value),
                 PlayersData = PlayersData.Select(d => d.Migrate()).ToList(),
                 RunData = RunData.Migrate(),
             };

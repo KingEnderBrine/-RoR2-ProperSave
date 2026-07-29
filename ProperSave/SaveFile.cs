@@ -20,7 +20,10 @@ namespace ProperSave
         public RunArtifactsData RunArtifactsData { get; set; }
         public ArtifactsData ArtifactsData { get; set; }
         public List<PlayerData> PlayersData { get; set; } = new List<PlayerData>();
-        public Dictionary<string, object> ModdedData { get; set; } = new Dictionary<string, object>();
+
+        [Obsolete("Use TryGetModdedData<T>() or GetModdedData<T>() instead of directly referencing this field")]
+        public Dictionary<string, ModdedData> ModdedData { get; set; } = new Dictionary<string, ModdedData>();
+        public Dictionary<string, object> ModdedObjectsData { get; set; } = new Dictionary<string, object>();
 
         public static event Action<Dictionary<string, object>> OnGatherSaveData;
 
@@ -59,7 +62,14 @@ namespace ProperSave
                 }
             }
 
-            ModdedData = gatheredData;
+            ModdedObjectsData = gatheredData;
+            ModdedData = ModdedObjectsData.ToDictionary(
+                el => el.Key, 
+                el => new ModdedData 
+                { 
+                    ObjectType = el.Value?.GetType().AssemblyQualifiedName, 
+                    Value = el.Value 
+                });
         }
 
         internal void LoadRun()
@@ -101,7 +111,8 @@ namespace ProperSave
             }
 
             var players = PlayersData.ToList();
-            foreach (var user in NetworkUser.readOnlyInstancesList) {
+            foreach (var user in NetworkUser.readOnlyInstancesList)
+            {
                 var player = players.FirstOrDefault(el => el.userId.Load().Equals(user.id));
                 if (player == null)
                 {
@@ -115,7 +126,17 @@ namespace ProperSave
 
         public T GetModdedData<T>(string key)
         {
-            return (T)ModdedData[key];
+            return (T)ModdedObjectsData[key];
+        }
+
+        public T TryGetModdedData<T>(string key)
+        {
+            if (ModdedObjectsData.TryGetValue(key, out var value))
+            {
+                return (T)value;
+            }
+
+            return default;
         }
 
         internal static SaveFile Read(BinaryReader reader)
@@ -165,7 +186,14 @@ namespace ProperSave
                 saveFile.PlayersData.Add(PlayerData.Read(context));
             }
 
-            saveFile.ModdedData = ReadModdedData(context);
+            saveFile.ModdedObjectsData = ReadModdedData(context);
+            saveFile.ModdedData = saveFile.ModdedObjectsData.ToDictionary(
+                el => el.Key, 
+                el => new ModdedData 
+                { 
+                    ObjectType = el.Value?.GetType().AssemblyQualifiedName, 
+                    Value = el.Value 
+                });
 
             reader.BaseStream.Seek(endOffset, SeekOrigin.Begin);
 
@@ -210,7 +238,7 @@ namespace ProperSave
                 PlayersData[i].Write(context);
             }
 
-            _ = GenericObjectsHelper.GetReferenceIndex(ModdedData, context);
+            _ = GenericObjectsHelper.GetReferenceIndex(ModdedObjectsData, context);
             GenericObjectsHelper.WriteObjectsData(context);
 
             var typesOffset = writer.BaseStream.Position;

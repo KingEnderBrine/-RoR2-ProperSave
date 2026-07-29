@@ -23,13 +23,26 @@ namespace ProperSave
                     return;
                 }
                 isLoading = value;
-                if (isLoading)
+
+                var save = CurrentSave;
+                var invocationList = isLoading ? OnLoadingStarted?.GetInvocationList() : OnLoadingEnded?.GetInvocationList();
+                if (invocationList != null)
                 {
-                    OnLoadingStarted?.Invoke(CurrentSave);
-                }
-                else
-                {
-                    OnLoadingEnded?.Invoke(CurrentSave);
+                    foreach (var invocation in invocationList)
+                    {
+                        try
+                        {
+                            ((Action<SaveFile>)invocation)(save);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex is MissingMemberException)
+                            {
+                                ProperSavePlugin.InstanceLogger.LogError($"Method {invocation.Method?.DeclaringType.FullName}.{invocation.Method.Name}");
+                            }
+                            ProperSavePlugin.InstanceLogger.LogError(ex);
+                        }
+                    }
                 }
             }
         }

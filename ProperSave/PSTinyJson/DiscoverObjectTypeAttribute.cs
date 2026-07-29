@@ -16,10 +16,11 @@ namespace ProperSave.TinyJson
 
         public Type GetObjectType(object instance)
         {
-            if (MemberName == null)
+            if (string.IsNullOrEmpty(MemberName) || instance is null)
             {
                 return null;
             }
+
             var member = instance?.GetType()?.GetMember(MemberName)?.FirstOrDefault();
             string value;
             switch (member)

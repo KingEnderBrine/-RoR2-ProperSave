@@ -1,3 +1,7 @@
+**3.0.6**
+* Added more error handling during loading.
+* Temporarily reverted a breaking change, which should fix mod compatibility.
+
 **3.0.5**
 * Slightly reduced save file size by using packed ints.
 * Changed `ModdedData` serialization from json to binary format, this should reduce save file size and allow supporing more types for serialization.

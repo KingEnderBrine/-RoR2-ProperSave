@@ -199,7 +199,7 @@ namespace ProperSave.Utils
                 }
                 case ObjectType.String:
                 {
-                    return context.SharedStrings[reader.ReadPackedInt32()];
+                    return context.SharedStrings.GetSafe(reader.ReadPackedInt32());
                 }
                 case ObjectType.KeyValuePair:
                 {

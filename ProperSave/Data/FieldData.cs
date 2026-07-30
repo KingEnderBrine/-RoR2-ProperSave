@@ -25,7 +25,7 @@ namespace ProperSave.Data
             var data = new FieldData();
             var reader = context.Reader;
 
-            data.Name = context.SharedStrings[reader.ReadPackedInt32()];
+            data.Name = context.SharedStrings.GetSafe(reader.ReadPackedInt32());
             data.Type = context.Types[reader.ReadPackedInt32()];
 
             return data;

@@ -31,9 +31,9 @@ namespace ProperSave.Data
             var data = new TypeName();
             var reader = context.Reader;
 
-            data.Namespace = context.SharedStrings[reader.ReadPackedInt32()];
-            data.Name = context.SharedStrings[reader.ReadPackedInt32()];
-            data.AssemblyName = context.SharedStrings[reader.ReadPackedInt32()];
+            data.Namespace = context.SharedStrings.GetSafe(reader.ReadPackedInt32());
+            data.Name = context.SharedStrings.GetSafe(reader.ReadPackedInt32());
+            data.AssemblyName = context.SharedStrings.GetSafe(reader.ReadPackedInt32());
             var argumentsCount = reader.ReadPackedInt32();
             data.GenereicArguments = new TypeName[argumentsCount];
             for (var i = 0; i < argumentsCount; i++)

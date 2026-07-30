@@ -24,8 +24,23 @@ namespace ProperSave
             return count;
         }
 
-        public static int AddOrIndexOf<T>(this List<T> list, T value)
+        public static string GetSafe(this string[] list, int index)
         {
+            if ((uint)index > list.Length)
+            {
+                return null;
+            }
+
+            return list[index];
+        }
+
+        public static int AddOrIndexOf(this List<string> list, string value)
+        {
+            if (value is null)
+            {
+                return -1;
+            }
+
             var index = list.IndexOf(value);
             if (index < 0)
             {

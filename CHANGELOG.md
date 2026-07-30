@@ -1,3 +1,6 @@
+**3.0.7**
+* Fixed an error when saving some modded data.
+
 **3.0.6**
 * Added more error handling during loading.
 * Temporarily reverted a breaking change, which should fix mod compatibility.

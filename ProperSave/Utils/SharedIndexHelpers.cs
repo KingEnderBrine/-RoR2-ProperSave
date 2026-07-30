@@ -46,7 +46,7 @@ namespace ProperSave.Utils
                 return (DifficultyIndex)sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var index = CatalogHelpers.FindDifficultyIndex(name);
             if (index == DifficultyIndex.Invalid)
             {
@@ -87,7 +87,7 @@ namespace ProperSave.Utils
                 return sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var def = RuleCatalog.FindRuleDef(name);
             if (def == null)
             {
@@ -133,7 +133,7 @@ namespace ProperSave.Utils
                 return (ArtifactIndex)sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var def = ArtifactCatalog.FindArtifactDef(name);
             if (def == null)
             {
@@ -179,7 +179,7 @@ namespace ProperSave.Utils
                 return (BodyIndex)sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var index = BodyCatalog.FindBodyIndex(name);
             if (index == BodyIndex.None)
             {
@@ -220,7 +220,7 @@ namespace ProperSave.Utils
                 return sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var def = StatDef.Find(name);
             if (def == null)
             {
@@ -267,7 +267,7 @@ namespace ProperSave.Utils
                 return (UnlockableIndex)sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var def = UnlockableCatalog.GetUnlockableDef(name);
             if (def == null)
             {
@@ -313,7 +313,7 @@ namespace ProperSave.Utils
                 return new MasterCatalog.MasterIndex(sharedIndex);
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var index = MasterCatalog.FindMasterIndex(name);
             if (index == MasterCatalog.MasterIndex.none)
             {
@@ -359,7 +359,7 @@ namespace ProperSave.Utils
                 return (ItemIndex)sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var index = ItemCatalog.FindItemIndex(name);
             if (index == ItemIndex.None)
             {
@@ -405,7 +405,7 @@ namespace ProperSave.Utils
                 return (EquipmentIndex)sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var index = EquipmentCatalog.FindEquipmentIndex(name);
             if (index == EquipmentIndex.None)
             {
@@ -451,7 +451,7 @@ namespace ProperSave.Utils
                 return (DroneIndex)sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var index = CatalogHelpers.FindDroneIndex(name);
             if (index == DroneIndex.None)
             {
@@ -497,7 +497,7 @@ namespace ProperSave.Utils
                 return (uint)sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var skinDefs = SkinCatalog.GetBodySkinDefs(bodyIndex);
             for (var i = 0u; i < skinDefs.Length; i++)
             {
@@ -547,7 +547,7 @@ namespace ProperSave.Utils
                 return (GameModeIndex)sharedIndex;
             }
 
-            var name = context.SharedStrings[sharedIndex];
+            var name = context.SharedStrings.GetSafe(sharedIndex);
             var index = GameModeCatalog.FindGameModeIndex(name);
             if (index == GameModeIndex.Invalid)
             {
@@ -565,7 +565,7 @@ namespace ProperSave.Utils
 
         public static string ResolveString(int sharedIndex, ReaderContext context)
         {
-            return context.SharedStrings[sharedIndex];
+            return context.SharedStrings.GetSafe(sharedIndex);
         }
     }
 }

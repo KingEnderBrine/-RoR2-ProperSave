@@ -1,7 +1,6 @@
 ﻿using ProperSave.Utils;
 using RoR2;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ProperSave.Data
 {
@@ -19,6 +18,7 @@ namespace ProperSave.Data
         public EquipmentData[][] equipments;
         public byte activeEquipmentSlot;
         public byte[] activeEquipmentSet;
+        // No longer used by the game, kept for save file format compatibility
         public int lastExtraEquipmentCount;
 
         public static InventoryData Create(Inventory inventory)
@@ -45,18 +45,20 @@ namespace ProperSave.Data
             data.tempStorageDecayDuration = inventory.tempItemsStorage.decayDuration;
             data.tempStorageInvDecayDuration = inventory.tempItemsStorage.invDecayDuration;
 
+            var equipmentSetCount = inventory.GetEquipmentSetCount();
             data.equipments = new EquipmentData[inventory.GetEquipmentSlotCount()][];
+            data.activeEquipmentSet = new byte[data.equipments.Length];
             for (var i = 0; i < data.equipments.Length; i++)
             {
-                var slotEquipments = data.equipments[i] = new EquipmentData[inventory.GetEquipmentSetCount((uint)i)];
+                var slotEquipments = data.equipments[i] = new EquipmentData[equipmentSetCount];
                 for (var j = 0; j < slotEquipments.Length; j++)
                 {
-                    slotEquipments[j] = EquipmentData.Create(inventory.GetEquipment((uint)i, (uint)j));
+                    var location = new EquipmentLocation { slot = (uint)i, set = (uint)j };
+                    slotEquipments[j] = EquipmentData.Create(inventory.GetEquipment(in location));
                 }
+                data.activeEquipmentSet[i] = (byte)inventory.GetActiveEquipmentSetInSlot((uint)i);
             }
             data.activeEquipmentSlot = inventory.activeEquipmentSlot;
-            data.activeEquipmentSet = inventory.activeEquipmentSet.ToArray();
-            data.lastExtraEquipmentCount = inventory._lastExtraEquipmentCount;
 
             return data;
         }
@@ -96,8 +98,9 @@ namespace ProperSave.Data
                 inventory.UpdateEffectiveItemStacks(itemIndex);
             }
 
-            inventory._lastExtraEquipmentCount = lastExtraEquipmentCount;
             inventory.HandleInventoryChanged();
+            // Recalculates equipment set count based on items
+            inventory.RefreshInventoryStateServer();
             inventory.AddInfusionBonus(infusionBonus);
 
             for (uint i = 0; i < equipments.Length; i++)
@@ -109,10 +112,15 @@ namespace ProperSave.Data
                 }
             }
 
-            inventory.activeEquipmentSet = activeEquipmentSet;
-            if (activeEquipmentSlot > 0)
+            for (uint i = 0; i < activeEquipmentSet.Length; i++)
             {
-                inventory.SetActiveEquipmentSlot(activeEquipmentSlot);
+                var location = new EquipmentLocation { slot = i, set = activeEquipmentSet[i] };
+                inventory.TrySetActiveEquipmentLocation(in location);
+            }
+            if (activeEquipmentSlot < activeEquipmentSet.Length)
+            {
+                var location = new EquipmentLocation { slot = activeEquipmentSlot, set = activeEquipmentSet[activeEquipmentSlot] };
+                inventory.TrySetActiveEquipmentLocation(in location);
             }
             inventory.SetDirtyBit(uint.MaxValue);
         }

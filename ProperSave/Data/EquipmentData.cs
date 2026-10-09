@@ -28,7 +28,8 @@ namespace ProperSave.Data
                 new Run.FixedTimeStamp(chargeFinishTime),
                 charges
                 );
-            inventory.SetEquipment(state, equipmentSlot, equipmentSet);
+            var location = new EquipmentLocation { slot = equipmentSlot, set = equipmentSet };
+            inventory.SetEquipment(in state, in location);
         }
 
         internal static EquipmentData Read(ReaderContext context)

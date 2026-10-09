@@ -1,3 +1,7 @@
+**3.0.8**
+* Updated for the latest game update (Hallowed Concepts DLC).
+* Fixed an error that prevented saving caused by changes to equipment slots.
+
 **3.0.7**
 * Fixed an error when saving some modded data.
 

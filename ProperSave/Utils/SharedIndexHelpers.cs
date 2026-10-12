@@ -558,6 +558,52 @@ namespace ProperSave.Utils
             return index;
         }
 
+        public static int FromKeyItem(KeyItemIndex keyItemIndex, WriterContext context)
+        {
+            if (keyItemIndex == KeyItemIndex.None)
+            {
+                return -1;
+            }
+
+            if (!context.Resilient)
+            {
+                return (int)keyItemIndex;
+            }
+
+            var def = KeyItemCatalog.GetKeyItemDef(keyItemIndex);
+            if (!def)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find game mode with index \"{keyItemIndex}\" in GameModeCatalog");
+                return -1;
+            }
+            var index = context.SharedStrings.AddOrIndexOf(def.name);
+
+            return index;
+        }
+
+        public static KeyItemIndex ResolveKeyItem(int sharedIndex, ReaderContext context)
+        {
+            if (sharedIndex == -1)
+            {
+                return KeyItemIndex.None;
+            }
+
+            if (!context.Resilient)
+            {
+                return (KeyItemIndex)sharedIndex;
+            }
+
+            var name = context.SharedStrings.GetSafe(sharedIndex);
+            var index = KeyItemCatalog.FindKeyItemIndex(name);
+            if (index == KeyItemIndex.None)
+            {
+                ProperSavePlugin.InstanceLogger.LogWarning($"Couldn't find game mode \"{name}\" in GameModeCatalog");
+                return KeyItemIndex.None;
+            }
+
+            return index;
+        }
+
         public static int FromString(string str, WriterContext context)
         {
             return context.SharedStrings.AddOrIndexOf(str);

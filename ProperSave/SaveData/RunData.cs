@@ -29,6 +29,7 @@ namespace ProperSave.SaveData
         public ItemMaskData itemMask;
         public EquipmentMaskData equipmentMask;
         public DroneMaskData droneMask;
+        public KeyItemMaskData keyItemMaskData;
         public int shopPortalCount;
         public string[] eventFlags;
         public RunRngData runRng;
@@ -64,6 +65,7 @@ namespace ProperSave.SaveData
             data.itemMask = ItemMaskData.Create(run.availableItems);
             data.equipmentMask = EquipmentMaskData.Create(run.availableEquipment);
             data.droneMask = DroneMaskData.Create(run.availableDrones);
+            data.keyItemMaskData = KeyItemMaskData.Create(run.availableKeyItems);
 
             data.runRng = Saving.PreStageRng;
 
@@ -142,6 +144,7 @@ namespace ProperSave.SaveData
             itemMask.LoadData(instance.availableItems);
             equipmentMask.LoadData(instance.availableEquipment);
             droneMask.LoadData(instance.availableDrones);
+            keyItemMaskData.LoadData(instance.availableKeyItems);
 
             instance.BuildUnlockAvailability();
             instance.BuildDropTable();
@@ -189,6 +192,7 @@ namespace ProperSave.SaveData
             data.itemMask = ItemMaskData.Read(context);
             data.equipmentMask = EquipmentMaskData.Read(context);
             data.droneMask = DroneMaskData.Read(context);
+            data.keyItemMaskData = KeyItemMaskData.Read(context);
             data.shopPortalCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
             data.eventFlags = new string[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
             for (var i = 0; i < data.eventFlags.Length; i++)
@@ -228,6 +232,7 @@ namespace ProperSave.SaveData
             itemMask.Write(context);
             equipmentMask.Write(context);
             droneMask.Write(context);
+            keyItemMaskData.Write(context);
             writer.WritePacked(shopPortalCount);
             writer.WritePacked(eventFlags.Length);
             for (var i = 0; i < eventFlags.Length; i++)

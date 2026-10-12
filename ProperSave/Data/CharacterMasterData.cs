@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using ProperSave.SaveData;
 using ProperSave.Utils;
 using RoR2;
@@ -42,7 +43,22 @@ namespace ProperSave.Data
             data.trackedMissileCount = master.trackedMissileCount;
             data.extraBossMissileMoneyRemainder = master.ExtraBossMissileMoneyRemainder;
 
-            data.inventory = InventoryData.Create(master.inventory);
+            var trialController = InstanceTracker.FirstOrNull<TrialController>();
+            var inventory = master.inventory;
+            if (trialController)
+            {
+                var inventorySafekeep = trialController.inventorySafekeepController;
+                if (inventorySafekeep)
+                {
+                    var safekeptInventory = inventorySafekeep._safekeptInventoryList.FirstOrDefault(i => i.characterMaster == master);
+                    if (safekeptInventory.originalInventoryStorage)
+                    {
+                        inventory = safekeptInventory.originalInventoryStorage;
+                    }
+                }
+            }
+
+            data.inventory = InventoryData.Create(inventory);
             data.loadout = LoadoutData.Create(master.loadout);
             
             data.bodyIndex = master.bodyPrefab.GetComponent<CharacterBody>().bodyIndex;
@@ -117,7 +133,21 @@ namespace ProperSave.Data
             }
             else
             {
-                inventory.LoadInventory(master.inventory);
+                var trialController = InstanceTracker.FirstOrNull<TrialController>();
+                var masterInventory = master.inventory;
+                if (trialController)
+                {
+                    var inventorySafekeep = trialController.inventorySafekeepController;
+                    if (inventorySafekeep)
+                    {
+                        var safekeptInventory = inventorySafekeep._safekeptInventoryList.FirstOrDefault(i => i.characterMaster == master);
+                        if (safekeptInventory.originalInventoryStorage)
+                        {
+                            masterInventory = safekeptInventory.originalInventoryStorage;
+                        }
+                    }
+                }
+                inventory.LoadInventory(masterInventory);
             }
         }
 

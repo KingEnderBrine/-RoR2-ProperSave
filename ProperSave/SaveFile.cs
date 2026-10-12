@@ -13,13 +13,15 @@ namespace ProperSave
 {
     public class SaveFile
     {
-        internal static readonly int currentVersion = 2;
+        internal static readonly int currentVersion = 3;
 
         public RunData RunData { get; set; }
         public TeamData TeamData { get; set; }
         public RunArtifactsData RunArtifactsData { get; set; }
         public ArtifactsData ArtifactsData { get; set; }
         public List<PlayerData> PlayersData { get; set; } = new List<PlayerData>();
+        public DLC4ProgressionData DLC4ProgressionData { get; set; }
+        public KarmaManagerData KarmaManagerData { get; set; }
 
         [Obsolete("Use TryGetModdedData<T>() or GetModdedData<T>() instead of directly referencing this field")]
         public Dictionary<string, ModdedData> ModdedData { get; set; } = new Dictionary<string, ModdedData>();
@@ -35,6 +37,8 @@ namespace ProperSave
             TeamData = TeamData.Create();
             RunArtifactsData = RunArtifactsData.Create();
             ArtifactsData = ArtifactsData.Create();
+            DLC4ProgressionData = DLC4ProgressionData.Create();
+            KarmaManagerData = KarmaManagerData.Create();
 
             foreach (var item in PlayerCharacterMasterController.instances) {
                 LostNetworkUser lostUser = null;
@@ -82,6 +86,7 @@ namespace ProperSave
             catch { }
 
             RunData.LoadData();
+            DLC4ProgressionData.LoadData();
         }
 
         internal void LoadArtifacts()
@@ -122,6 +127,11 @@ namespace ProperSave
                 players.Remove(player);
                 player.LoadPlayer(user);
             }
+        }
+
+        internal void LoadKarmaManager()
+        {
+            KarmaManagerData.LoadData();
         }
 
         public T GetModdedData<T>(string key)
@@ -185,6 +195,8 @@ namespace ProperSave
             {
                 saveFile.PlayersData.Add(PlayerData.Read(context));
             }
+            saveFile.DLC4ProgressionData = DLC4ProgressionData.Read(context);
+            saveFile.KarmaManagerData = KarmaManagerData.Read(context);
 
             saveFile.ModdedObjectsData = ReadModdedData(context);
             saveFile.ModdedData = saveFile.ModdedObjectsData.ToDictionary(
@@ -237,6 +249,8 @@ namespace ProperSave
             {
                 PlayersData[i].Write(context);
             }
+            DLC4ProgressionData.Write(context);
+            KarmaManagerData.Write(context);
 
             _ = GenericObjectsHelper.GetReferenceIndex(ModdedObjectsData, context);
             GenericObjectsHelper.WriteObjectsData(context);

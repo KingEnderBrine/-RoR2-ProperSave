@@ -33,7 +33,7 @@ Once save file is loaded you can get data you've previously saved and apply it a
 * `ProperSave.Loading.IsLoading` - you can use this to check if the `ProperSave` is loading.
 * `ProperSave.Loading.FirstRunStage` - you can use this to check if run is starting. Is set to `true` on `RoR2.Run.Start`, is set to `false` on `RoR2.Stage.onStageStartGlobal`
 * `ProperSave.Loading.OnLoadingStarted` - event, fired when `IsLoading` set to true (this happens after save file is loaded into memory, before run started).
-* `ProperSave.Loading.OnLoadingEnded` - event, fired when `IsLoading` set to false (this happens after `RoR2.TeamManager.Start` because this is the last step of loading process).
+* `ProperSave.Loading.OnLoadingEnded` - event, fired when `IsLoading` set to false (this happens after `RoR2.KarmaManager.Start` because this is the last step of loading process).
 * `ProperSave.Loading.CurrentSave` - current save file, you can access it after `OnLoadingStarted`. Will be overwritten every time game is saved.
 * `CurrentSave.GetModdedData<Type>("")` - use this method to get data that you've saved.
 * `CurrentSave.TryGetModdedData<Type>("")` - use this method to get data that you've saved or null if there is nothing saved with that key.

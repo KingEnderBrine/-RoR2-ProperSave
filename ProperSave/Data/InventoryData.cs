@@ -16,10 +16,10 @@ namespace ProperSave.Data
         public List<ItemData> items = new List<ItemData>();
         public float tempStorageDecayDuration;
         public float tempStorageInvDecayDuration;
-        public EquipmentData[][] equipments;
-        public byte activeEquipmentSlot;
-        public byte[] activeEquipmentSet;
-        public int lastExtraEquipmentCount;
+        public EquipmentSlotData[] equipments;
+        public uint activeEquipmentSlot;
+        public uint activeEquipmentSet;
+        public KeyItemIndex keyItemIndex;
 
         public static InventoryData Create(Inventory inventory)
         {
@@ -45,18 +45,14 @@ namespace ProperSave.Data
             data.tempStorageDecayDuration = inventory.tempItemsStorage.decayDuration;
             data.tempStorageInvDecayDuration = inventory.tempItemsStorage.invDecayDuration;
 
-            data.equipments = new EquipmentData[inventory.GetEquipmentSlotCount()][];
+            data.equipments = new EquipmentSlotData[inventory.GetEquipmentSlotCount()];
             for (var i = 0; i < data.equipments.Length; i++)
             {
-                var slotEquipments = data.equipments[i] = new EquipmentData[inventory.GetEquipmentSetCount((uint)i)];
-                for (var j = 0; j < slotEquipments.Length; j++)
-                {
-                    slotEquipments[j] = EquipmentData.Create(inventory.GetEquipment((uint)i, (uint)j));
-                }
+                data.equipments[i] = EquipmentSlotData.Create(inventory, i);
             }
-            data.activeEquipmentSlot = inventory.activeEquipmentSlot;
-            data.activeEquipmentSet = inventory.activeEquipmentSet.ToArray();
-            data.lastExtraEquipmentCount = inventory._lastExtraEquipmentCount;
+            data.activeEquipmentSlot = inventory.activeEquipmentLocation.slot;
+            data.activeEquipmentSet = inventory.activeEquipmentLocation.set;
+            data.keyItemIndex = inventory.keyItemIndex;
 
             return data;
         }
@@ -96,24 +92,17 @@ namespace ProperSave.Data
                 inventory.UpdateEffectiveItemStacks(itemIndex);
             }
 
-            inventory._lastExtraEquipmentCount = lastExtraEquipmentCount;
+            inventory.keyItemIndex = keyItemIndex;
             inventory.HandleInventoryChanged();
             inventory.AddInfusionBonus(infusionBonus);
 
             for (uint i = 0; i < equipments.Length; i++)
             {
-                var slotEquipments = equipments[i];
-                for (uint j = 0; j < slotEquipments.Length; j++)
-                {
-                    slotEquipments[j].LoadEquipment(inventory, i, j);
-                }
+                equipments[i].LoadSlot(inventory, i);
             }
 
-            inventory.activeEquipmentSet = activeEquipmentSet;
-            if (activeEquipmentSlot > 0)
-            {
-                inventory.SetActiveEquipmentSlot(activeEquipmentSlot);
-            }
+            inventory.RecalculateEquipmentSetsServer();
+            inventory.TrySetActiveEquipmentLocation(new EquipmentLocation { slot = activeEquipmentSlot, set = activeEquipmentSet });
             inventory.SetDirtyBit(uint.MaxValue);
         }
 
@@ -136,22 +125,29 @@ namespace ProperSave.Data
             }
             data.tempStorageDecayDuration = reader.ReadSingle();
             data.tempStorageInvDecayDuration = reader.ReadSingle();
-            data.equipments = new EquipmentData[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()][];
+            data.equipments = new EquipmentSlotData[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
             for (var i = 0; i < data.equipments.Length; i++)
             {
-                var slotEquipment = data.equipments[i] = new EquipmentData[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
-                for (var j = 0; j < slotEquipment.Length; j++)
-                {
-                    slotEquipment[j] = EquipmentData.Read(context);
-                }
+                data.equipments[i] = EquipmentSlotData.Read(context);
             }
-            data.activeEquipmentSlot = reader.ReadByte();
-            data.activeEquipmentSet = new byte[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
-            for (var i = 0; i < data.activeEquipmentSet.Length; i++)
+
+            if (version > 2)
             {
-                data.activeEquipmentSet[i] = reader.ReadByte();
+                data.activeEquipmentSlot = reader.ReadPackedUInt32();
+                data.activeEquipmentSet = reader.ReadPackedUInt32();
+                data.keyItemIndex = SharedIndexHelpers.ResolveKeyItem(reader.ReadPackedInt32(), context);
             }
-            data.lastExtraEquipmentCount = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
+            else
+            {
+                data.activeEquipmentSlot = reader.ReadByte();
+                var activeEquipmentSet = new byte[version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32()];
+                for (var i = 0; i < activeEquipmentSet.Length; i++)
+                {
+                    data.equipments[i].activeSetIndex = reader.ReadByte();
+                }
+                _ = version > 1 ? reader.ReadPackedInt32() : reader.ReadInt32();
+                data.keyItemIndex = KeyItemIndex.None;
+            }
 
             return data;
         }
@@ -175,20 +171,11 @@ namespace ProperSave.Data
             writer.WritePacked(equipments.Length);
             for (var i = 0; i < equipments.Length; i++)
             {
-                var slotEquipment = equipments[i];
-                writer.WritePacked(slotEquipment.Length);
-                for (var j = 0; j < slotEquipment.Length; j++)
-                {
-                    slotEquipment[j].Write(context);
-                }
+                equipments[i].Write(context);
             }
-            writer.Write(activeEquipmentSlot);
-            writer.WritePacked(activeEquipmentSet.Length);
-            for (var i = 0; i < activeEquipmentSet.Length; i++)
-            {
-                writer.Write(activeEquipmentSet[i]);
-            }
-            writer.WritePacked(lastExtraEquipmentCount);
+            writer.WritePacked(activeEquipmentSlot);
+            writer.WritePacked(activeEquipmentSet);
+            writer.WritePacked(SharedIndexHelpers.FromKeyItem(keyItemIndex, context));
         }
     }
 }

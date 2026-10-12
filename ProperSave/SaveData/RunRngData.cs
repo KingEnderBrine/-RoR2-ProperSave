@@ -10,6 +10,7 @@ namespace ProperSave.SaveData
         public RngData nextStageRng;
         public RngData stageRngGenerator;
         public RngData loopRngGenerator;
+        public RngData rerollStageRng;
 
         internal static RunRngData Create(Run run)
         {
@@ -19,6 +20,7 @@ namespace ProperSave.SaveData
                 nextStageRng = RngData.Create(run.nextStageRng),
                 stageRngGenerator = RngData.Create(run.stageRngGenerator),
                 loopRngGenerator = RngData.Create(run.loopRngGenerator),
+                rerollStageRng = RngData.Create(run.rerollStageRng),
             };
         }
 
@@ -28,15 +30,25 @@ namespace ProperSave.SaveData
             nextStageRng.LoadDataOut(out run.nextStageRng);
             stageRngGenerator.LoadDataOut(out run.stageRngGenerator);
             loopRngGenerator.LoadDataOut(out run.loopRngGenerator);
+            rerollStageRng.LoadDataOut(out run.rerollStageRng);
         }
 
         internal static RunRngData Read(ReaderContext context)
         {
+            var version = context.Version;
             var data = new RunRngData();
             data.runRng = RngData.Read(context);
             data.nextStageRng = RngData.Read(context);
             data.stageRngGenerator = RngData.Read(context);
             data.loopRngGenerator = RngData.Read(context);
+            if (version > 2)
+            {
+                data.rerollStageRng = RngData.Read(context);
+            }
+            else
+            {
+                data.rerollStageRng = new RngData();
+            }
 
             return data;
         }
@@ -47,6 +59,7 @@ namespace ProperSave.SaveData
             nextStageRng.Write(context);
             stageRngGenerator.Write(context);
             loopRngGenerator.Write(context);
+            rerollStageRng.Write(context);
         }
     }
 }

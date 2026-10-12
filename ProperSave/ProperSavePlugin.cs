@@ -25,7 +25,7 @@ namespace ProperSave
     {
         public const string GUID = "com.KingEnderBrine.ProperSave";
         public const string Name = "Proper Save";
-        public const string Version = "3.0.7";
+        public const string Version = "3.1.0";
 
         private static readonly char[] invalidSubDirectoryCharacters = new[] { '\\', '/', '.' };
 
@@ -57,7 +57,6 @@ namespace ProperSave
             RoR2Application.onLoad += () =>
             {
                 InitSaveFileSystem();
-                ProperSave.Old.SaveFileMetadata.MigrateAll();
                 SaveFileMetadata.PopulateSavesMetadata();
             };
 
@@ -120,25 +119,6 @@ namespace ProperSave
             }
         }
 
-#pragma warning disable IDE0051
-        private void Destroy()
-#pragma warning restore IDE0051
-        {
-            Instance = null;
-
-            ModCompat.UnregisterHooks();
-
-            Saving.UnregisterHooks();
-            Loading.UnregisterHooks();
-
-            LobbyUI.UnregisterHooks();
-
-            LostNetworkUser.Unsubscribe();
-            
-            Language.collectLanguageRootFolders -= CollectLanguageRootFolders;
-            ContentManager.onContentPacksAssigned -= ContentManagerOnContentPacksAssigned;
-        }
-
         public void CollectLanguageRootFolders(List<string> folders)
         {
             folders.Add(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Info.Location), "Language"));
@@ -167,6 +147,7 @@ namespace ProperSave
                     WriteCollection(contentPack.skillFamilies, nameof(contentPack.skillFamilies));
                     WriteCollection(contentPack.survivorDefs, nameof(contentPack.survivorDefs));
                     WriteCollection(contentPack.unlockableDefs, nameof(contentPack.unlockableDefs));
+                    WriteCollection(contentPack.keyItemDefs, nameof(contentPack.keyItemDefs));
                 }
 
                 var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(writer.ToString()));

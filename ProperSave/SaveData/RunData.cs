@@ -96,10 +96,6 @@ namespace ProperSave.SaveData
 
             var instance = Run.instance;
 
-            instance.SetRuleBook(ruleBook.Load());
-            instance.OnRuleBookUpdated(instance.networkRuleBookComponent);
-
-            instance.seed = seed;
             if (difficultyIndex == DifficultyIndex.Invalid)
             {
                 instance.selectedDifficulty = DifficultyIndex.Easy;

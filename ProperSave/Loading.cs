@@ -56,12 +56,25 @@ namespace ProperSave
         internal static void RegisterHooks()
         {
             //Replace with custom run load
+            On.RoR2.NetworkSession.BeginRun += NetworkSessionBeginRun;
             IL.RoR2.Run.Start += RunStart;
             IL.RoR2.DLC4ProgressionController.Start += DLC4ProgressionControllerStart;
             On.RoR2.KarmaManager.Start += KarmaManagerStart;
 
             //Restore team experience
             On.RoR2.TeamManager.Start += TeamManagerStart;
+        }
+
+        private static Run NetworkSessionBeginRun(On.RoR2.NetworkSession.orig_BeginRun orig, NetworkSession self, Run runPrefabComponent, RuleBook ruleBook, ulong seed)
+        {
+            if (IsLoading)
+            {
+                var runData = CurrentSave.RunData;
+                ruleBook = runData.ruleBook.Load();
+                seed = runData.seed;
+            }
+
+            return orig(self, runPrefabComponent, ruleBook, seed);
         }
 
         private static void KarmaManagerStart(On.RoR2.KarmaManager.orig_Start orig, KarmaManager self)

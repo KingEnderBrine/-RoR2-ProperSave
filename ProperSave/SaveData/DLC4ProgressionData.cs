@@ -26,6 +26,12 @@ namespace ProperSave.SaveData
             var data = new DLC4ProgressionData();
 
             var controller = DLC4ProgressionController.instance;
+            if (!controller)
+            {
+                data.rng = new RngData();
+                return data;
+            }
+
             data.reaperBossDefeated = controller.reaperBossDefeated;
             data.hasAnyPlayerHadHexes = controller.hasAnyPlayerHadHexes;
             data.hasWakeSpawned = controller.hasWakeSpawned;
@@ -46,6 +52,11 @@ namespace ProperSave.SaveData
         public void LoadData()
         {
             var controller = DLC4ProgressionController.instance;
+            if (!controller)
+            {
+                return;
+            }
+
             controller.NetworkreaperBossDefeated = reaperBossDefeated;
             controller.hasAnyPlayerHadHexes = hasAnyPlayerHadHexes;
             controller.hasWakeSpawned = hasWakeSpawned;

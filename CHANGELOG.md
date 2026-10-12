@@ -1,3 +1,6 @@
+**3.1.1**
+* Fixed an error preventing saving when dlc4 expansion is disabled.
+
 **3.1.0**
 * Fixes for `Hallowed Concepts` update.
 * Removed support for saves prior to `3.0.0` version.

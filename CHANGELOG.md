@@ -1,3 +1,6 @@
+**3.1.2**
+* Fixed an issue that caused minions to be dead after loading.
+
 **3.1.1**
 * Fixed an error preventing saving when dlc4 expansion is disabled.
 

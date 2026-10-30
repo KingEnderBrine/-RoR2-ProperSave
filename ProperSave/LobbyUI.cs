@@ -111,10 +111,12 @@ namespace ProperSave
                 lobbyGlyphAndDescription.SetActive(true);
 
                 var glyph = lobbyGlyphAndDescription.transform.GetChild(0).GetComponent<InputBindingDisplayController>();
-                glyph.actionName = "UISubmitTertiary";
+                glyph.actionName = "Equipment";
+                glyph.axisRange = Rewired.AxisRange.Full;
 
                 var glyph2 = lobbyGlyphAndDescription.transform.GetChild(1);
                 var description = lobbyGlyphAndDescription.transform.GetChild(2).GetComponent<LanguageTextMeshController>();
+                glyph2.SetSiblingIndex(2);
                 GameObject.Destroy(glyph2.gameObject);
 
                 description.token = LanguageConsts.PROPER_SAVE_TITLE_LOAD;
@@ -126,7 +128,7 @@ namespace ProperSave
                 #endregion
 
                 var gamepadInputEvent = self.gameObject.AddComponent<HoldGamepadInputEvent>();
-                gamepadInputEvent.actionName = "UISubmitTertiary";
+                gamepadInputEvent.actionName = "Equipment";
                 gamepadInputEvent.enabledObjectsIfActive = Array.Empty<GameObject>();
 
                 gamepadInputEvent.actionEvent = new UnityEngine.Events.UnityEvent();

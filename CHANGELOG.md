@@ -1,3 +1,6 @@
+**3.1.4**
+* Added more error handling when loading a minion.
+
 **3.1.3**
 * Fixed not working gamepad button to load save file.
 
